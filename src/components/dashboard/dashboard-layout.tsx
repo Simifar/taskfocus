@@ -7,6 +7,9 @@ import { ApiResponse, Task, TasksListResponse, StatsResponse } from "@/types";
 import { useDashboardState, DashboardView } from "@/hooks/useDashboardState";
 import { DashboardSidebar } from "./sidebar/dashboard-sidebar";
 import { TodayView } from "./views/today-view";
+import { InboxView } from "./views/inbox-view";
+import { WeekView } from "./views/week-view";
+import { CalendarView } from "./views/calendar-view";
 import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { EditTaskDialog } from "@/components/tasks/edit-task-dialog";
 import { toast } from "sonner";
@@ -28,6 +31,7 @@ export function DashboardLayout() {
   const { state, actions } = useDashboardState();
   const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // Authentication check
@@ -141,6 +145,11 @@ export function DashboardLayout() {
     }
   };
 
+  const handleCreateTaskWithDate = (date: Date) => {
+    setPreSelectedDate(date);
+    setCreateDialogOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -163,59 +172,71 @@ export function DashboardLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Content Area */}
-        {state.currentView === "today" && (
-          <TodayView
-            tasks={tasks}
-            stats={stats}
-            currentEnergy={state.currentEnergy}
-            onEnergyChange={actions.setEnergy}
-            onEdit={setEditingTask}
-            onArchive={handleArchiveTask}
-            onComplete={handleToggleCompleteTask}
-            onDelete={handleDeleteTask}
-            onAddTask={() => setCreateDialogOpen(true)}
-            isLoading={isLoading}
-          />
-        )}
+        {/* Content Area with Padding */}
+        <div className="flex-1 overflow-auto p-6 md:p-8">
+          {state.currentView === "today" && (
+            <TodayView
+              tasks={tasks}
+              stats={stats}
+              currentEnergy={state.currentEnergy}
+              onEnergyChange={actions.setEnergy}
+              onEdit={setEditingTask}
+              onArchive={handleArchiveTask}
+              onComplete={handleToggleCompleteTask}
+              onDelete={handleDeleteTask}
+              onAddTask={() => setCreateDialogOpen(true)}
+              isLoading={isLoading}
+            />
+          )}
 
-        {/* Placeholder for other views */}
-        {state.currentView === "inbox" && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">Inbox view coming soon</p>
-              <button className="text-emerald-600 underline" onClick={() => actions.setView("today")}>
-                Go back to Today
-              </button>
-            </div>
-          </div>
-        )}
+          {state.currentView === "inbox" && (
+            <InboxView
+              tasks={tasks}
+              stats={stats}
+              onEdit={setEditingTask}
+              onArchive={handleArchiveTask}
+              onComplete={handleToggleCompleteTask}
+              onDelete={handleDeleteTask}
+            />
+          )}
 
-        {state.currentView === "week" && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">Week view coming soon</p>
-              <button className="text-emerald-600 underline" onClick={() => actions.setView("today")}>
-                Go back to Today
-              </button>
-            </div>
-          </div>
-        )}
+          {state.currentView === "week" && (
+            <WeekView
+              tasks={tasks}
+              stats={stats}
+              onEdit={setEditingTask}
+              onArchive={handleArchiveTask}
+              onComplete={handleToggleCompleteTask}
+              onDelete={handleDeleteTask}
+              onCreateTask={handleCreateTaskWithDate}
+            />
+          )}
 
-        {state.currentView === "calendar" && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">Calendar view coming soon</p>
-              <button className="text-emerald-600 underline" onClick={() => actions.setView("today")}>
-                Go back to Today
-              </button>
-            </div>
-          </div>
-        )}
+          {state.currentView === "calendar" && (
+            <CalendarView
+              tasks={tasks}
+              stats={stats}
+              onEdit={setEditingTask}
+              onArchive={handleArchiveTask}
+              onComplete={handleToggleCompleteTask}
+              onDelete={handleDeleteTask}
+              onCreateTask={handleCreateTaskWithDate}
+            />
+          )}
+        </div>
       </div>
 
       {/* Dialogs */}
-      <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateTaskDialog 
+        open={createDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreSelectedDate(undefined);
+          }
+          setCreateDialogOpen(open);
+        }}
+        preSelectedDate={preSelectedDate}
+      />
       {editingTask && (
         <EditTaskDialog
           task={editingTask}

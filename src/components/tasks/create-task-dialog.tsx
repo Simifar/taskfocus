@@ -22,15 +22,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Loader2, Calendar as CalendarIcon, Battery, BatteryLow, BatteryMedium, BatteryFull } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preSelectedDate?: Date;
 }
 
-export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: CreateTaskDialogProps) {
   const { addTask, currentEnergy } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,8 +48,23 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [energyLevel, setEnergyLevel] = useState(currentEnergy ?? 3);
-  const [dueDateStart, setDueDateStart] = useState("");
-  const [dueDateEnd, setDueDateEnd] = useState("");
+  const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate);
+  const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate);
+
+  // Иконки энергии
+  const getEnergyIcon = (level: number) => {
+    if (level <= 1) return <BatteryLow className="h-4 w-4" />;
+    if (level <= 2) return <BatteryMedium className="h-4 w-4" />;
+    if (level <= 3) return <Battery className="h-4 w-4" />;
+    return <BatteryFull className="h-4 w-4" />;
+  };
+
+  // Цвета энергии
+  const getEnergyColor = (level: number) => {
+    if (level <= 2) return "bg-green-100 hover:bg-green-200 text-green-900 dark:bg-green-900/40 dark:hover:bg-green-800/50 dark:text-green-200";
+    if (level === 3) return "bg-yellow-100 hover:bg-yellow-200 text-yellow-900 dark:bg-yellow-900/40 dark:hover:bg-yellow-800/50 dark:text-yellow-200";
+    return "bg-red-100 hover:bg-red-200 text-red-900 dark:bg-red-900/40 dark:hover:bg-red-800/50 dark:text-red-200";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,8 +83,8 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
           description: description.trim() || undefined,
           priority,
           energyLevel,
-          dueDateStart: dueDateStart || undefined,
-          dueDateEnd: dueDateEnd || undefined,
+          dueDateStart: dueDateStart ? dueDateStart.toISOString() : undefined,
+          dueDateEnd: dueDateEnd ? dueDateEnd.toISOString() : undefined,
         }),
       });
 
@@ -73,8 +98,8 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         setDescription("");
         setPriority("medium");
         setEnergyLevel(currentEnergy ?? 3);
-        setDueDateStart("");
-        setDueDateEnd("");
+        setDueDateStart(undefined);
+        setDueDateEnd(undefined);
         onOpenChange(false);
       } else {
         toast.error(data.error?.message || "Ошибка создания задачи");
@@ -98,6 +123,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">
                 Название <span className="text-destructive">*</span>
@@ -108,9 +134,11 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Что нужно сделать?"
                 autoFocus
+                className="text-base"
               />
             </div>
 
+            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Описание</Label>
               <Textarea
@@ -118,69 +146,117 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Дополнительная информация..."
-                rows={3}
+                rows={2}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Приоритет</Label>
-                <Select value={priority} onValueChange={(v) => setPriority(v as "low" | "medium" | "high")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Низкий</SelectItem>
-                    <SelectItem value="medium">Средний</SelectItem>
-                    <SelectItem value="high">Высокий</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Energy Level - Buttons */}
+            <div className="space-y-2">
+              <Label>Уровень энергии</Label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setEnergyLevel(level)}
+                    className={cn(
+                      "flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-1",
+                      energyLevel === level
+                        ? "bg-emerald-600 text-white shadow-md"
+                        : getEnergyColor(level)
+                    )}
+                  >
+                    {getEnergyIcon(level)}
+                    <span>{level}</span>
+                  </button>
+                ))}
               </div>
-
-              <div className="space-y-2">
-                <Label>Уровень энергии</Label>
-                <Select
-                  value={energyLevel.toString()}
-                  onValueChange={(v) => setEnergyLevel(parseInt(v))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 — Очень низкий</SelectItem>
-                    <SelectItem value="2">2 — Низкий</SelectItem>
-                    <SelectItem value="3">3 — Средний</SelectItem>
-                    <SelectItem value="4">4 — Высокий</SelectItem>
-                    <SelectItem value="5">5 — Очень высокий</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                {energyLevel <= 2 && "Для рутинных дел, которые не требуют большой энергии"}
+                {energyLevel === 3 && "Сбалансированные задачи среднего уровня"}
+                {energyLevel >= 4 && "Для важных дел, которые требуют полной концентрации"}
+              </p>
             </div>
 
+            {/* Priority */}
             <div className="space-y-2">
-              <Label>Мягкий дедлайн (диапазон дат)</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="dateStart" className="text-xs text-muted-foreground">
+              <Label>Приоритет</Label>
+              <Select value={priority} onValueChange={(v) => setPriority(v as "low" | "medium" | "high")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">🟢 Низкий</SelectItem>
+                  <SelectItem value="medium">🟡 Средний</SelectItem>
+                  <SelectItem value="high">🔴 Высокий</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date Range */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Мягкий дедлайн</Label>
+              <p className="text-xs text-muted-foreground">Выберите период, когда нужно выполнить задачу</p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {/* Start Date */}
+                <div className="space-y-2">
+                  <Label htmlFor="dateStart" className="text-sm text-muted-foreground">
                     От
                   </Label>
-                  <Input
-                    id="dateStart"
-                    type="date"
-                    value={dueDateStart}
-                    onChange={(e) => setDueDateStart(e.target.value)}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !dueDateStart && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dueDateStart ? format(dueDateStart, "dd MMM", { locale: ru }) : "Выбрать дату"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={dueDateStart}
+                        onSelect={setDueDateStart}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        locale={ru}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
-                <div>
-                  <Label htmlFor="dateEnd" className="text-xs text-muted-foreground">
+
+                {/* End Date */}
+                <div className="space-y-2">
+                  <Label htmlFor="dateEnd" className="text-sm text-muted-foreground">
                     До
                   </Label>
-                  <Input
-                    id="dateEnd"
-                    type="date"
-                    value={dueDateEnd}
-                    onChange={(e) => setDueDateEnd(e.target.value)}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !dueDateEnd && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dueDateEnd ? format(dueDateEnd, "dd MMM", { locale: ru }) : "Выбрать дату"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={dueDateEnd}
+                        onSelect={setDueDateEnd}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        locale={ru}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </div>
