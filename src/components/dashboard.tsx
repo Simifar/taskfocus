@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store";
 import { ApiResponse, Task, TasksListResponse, StatsResponse } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
   BatteryLow,
   BatteryFull,
   AlertTriangle,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
@@ -41,11 +43,13 @@ import { cn } from "@/lib/utils";
 const MAX_ACTIVE_TASKS = 3;
 
 export function Dashboard() {
+  const router = useRouter();
   const {
     user,
     tasks,
     activeTasks,
     completedTasks,
+    archivedTasks,
     setTasks,
     updateTask,
     removeTask,
@@ -177,6 +181,25 @@ export function Dashboard() {
     }
   };
 
+  // Восстановление архивированной задачи
+  const handleRestoreTask = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "active" }),
+      });
+      const data: ApiResponse<Task> = await response.json();
+
+      if (data.success && data.data) {
+        updateTask(taskId, data.data);
+        toast.success("Задача восстановлена");
+      }
+    } catch {
+      toast.error("Ошибка восстановления");
+    }
+  };
+
   // Переключение развернутого состояния задачи
   const toggleExpanded = (taskId: string) => {
     setExpandedTasks((prev) => {
@@ -228,7 +251,8 @@ export function Dashboard() {
       if (!haystack.includes(q)) return false;
     }
     if (statusFilter !== "all" && task.status !== statusFilter) return false;
-    if (currentEnergy !== null && task.energyLevel > currentEnergy) return false;
+    // Не применяем фильтр энергии к архивированным задачам
+    if (task.status !== "archived" && currentEnergy !== null && task.energyLevel > currentEnergy) return false;
     return true;
   });
 
@@ -277,6 +301,14 @@ export function Dashboard() {
                 <Plus className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Новая задача</span>
                 <span className="sm:hidden">Добавить</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push("/profile")}
+                title="Профиль"
+              >
+                <User className="h-5 w-5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleLogout}>
                 <LogOut className="h-5 w-5" />
@@ -432,6 +464,14 @@ export function Dashboard() {
             <CheckCircle2 className="h-4 w-4 mr-1" />
             Выполненные ({completedTasks.length})
           </Button>
+          <Button
+            variant={statusFilter === "archived" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("archived")}
+          >
+            <Archive className="h-4 w-4 mr-1" />
+            Архив ({archivedTasks.length})
+          </Button>
           </div>
         </div>
 
@@ -446,6 +486,8 @@ export function Dashboard() {
                     ? "Нет активных задач"
                     : statusFilter === "completed"
                     ? "Нет выполненных задач"
+                    : statusFilter === "archived"
+                    ? "Архив пустой"
                     : "Нет задач"}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -465,7 +507,7 @@ export function Dashboard() {
                   key={task.id}
                   className={cn(
                     "transition-all duration-200 hover:shadow-md",
-                    task.status === "completed" && "opacity-75",
+                    (task.status === "completed" || task.status === "archived") && "opacity-75",
                     currentEnergy !== null && task.energyLevel > currentEnergy && "opacity-50"
                   )}
                 >
@@ -522,10 +564,22 @@ export function Dashboard() {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleArchiveTask(task.id)}
+                                  title="В архив"
                                 >
                                   <Archive className="h-4 w-4" />
                                 </Button>
                               </>
+                            )}
+                            {task.status === "archived" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRestoreTask(task.id)}
+                                className="text-emerald-600 hover:text-emerald-700"
+                                title="Восстановить"
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                              </Button>
                             )}
                             <Button
                               variant="ghost"
