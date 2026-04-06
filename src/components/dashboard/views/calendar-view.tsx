@@ -26,6 +26,7 @@ interface CalendarViewProps {
   onArchive?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
+  onSelectDay?: (date: Date) => void;
 }
 
 export function CalendarView({
@@ -36,6 +37,7 @@ export function CalendarView({
   onArchive,
   onDelete,
   onCreateTask,
+  onSelectDay,
 }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -140,10 +142,11 @@ export function CalendarView({
               return (
                 <div
                   key={dateStr}
+                  onClick={() => isCurrentMonth && onSelectDay?.(day)}
                   className={cn(
                     "min-h-[140px] p-2 rounded-lg border transition-all flex flex-col",
                     isCurrentMonth
-                      ? "bg-background border-gray-200 dark:border-gray-800"
+                      ? "bg-background border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50"
                       : "bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 opacity-50",
                     isToday && "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
                   )}

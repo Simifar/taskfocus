@@ -10,6 +10,7 @@ import { TodayView } from "./views/today-view";
 import { InboxView } from "./views/inbox-view";
 import { WeekView } from "./views/week-view";
 import { CalendarView } from "./views/calendar-view";
+import { DayView } from "./views/day-view";
 import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { EditTaskDialog } from "@/components/tasks/edit-task-dialog";
 import { toast } from "sonner";
@@ -150,6 +151,14 @@ export function DashboardLayout() {
     setCreateDialogOpen(true);
   };
 
+  const handleSelectDay = (date: Date) => {
+    actions.setView("day", undefined, date);
+  };
+
+  const handleBackFromDay = () => {
+    actions.setView("today");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -209,6 +218,7 @@ export function DashboardLayout() {
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
               onCreateTask={handleCreateTaskWithDate}
+              onSelectDay={handleSelectDay}
             />
           )}
 
@@ -221,6 +231,21 @@ export function DashboardLayout() {
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
               onCreateTask={handleCreateTaskWithDate}
+              onSelectDay={handleSelectDay}
+            />
+          )}
+
+          {state.currentView === "day" && state.selectedDate && (
+            <DayView
+              tasks={tasks}
+              stats={stats}
+              selectedDate={state.selectedDate}
+              onBack={handleBackFromDay}
+              onEdit={setEditingTask}
+              onArchive={handleArchiveTask}
+              onComplete={handleToggleCompleteTask}
+              onDelete={handleDeleteTask}
+              onAddTask={() => setCreateDialogOpen(true)}
             />
           )}
         </div>

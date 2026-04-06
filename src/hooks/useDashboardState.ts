@@ -1,12 +1,13 @@
 import { useState, useCallback } from "react";
 
-export type DashboardView = "today" | "inbox" | "week" | "calendar";
+export type DashboardView = "today" | "inbox" | "week" | "calendar" | "day";
 export type SortBy = "energy" | "priority" | "dueDate" | "created";
 
 export interface DashboardState {
   // Navigation
   currentView: DashboardView;
   currentCategory?: string;
+  selectedDate?: Date;
   
   // Filters
   currentEnergy: number | null;
@@ -22,6 +23,7 @@ export function useDashboardState() {
   const [state, setState] = useState<DashboardState>({
     currentView: "today",
     currentCategory: undefined,
+    selectedDate: undefined,
     currentEnergy: null,
     searchQuery: "",
     showCompleted: false,
@@ -31,11 +33,12 @@ export function useDashboardState() {
 
   // View navigation
   const setView = useCallback(
-    (view: DashboardView, category?: string) => {
+    (view: DashboardView, category?: string, selectedDate?: Date) => {
       setState((prev) => ({
         ...prev,
         currentView: view,
         currentCategory: category,
+        selectedDate,
       }));
     },
     []
@@ -74,6 +77,14 @@ export function useDashboardState() {
     }));
   }, []);
 
+  // Select specific date for day view
+  const setSelectedDate = useCallback((date: Date | undefined) => {
+    setState((prev) => ({
+      ...prev,
+      selectedDate: date,
+    }));
+  }, []);
+
   // Reset filters
   const resetFilters = useCallback(() => {
     setState((prev) => ({
@@ -94,6 +105,7 @@ export function useDashboardState() {
       setSearch,
       setShowCompleted,
       setSortBy,
+      setSelectedDate,
       resetFilters,
     },
     // Shortcuts

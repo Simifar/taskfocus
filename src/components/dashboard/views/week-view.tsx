@@ -18,6 +18,7 @@ interface WeekViewProps {
   onArchive?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
+  onSelectDay?: (date: Date) => void;
 }
 
 export function WeekView({
@@ -28,6 +29,7 @@ export function WeekView({
   onArchive,
   onDelete,
   onCreateTask,
+  onSelectDay,
 }: WeekViewProps) {
   // Получаем начало недели (понедельник)
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -87,7 +89,10 @@ export function WeekView({
                 isToday && "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
               )}
             >
-              <CardHeader className="pb-3">
+              <CardHeader 
+                className="pb-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                onClick={() => onSelectDay?.(day.date)}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">{dayName}</p>
