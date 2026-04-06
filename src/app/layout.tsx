@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "TaskFocus - Интеллектуальный менеджер задач",
-  description: "Менеджер задач для пользователей с СДВГ. Ограничение 3 активных задач, учёт энергии, мягкие дедлайны.",
+  description: "Менеджер задач для пользователей с СДВГ. Ограничение 5 активных задач на сегодня, учёт энергии, мягкие дедлайны.",
   keywords: ["TaskFocus", "СДВГ", "менеджер задач", "продуктивность", "ADHD", "task manager"],
   authors: [{ name: "TaskFocus Team" }],
   icons: {

@@ -48,6 +48,11 @@ export function DashboardLayout() {
   // Load data
   useEffect(() => {
     const fetchData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
         // Load tasks
@@ -58,9 +63,10 @@ export function DashboardLayout() {
           
           // Если нет задач, добавляем тестовую задачу с подзадачей
           if (tasks.length === 0) {
+            const userId = user.id;
             const testTask = {
               id: "test-task-1",
-              userId: user.id,
+              userId,
               title: "Тестовая задача с подзадачами",
               description: "Это тестовая задача для проверки функциональности подзадач",
               status: "active" as const,
@@ -75,7 +81,7 @@ export function DashboardLayout() {
               subtasks: [
                 {
                   id: "test-subtask-1",
-                  userId: user.id,
+                  userId,
                   title: "Подзадача 1",
                   description: "Первая подзадача",
                   status: "active" as const,
@@ -91,7 +97,7 @@ export function DashboardLayout() {
                 },
                 {
                   id: "test-subtask-2", 
-                  userId: user.id,
+                  userId,
                   title: "Подзадача 2",
                   description: "Вторая подзадача",
                   status: "completed" as const,

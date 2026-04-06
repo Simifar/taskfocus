@@ -104,7 +104,7 @@ export function TodayView({
   const activeTasks = filteredTasks.filter((t) => t.status === "active");
   const completedTasks = todayTasks.filter((t) => t.status === "completed");
 
-  const maxActive = 3;
+  const maxActive = 5;
   const canAddMore = activeTasks.length < maxActive;
   const progressPercent = todayTasks.length > 0 
     ? (completedTasks.length / todayTasks.length) * 100 
@@ -140,11 +140,9 @@ export function TodayView({
               <Badge variant="outline">{activeTasks.length}/{maxActive}</Badge>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              {maxActive === 3 && activeTasks.length < maxActive
+              {activeTasks.length < maxActive
                 ? `${maxActive - activeTasks.length} more slots available`
-                : activeTasks.length >= maxActive
-                ? `You're at capacity! Finish one to add more`
-                : "You're all set for today!"}
+                : `You're at capacity! Finish one to add more`}
             </p>
           </CardHeader>
           <CardContent>
