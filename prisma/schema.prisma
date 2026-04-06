@@ -1,0 +1,55 @@
+// TaskFocus - Интеллектуальный менеджер задач для пользователей с СДВГ
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// NOTE: SQL Server connector in Prisma does not support schema enums.
+// We store status/priority as constrained strings at app level.
+
+// Пользователь системы
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  name         String?
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  tasks        Task[]
+  
+  @@map("users")
+}
+
+// Задача
+model Task {
+  id           String     @id @default(cuid())
+  userId       String
+  title        String
+  description  String?
+  status       String     @default("active")
+  priority     String     @default("medium")
+  energyLevel  Int        @default(3)    // 1-5: уровень энергии для задачи
+  dueDateStart DateTime?                 // Мягкий дедлайн - начало диапазона
+  dueDateEnd   DateTime?                 // Мягкий дедлайн - конец диапазона
+  parentTaskId String?                   // Для подзадач - ссылка на родительскую
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  completedAt  DateTime?
+  
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentTask   Task?      @relation("Subtasks", fields: [parentTaskId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subtasks     Task[]     @relation("Subtasks")
+  
+  @@index([userId, status])
+  @@index([userId, energyLevel])
+  @@index([parentTaskId])
+  @@map("tasks")
+}
