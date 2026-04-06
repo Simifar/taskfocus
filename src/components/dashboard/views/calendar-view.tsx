@@ -27,6 +27,11 @@ interface CalendarViewProps {
   onDelete?: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
   onSelectDay?: (date: Date) => void;
+  // Subtasks
+  onToggleSubtask?: (subtask: Task) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
+  onEditSubtask?: (subtask: Task) => void;
+  onDeleteSubtask?: (subtaskId: string) => void;
 }
 
 export function CalendarView({
@@ -38,6 +43,10 @@ export function CalendarView({
   onDelete,
   onCreateTask,
   onSelectDay,
+  onToggleSubtask,
+  onAddSubtask,
+  onEditSubtask,
+  onDeleteSubtask,
 }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 

@@ -19,6 +19,11 @@ interface WeekViewProps {
   onDelete?: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
   onSelectDay?: (date: Date) => void;
+  // Subtasks
+  onToggleSubtask?: (subtask: Task) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
+  onEditSubtask?: (subtask: Task) => void;
+  onDeleteSubtask?: (subtaskId: string) => void;
 }
 
 export function WeekView({
@@ -30,6 +35,10 @@ export function WeekView({
   onDelete,
   onCreateTask,
   onSelectDay,
+  onToggleSubtask,
+  onAddSubtask,
+  onEditSubtask,
+  onDeleteSubtask,
 }: WeekViewProps) {
   // Получаем начало недели (понедельник)
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -205,6 +214,10 @@ export function WeekView({
             onArchive={onArchive || (() => {})}
             onDelete={onDelete || (() => {})}
             onReorder={() => {}}
+            onAddSubtask={onAddSubtask}
+            onToggleSubtask={onToggleSubtask}
+            onEditSubtask={onEditSubtask}
+            onDeleteSubtask={onDeleteSubtask}
           />
         </div>
       )}

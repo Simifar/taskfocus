@@ -18,6 +18,11 @@ interface AppState {
   updateTask: (id: string, task: Partial<Task>) => void;
   removeTask: (id: string) => void;
 
+  // Подзадачи
+  addSubtask: (parentId: string, subtask: Task) => void;
+  updateSubtask: (id: string, subtask: Partial<Task>) => void;
+  removeSubtask: (id: string) => void;
+
   // Фильтры
   statusFilter: "all" | "active" | "completed" | "archived";
   searchQuery: string;
@@ -99,6 +104,81 @@ export const useAppStore = create<AppState>((set) => ({
         activeTasks: newTasks.filter((t) => t.status === "active"),
         completedTasks: newTasks.filter((t) => t.status === "completed"),
         archivedTasks: newTasks.filter((t) => t.status === "archived"),
+      };
+    }),
+
+  // Подзадачи
+  addSubtask: (parentId, subtask) =>
+    set((state) => {
+      // Добавляем подзадачу в общий список
+      const newTasks = [subtask, ...state.tasks];
+      
+      // Обновляем родительскую задачу, добавляя подзадачу в ее subtasks
+      const updatedTasks = newTasks.map((task) => {
+        if (task.id === parentId) {
+          return {
+            ...task,
+            subtasks: [...(task.subtasks || []), subtask]
+          };
+        }
+        return task;
+      });
+      
+      return {
+        tasks: updatedTasks,
+        activeTasks: updatedTasks.filter((t) => t.status === "active"),
+        completedTasks: updatedTasks.filter((t) => t.status === "completed"),
+        archivedTasks: updatedTasks.filter((t) => t.status === "archived"),
+      };
+    }),
+  updateSubtask: (id, updatedSubtask) =>
+    set((state) => {
+      // Обновляем подзадачу в общем списке
+      const newTasks = state.tasks.map((t) =>
+        t.id === id ? { ...t, ...updatedSubtask } : t
+      );
+      
+      // Обновляем подзадачу в массиве subtasks родительской задачи
+      const finalTasks = newTasks.map((task) => {
+        if (task.subtasks && task.subtasks.some(st => st.id === id)) {
+          return {
+            ...task,
+            subtasks: task.subtasks.map(st => 
+              st.id === id ? { ...st, ...updatedSubtask } : st
+            )
+          };
+        }
+        return task;
+      });
+      
+      return {
+        tasks: finalTasks,
+        activeTasks: finalTasks.filter((t) => t.status === "active"),
+        completedTasks: finalTasks.filter((t) => t.status === "completed"),
+        archivedTasks: finalTasks.filter((t) => t.status === "archived"),
+      };
+    }),
+  removeSubtask: (id) =>
+    set((state) => {
+      // Удаляем подзадачу из общего списка
+      const newTasks = state.tasks.filter((t) => t.id !== id);
+      
+      // Удаляем подзадачу из массивов subtasks родительских задач
+      const finalTasks = newTasks.map((task) => {
+        if (task.subtasks) {
+          return {
+            ...task,
+            subtasks: task.subtasks.filter(st => st.id !== id)
+          };
+        }
+        return task;
+      });
+      
+      return {
+        tasks: finalTasks,
+        activeTasks: finalTasks.filter((t) => t.status === "active"),
+        completedTasks: finalTasks.filter((t) => t.status === "completed"),
+        archivedTasks: finalTasks.filter((t) => t.status === "archived"),
       };
     }),
 

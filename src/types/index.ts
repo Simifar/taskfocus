@@ -11,15 +11,6 @@ export interface User {
   avatar?: string | null;
 }
 
-export interface Subtask {
-  id: string;
-  title: string;
-  status: TaskStatus;
-  energyLevel: number;
-  parentTaskId: string;
-  createdAt: string;
-}
-
 export interface Task {
   id: string;
   userId: string;
@@ -34,7 +25,7 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   completedAt?: string | null;
-  subtasks: Subtask[];
+  subtasks: Task[];
 }
 
 export interface ApiResponse<T> {

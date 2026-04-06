@@ -23,6 +23,11 @@ interface InboxViewProps {
   onAssignToToday?: (taskId: string) => void;
   onAssignToWeek?: (taskId: string) => void;
   onAddTask?: () => void;
+  // Subtasks
+  onToggleSubtask?: (subtask: Task) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
+  onEditSubtask?: (subtask: Task) => void;
+  onDeleteSubtask?: (subtaskId: string) => void;
 }
 
 export function InboxView({
@@ -35,6 +40,10 @@ export function InboxView({
   onAssignToToday,
   onAssignToWeek,
   onAddTask,
+  onToggleSubtask,
+  onAddSubtask,
+  onEditSubtask,
+  onDeleteSubtask,
 }: InboxViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -174,6 +183,11 @@ export function InboxView({
                           {task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий"}
                         </Badge>
                       )}
+                      {task.subtasks && task.subtasks.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          П: {task.subtasks.length}
+                        </Badge>
+                      )}
                     </div>
                     {task.description && (
                       <p className="text-sm text-muted-foreground">{task.description}</p>
@@ -182,6 +196,22 @@ export function InboxView({
 
                   {/* Quick Actions */}
                   <div className="flex flex-col gap-2 min-w-max">
+                    {onAddSubtask && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => {
+                          const title = window.prompt("Название подзадачи:");
+                          if (title && title.trim()) {
+                            onAddSubtask(task.id, title.trim());
+                          }
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Подзадача
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"

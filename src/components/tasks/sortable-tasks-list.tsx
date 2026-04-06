@@ -34,9 +34,11 @@ import {
   BatteryMedium,
   BatteryLow,
   BatteryFull,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TaskWithSubtasks } from "./task-with-subtasks";
 
 interface SortableTaskItemProps {
   task: Task;
@@ -44,6 +46,7 @@ interface SortableTaskItemProps {
   onArchive: (taskId: string) => void;
   onComplete: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
   isDragging?: boolean;
 }
 
@@ -53,6 +56,7 @@ function SortableTaskItem({
   onArchive,
   onComplete,
   onDelete,
+  onAddSubtask,
   isDragging = false,
 }: SortableTaskItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortableDragging } =
@@ -148,6 +152,11 @@ function SortableTaskItem({
                   ? "Средний"
                   : "Низкий"}
               </Badge>
+              {task.subtasks && task.subtasks.length > 0 && (
+                <Badge variant="secondary" className="bg-slate-100 text-slate-800 dark:bg-slate-900/40 dark:text-slate-200">
+                  Подзадач: {task.subtasks.length}
+                </Badge>
+              )}
             </div>
           </div>
 
@@ -155,6 +164,21 @@ function SortableTaskItem({
           <div className="flex items-center gap-1">
             {task.status === "active" && (
               <>
+                {onAddSubtask && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const title = window.prompt("Название подзадачи:");
+                      if (title && title.trim()) {
+                        onAddSubtask(task.id, title.trim());
+                      }
+                    }}
+                    title="Добавить подзадачу"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" onClick={() => onEdit(task)}>
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -190,6 +214,12 @@ interface SortableTasksListProps {
   onComplete: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onReorder?: (tasks: Task[]) => void;
+  // Подзадачи
+  onToggleSubtask?: (subtask: Task) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
+  onEditTask?: (task: Task) => void;
+  onEditSubtask?: (subtask: Task) => void;
+  onDeleteSubtask?: (subtaskId: string) => void;
 }
 
 export function SortableTasksList({
@@ -199,6 +229,11 @@ export function SortableTasksList({
   onComplete,
   onDelete,
   onReorder,
+  onToggleSubtask,
+  onAddSubtask,
+  onEditTask,
+  onEditSubtask,
+  onDeleteSubtask,
 }: SortableTasksListProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
@@ -250,17 +285,37 @@ export function SortableTasksList({
               </CardContent>
             </Card>
           ) : (
-            tasks.map((task) => (
-              <SortableTaskItem
-                key={task.id}
-                task={task}
-                onEdit={onEdit}
-                onArchive={onArchive}
-                onComplete={onComplete}
-                onDelete={onDelete}
-                isDragging={draggedId === task.id}
-              />
-            ))
+            tasks.map((task) => {
+              // Если у задачи есть подзадачи, используем TaskWithSubtasks
+              if (task.subtasks && task.subtasks.length > 0) {
+                return (
+                  <TaskWithSubtasks
+                    key={task.id}
+                    task={task}
+                    subtasks={task.subtasks}
+                    onToggleSubtask={onToggleSubtask || (() => {})}
+                    onAddSubtask={onAddSubtask || (() => {})}
+                    onEditTask={onEditTask || onEdit}
+                    onEditSubtask={onEditSubtask || (() => {})}
+                    onDeleteSubtask={onDeleteSubtask || (() => {})}
+                  />
+                );
+              }
+
+              // Иначе используем обычный SortableTaskItem
+              return (
+                <SortableTaskItem
+                  key={task.id}
+                  task={task}
+                  onEdit={onEdit}
+                  onArchive={onArchive}
+                  onComplete={onComplete}
+                  onDelete={onDelete}
+                  onAddSubtask={onAddSubtask}
+                  isDragging={draggedId === task.id}
+                />
+              );
+            })
           )}
         </div>
       </SortableContext>

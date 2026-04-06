@@ -28,6 +28,11 @@ interface TodayViewProps {
   onComplete: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onAddTask: () => void;
+  // Subtasks
+  onToggleSubtask?: (subtask: Task) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
+  onEditSubtask?: (subtask: Task) => void;
+  onDeleteSubtask?: (subtaskId: string) => void;
   isLoading?: boolean;
 }
 
@@ -61,6 +66,10 @@ export function TodayView({
   onComplete,
   onDelete,
   onAddTask,
+  onToggleSubtask,
+  onAddSubtask,
+  onEditSubtask,
+  onDeleteSubtask,
   isLoading = false,
 }: TodayViewProps) {
   // Filter tasks for today
@@ -156,6 +165,10 @@ export function TodayView({
                   onArchive={onArchive}
                   onComplete={onComplete}
                   onDelete={onDelete}
+                  onToggleSubtask={onToggleSubtask}
+                  onAddSubtask={onAddSubtask}
+                  onEditSubtask={onEditSubtask}
+                  onDeleteSubtask={onDeleteSubtask}
                 />
               </div>
             )}

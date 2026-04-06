@@ -19,6 +19,11 @@ interface DayViewProps {
   onArchive?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
   onAddTask?: () => void;
+  // Subtasks
+  onToggleSubtask?: (subtask: Task) => void;
+  onAddSubtask?: (parentId: string, title: string) => void;
+  onEditSubtask?: (subtask: Task) => void;
+  onDeleteSubtask?: (subtaskId: string) => void;
 }
 
 export function DayView({
@@ -31,6 +36,10 @@ export function DayView({
   onArchive,
   onDelete,
   onAddTask,
+  onToggleSubtask,
+  onAddSubtask,
+  onEditSubtask,
+  onDeleteSubtask,
 }: DayViewProps) {
   // Filter tasks for selected date
   const dayTasks = tasks.filter((task) => {
@@ -146,6 +155,10 @@ export function DayView({
             onArchive={onArchive || (() => {})}
             onDelete={onDelete || (() => {})}
             onReorder={() => {}}
+            onToggleSubtask={onToggleSubtask}
+            onAddSubtask={onAddSubtask}
+            onEditSubtask={onEditSubtask}
+            onDeleteSubtask={onDeleteSubtask}
           />
         </div>
       ) : (
@@ -173,6 +186,10 @@ export function DayView({
             onArchive={onArchive || (() => {})}
             onDelete={onDelete || (() => {})}
             onReorder={() => {}}
+            onToggleSubtask={onToggleSubtask}
+            onAddSubtask={onAddSubtask}
+            onEditSubtask={onEditSubtask}
+            onDeleteSubtask={onDeleteSubtask}
           />
         </div>
       )}
