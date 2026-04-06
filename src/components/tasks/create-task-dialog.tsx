@@ -47,7 +47,7 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
-  const [energyLevel, setEnergyLevel] = useState(currentEnergy ?? 3);
+  const [energyLevel, setEnergyLevel] = useState(currentEnergy || 3);
   const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate || new Date());
   const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate || new Date());
 
@@ -106,7 +106,7 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
         setTitle("");
         setDescription("");
         setPriority("medium");
-        setEnergyLevel(currentEnergy ?? 3);
+        setEnergyLevel(currentEnergy || 3);
         setDueDateStart(preSelectedDate || new Date());
         setDueDateEnd(preSelectedDate || new Date());
         onOpenChange(false);

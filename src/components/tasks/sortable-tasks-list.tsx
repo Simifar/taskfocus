@@ -39,6 +39,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TaskWithSubtasks } from "./task-with-subtasks";
+import { CreateSubtaskDialog } from "./create-subtask-dialog";
 
 interface SortableTaskItemProps {
   task: Task;
@@ -47,6 +48,7 @@ interface SortableTaskItemProps {
   onComplete: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
+  onOpenSubtaskDialog?: (task: Task) => void;
   isDragging?: boolean;
 }
 
@@ -57,6 +59,7 @@ function SortableTaskItem({
   onComplete,
   onDelete,
   onAddSubtask,
+  onOpenSubtaskDialog,
   isDragging = false,
 }: SortableTaskItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortableDragging } =
@@ -169,10 +172,7 @@ function SortableTaskItem({
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      const title = window.prompt("Название подзадачи:");
-                      if (title && title.trim()) {
-                        onAddSubtask(task.id, title.trim());
-                      }
+                      onOpenSubtaskDialog?.(task);
                     }}
                     title="Добавить подзадачу"
                   >
@@ -236,6 +236,13 @@ export function SortableTasksList({
   onDeleteSubtask,
 }: SortableTasksListProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
+  const [parentTaskForSubtask, setParentTaskForSubtask] = useState<Task | null>(null);
+
+  const handleOpenSubtaskDialog = useCallback((task: Task) => {
+    setParentTaskForSubtask(task);
+    setSubtaskDialogOpen(true);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -267,58 +274,76 @@ export function SortableTasksList({
   const taskIds = tasks.map((task) => task.id);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-        <div className="space-y-3">
-          {tasks.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="p-8 text-center">
-                <Circle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">
-                  Нет задач
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            tasks.map((task) => {
-              // Если у задачи есть подзадачи, используем TaskWithSubtasks
-              if (task.subtasks && task.subtasks.length > 0) {
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {tasks.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="p-8 text-center">
+                  <Circle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium text-muted-foreground">
+                    Нет задач
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              tasks.map((task) => {
+                // Если у задачи есть подзадачи, используем TaskWithSubtasks
+                if (task.subtasks && task.subtasks.length > 0) {
+                  return (
+                    <TaskWithSubtasks
+                      key={task.id}
+                      task={task}
+                      subtasks={task.subtasks}
+                      onToggleSubtask={onToggleSubtask || (() => {})}
+                      onAddSubtask={onAddSubtask || (() => {})}
+                      onEditTask={onEditTask || onEdit}
+                      onEditSubtask={onEditSubtask || (() => {})}
+                      onDeleteSubtask={onDeleteSubtask || (() => {})}
+                    />
+                  );
+                }
+
+                // Иначе используем обычный SortableTaskItem
                 return (
-                  <TaskWithSubtasks
+                  <SortableTaskItem
                     key={task.id}
                     task={task}
-                    subtasks={task.subtasks}
-                    onToggleSubtask={onToggleSubtask || (() => {})}
-                    onAddSubtask={onAddSubtask || (() => {})}
-                    onEditTask={onEditTask || onEdit}
-                    onEditSubtask={onEditSubtask || (() => {})}
-                    onDeleteSubtask={onDeleteSubtask || (() => {})}
+                    onEdit={onEdit}
+                    onArchive={onArchive}
+                    onComplete={onComplete}
+                    onDelete={onDelete}
+                    onAddSubtask={onAddSubtask}
+                    onOpenSubtaskDialog={handleOpenSubtaskDialog}
+                    isDragging={draggedId === task.id}
                   />
                 );
-              }
+              })
+            )}
+          </div>
+        </SortableContext>
+      </DndContext>
 
-              // Иначе используем обычный SortableTaskItem
-              return (
-                <SortableTaskItem
-                  key={task.id}
-                  task={task}
-                  onEdit={onEdit}
-                  onArchive={onArchive}
-                  onComplete={onComplete}
-                  onDelete={onDelete}
-                  onAddSubtask={onAddSubtask}
-                  isDragging={draggedId === task.id}
-                />
-              );
-            })
-          )}
-        </div>
-      </SortableContext>
-    </DndContext>
+      {/* Create Subtask Dialog */}
+      {parentTaskForSubtask && (
+        <CreateSubtaskDialog
+          open={subtaskDialogOpen}
+          onOpenChange={setSubtaskDialogOpen}
+          parentTaskId={parentTaskForSubtask!.id}
+          parentTaskTitle={parentTaskForSubtask!.title}
+          onSubmit={(parentId, title) => {
+            if (onAddSubtask) {
+              onAddSubtask(parentId, title);
+            }
+          }}
+        />
+      )}
+    </>
   );
 }
