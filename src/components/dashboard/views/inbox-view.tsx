@@ -10,7 +10,6 @@ import { SortableTasksList } from "@/components/tasks/sortable-tasks-list";
 import { cn } from "@/lib/utils";
 import { Plus, Inbox, CheckCircle2, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { format, addDays } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -23,6 +22,7 @@ interface InboxViewProps {
   onDelete?: (taskId: string) => void;
   onAssignToToday?: (taskId: string) => void;
   onAssignToWeek?: (taskId: string) => void;
+  onAddTask?: () => void;
 }
 
 export function InboxView({
@@ -34,8 +34,8 @@ export function InboxView({
   onDelete,
   onAssignToToday,
   onAssignToWeek,
+  onAddTask,
 }: InboxViewProps) {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Inbox задачи: это задачи без установленной даты или с priority=null
@@ -112,7 +112,7 @@ export function InboxView({
           </p>
         </div>
         <Button
-          onClick={() => setCreateDialogOpen(true)}
+          onClick={onAddTask}
           className="bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -222,8 +222,6 @@ export function InboxView({
         </Card>
       )}
 
-      {/* Dialogs */}
-      <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </div>
   );
 }

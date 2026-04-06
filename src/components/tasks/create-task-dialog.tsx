@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/store";
 import { ApiResponse, Task } from "@/types";
 import {
@@ -48,8 +48,8 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [energyLevel, setEnergyLevel] = useState(currentEnergy ?? 3);
-  const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate);
-  const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate);
+  const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate || new Date());
+  const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate || new Date());
 
   // Иконки энергии
   const getEnergyIcon = (level: number) => {
@@ -65,6 +65,15 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
     if (level === 3) return "bg-yellow-100 hover:bg-yellow-200 text-yellow-900 dark:bg-yellow-900/40 dark:hover:bg-yellow-800/50 dark:text-yellow-200";
     return "bg-red-100 hover:bg-red-200 text-red-900 dark:bg-red-900/40 dark:hover:bg-red-800/50 dark:text-red-200";
   };
+
+  // Update dates when dialog opens or preSelectedDate changes
+  useEffect(() => {
+    if (open) {
+      const defaultDate = preSelectedDate || new Date();
+      setDueDateStart(defaultDate);
+      setDueDateEnd(defaultDate);
+    }
+  }, [open, preSelectedDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,8 +107,8 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
         setDescription("");
         setPriority("medium");
         setEnergyLevel(currentEnergy ?? 3);
-        setDueDateStart(undefined);
-        setDueDateEnd(undefined);
+        setDueDateStart(preSelectedDate || new Date());
+        setDueDateEnd(preSelectedDate || new Date());
         onOpenChange(false);
       } else {
         toast.error(data.error?.message || "Ошибка создания задачи");

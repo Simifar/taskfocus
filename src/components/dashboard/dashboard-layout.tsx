@@ -159,6 +159,15 @@ export function DashboardLayout() {
     actions.setView("today");
   };
 
+  const handleAddTask = () => {
+    // If we're in day view, use the selected date, otherwise use today
+    const dateToUse = state.currentView === "day" && state.selectedDate 
+      ? state.selectedDate 
+      : new Date();
+    setPreSelectedDate(dateToUse);
+    setCreateDialogOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -193,7 +202,7 @@ export function DashboardLayout() {
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
-              onAddTask={() => setCreateDialogOpen(true)}
+              onAddTask={handleAddTask}
               isLoading={isLoading}
             />
           )}
@@ -206,6 +215,7 @@ export function DashboardLayout() {
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
+              onAddTask={handleAddTask}
             />
           )}
 
@@ -245,7 +255,7 @@ export function DashboardLayout() {
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
-              onAddTask={() => setCreateDialogOpen(true)}
+              onAddTask={handleAddTask}
             />
           )}
         </div>
