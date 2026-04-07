@@ -41,6 +41,62 @@ import { cn } from "@/lib/utils";
 import { TaskWithSubtasks } from "./task-with-subtasks";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
 
+// Wrapper component to make TaskWithSubtasks draggable
+function SortableTaskWithSubtasks({
+  task,
+  subtasks,
+  onToggleSubtask,
+  onAddSubtask,
+  onEditTask,
+  onEditSubtask,
+  onDeleteSubtask,
+  onComplete,
+  onArchive,
+  onDelete,
+  isDragging = false,
+}: {
+  task: Task;
+  subtasks: Task[];
+  onToggleSubtask: (subtask: Task) => void;
+  onAddSubtask: (parentId: string, title: string) => void;
+  onEditTask: (task: Task) => void;
+  onEditSubtask: (subtask: Task) => void;
+  onDeleteSubtask: (subtaskId: string) => void;
+  onComplete: (task: Task) => void;
+  onArchive: (taskId: string) => void;
+  onDelete: (taskId: string) => void;
+  isDragging?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortableDragging } =
+    useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isSortableDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <TaskWithSubtasks
+        task={task}
+        subtasks={subtasks}
+        onToggleSubtask={onToggleSubtask}
+        onAddSubtask={onAddSubtask}
+        onEditTask={onEditTask}
+        onEditSubtask={onEditSubtask}
+        onDeleteSubtask={onDeleteSubtask}
+        onComplete={onComplete}
+        onArchive={onArchive}
+        onDelete={onDelete}
+        attributes={attributes}
+        listeners={listeners}
+        isDragging={isSortableDragging}
+      />
+    </div>
+  );
+}
+
 interface SortableTaskItemProps {
   task: Task;
   onEdit: (task: Task) => void;
@@ -100,103 +156,119 @@ function SortableTaskItem({
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className={cn("transition-all", isSortableDragging && "shadow-lg ring-2 ring-blue-400")}>
-        <CardContent className="p-4 flex items-center gap-3">
-          {/* Drag Handle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="cursor-grab active:cursor-grabbing"
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="h-5 w-5 text-muted-foreground" />
-          </Button>
-
-          {/* Complete Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(task.status === "completed" && "text-emerald-600")}
-            onClick={() => onComplete(task)}
-          >
-            {task.status === "completed" ? (
-              <CheckCircle2 className="h-6 w-6" />
-            ) : (
-              <Circle className="h-6 w-6" />
-            )}
-          </Button>
-
-          {/* Task Content */}
-          <div className="flex-1 min-w-0">
-            <h3
-              className={cn(
-                "font-medium",
-                task.status === "completed" && "line-through text-muted-foreground"
-              )}
+      <Card className={cn(
+        "transition-all hover:shadow-md border-l-4 border-l-slate-300 dark:border-l-slate-600",
+        task.priority === "high" && "border-l-red-500",
+        task.priority === "medium" && "border-l-yellow-500",
+        task.priority === "low" && "border-l-green-500",
+        task.status === "completed" && "opacity-60 bg-slate-50 dark:bg-slate-900/50",
+        isSortableDragging && "shadow-lg ring-2 ring-blue-400"
+      )}>
+        <CardContent className="p-4">
+          {/* Main Row */}
+          <div className="flex items-start gap-3">
+            {/* Drag Handle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="cursor-grab active:cursor-grabbing flex-shrink-0 mt-1"
+              {...attributes}
+              {...listeners}
             >
-              {task.title}
-            </h3>
-            {task.description && (
-              <p className="text-sm text-muted-foreground line-clamp-1">
-                {task.description}
-              </p>
-            )}
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2 mt-2">
-              <Badge variant="secondary" className={getEnergyColor(task.energyLevel)}>
-                {getEnergyIcon(task.energyLevel)}
-                <span className="ml-1">{task.energyLevel}</span>
-              </Badge>
-              <Badge variant="secondary" className={getPriorityColor(task.priority)}>
-                {task.priority === "high"
-                  ? "Высокий"
-                  : task.priority === "medium"
-                  ? "Средний"
-                  : "Низкий"}
-              </Badge>
-              {task.subtasks && task.subtasks.length > 0 && (
-                <Badge variant="secondary" className="bg-slate-100 text-slate-800 dark:bg-slate-900/40 dark:text-slate-200">
-                  Подзадач: {task.subtasks.length}
-                </Badge>
-              )}
-            </div>
-          </div>
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </Button>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1">
+            {/* Complete Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "flex-shrink-0 mt-0.5",
+                task.status === "completed" ? "text-emerald-600 hover:text-emerald-700" : "text-muted-foreground hover:text-emerald-600"
+              )}
+              onClick={() => onComplete(task)}
+            >
+              {task.status === "completed" ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                <Circle className="h-5 w-5" />
+              )}
+            </Button>
+
+            {/* Task Content */}
+            <div className="flex-1 min-w-0">
+              <h3 className={cn(
+                "font-semibold text-base leading-tight",
+                task.status === "completed" && "line-through text-muted-foreground"
+              )}>
+                {task.title}
+              </h3>
+              {task.description && (
+                <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">
+                  {task.description}
+                </p>
+              )}
+              {/* Badges Row */}
+              <div className="flex flex-wrap gap-2.5 mt-3">
+                <Badge variant="secondary" className={cn("gap-1", getEnergyColor(task.energyLevel))}>
+                  {getEnergyIcon(task.energyLevel)}
+                  <span className="text-xs font-semibold">{task.energyLevel}</span>
+                </Badge>
+                <Badge variant="secondary" className={cn("text-xs font-semibold", getPriorityColor(task.priority))}>
+                  {task.priority === "high"
+                    ? "⚡ Высокий"
+                    : task.priority === "medium"
+                    ? "→ Средний"
+                    : "✓ Низкий"}
+                </Badge>
+                {task.subtasks && task.subtasks.length > 0 && (
+                  <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 text-xs font-semibold gap-1">
+                    📋 {task.subtasks.filter(s => s.status === "completed").length}/{task.subtasks.length}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
             {task.status === "active" && (
-              <>
+              <div className="flex items-center gap-1 flex-shrink-0">
                 {onAddSubtask && (
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => {
                       onOpenSubtaskDialog?.(task);
                     }}
                     title="Добавить подзадачу"
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" onClick={() => onEdit(task)}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onEdit(task)}
+                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
                   <Edit2 className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   onClick={() => onArchive(task.id)}
                   title="В архив"
+                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <Archive className="h-4 w-4" />
                 </Button>
-              </>
+              </div>
             )}
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={() => onDelete(task.id)}
-              className="text-destructive hover:text-destructive"
+              className="text-destructive/70 hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -294,10 +366,10 @@ export function SortableTasksList({
               </Card>
             ) : (
               tasks.map((task) => {
-                // Если у задачи есть подзадачи, используем TaskWithSubtasks
+                // Если у задачи есть подзадачи, используем SortableTaskWithSubtasks
                 if (task.subtasks && task.subtasks.length > 0) {
                   return (
-                    <TaskWithSubtasks
+                    <SortableTaskWithSubtasks
                       key={task.id}
                       task={task}
                       subtasks={task.subtasks}
@@ -306,6 +378,10 @@ export function SortableTasksList({
                       onEditTask={onEditTask || onEdit}
                       onEditSubtask={onEditSubtask || (() => {})}
                       onDeleteSubtask={onDeleteSubtask || (() => {})}
+                      onComplete={onComplete}
+                      onArchive={onArchive}
+                      onDelete={onDelete}
+                      isDragging={draggedId === task.id}
                     />
                   );
                 }

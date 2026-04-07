@@ -74,7 +74,7 @@ export async function GET(request: Request) {
         orderBy: { createdAt: "asc" },
       },
     },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    orderBy: { id: "asc" },  // Stable order by ID only - preserves manual reordering
   });
 
   // Подсчитываем активные задачи

@@ -211,6 +211,13 @@ export function DashboardLayout() {
     }
   };
 
+  // Handle task reordering
+  const handleReorderTasks = (reorderedTasks: Task[]) => {
+    console.log("📋 handleReorderTasks called in dashboard-layout");
+    console.log("  Reordered tasks:", reorderedTasks.map(t => ({ id: t.id, title: t.title })));
+    setTasks(reorderedTasks);
+  };
+
   // Subtask handlers
   const handleToggleSubtask = async (subtask: Task) => {
     try {
@@ -336,6 +343,7 @@ export function DashboardLayout() {
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
               onAddTask={handleAddTask}
+              onReorder={handleReorderTasks}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
               onEditSubtask={handleEditSubtask}
