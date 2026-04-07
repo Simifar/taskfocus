@@ -109,6 +109,7 @@ export function TodayView({
   const progressPercent = todayTasks.length > 0 
     ? (completedTasks.length / todayTasks.length) * 100 
     : 0;
+  const hasTasksButFiltered = currentEnergy !== null && activeTasks.length === 0 && todayTasks.length > 0;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -149,11 +150,17 @@ export function TodayView({
             {activeTasks.length === 0 ? (
               <div className="text-center py-8">
                 <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground mb-4">No tasks for today yet</p>
-                <Button onClick={onAddTask} className="bg-emerald-600 hover:bg-emerald-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Task
-                </Button>
+                <p className="text-muted-foreground mb-4">
+                  {hasTasksButFiltered
+                    ? "Нет задач под выбранный уровень энергии. Попробуйте увеличить уровень или сбросить фильтр."
+                    : "No tasks for today yet"}
+                </p>
+                {!hasTasksButFiltered ? (
+                  <Button onClick={onAddTask} className="bg-emerald-600 hover:bg-emerald-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Task
+                  </Button>
+                ) : null}
               </div>
             ) : (
               <div className="space-y-3">
