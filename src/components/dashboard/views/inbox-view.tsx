@@ -49,6 +49,8 @@ export function InboxView({
   const [searchQuery, setSearchQuery] = useState("");
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
   const [parentTaskForSubtask, setParentTaskForSubtask] = useState<Task | null>(null);
+  const [quickAddTitle, setQuickAddTitle] = useState("");
+  const [isQuickAdding, setIsQuickAdding] = useState(false);
 
   // Inbox задачи: это задачи без установленной даты или с priority=null
   const inboxTasks = tasks.filter((task) => {
@@ -110,6 +112,42 @@ export function InboxView({
     }
   };
 
+  // Обработчик быстрого добавления задачи
+  const handleQuickAdd = async () => {
+    if (!quickAddTitle.trim()) return;
+
+    setIsQuickAdding(true);
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: quickAddTitle.trim(),
+          priority: "medium",
+          energyLevel: 3,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Задача добавлена!");
+        setQuickAddTitle("");
+      } else {
+        toast.error("Ошибка добавления задачи");
+      }
+    } catch {
+      toast.error("Ошибка соединения");
+    } finally {
+      setIsQuickAdding(false);
+    }
+  };
+
+  // Обработчик Enter в поле быстрого добавления
+  const handleQuickAddKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleQuickAdd();
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -137,8 +175,20 @@ export function InboxView({
         <Card>
           <CardContent className="p-4">
             <div className="flex gap-2">
-              <Input placeholder="Быстрое добавление задачи..." className="flex-1" />
-              <Button size="sm" className="bg-blue-600">
+              <Input 
+                placeholder="Быстрое добавление задачи..." 
+                className="flex-1"
+                value={quickAddTitle}
+                onChange={(e) => setQuickAddTitle(e.target.value)}
+                onKeyPress={handleQuickAddKeyPress}
+                disabled={isQuickAdding}
+              />
+              <Button 
+                size="sm" 
+                className="bg-blue-600"
+                onClick={handleQuickAdd}
+                disabled={isQuickAdding || !quickAddTitle.trim()}
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>

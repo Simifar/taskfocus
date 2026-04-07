@@ -288,11 +288,16 @@ export function DashboardLayout() {
   };
 
   const handleAddTask = () => {
-    // If we're in day view, use the selected date, otherwise use today
-    const dateToUse = state.currentView === "day" && state.selectedDate 
-      ? state.selectedDate 
-      : new Date();
-    setPreSelectedDate(dateToUse);
+    // For inbox view, don't set a date so tasks are created without dates
+    if (state.currentView === "inbox") {
+      setPreSelectedDate(undefined);
+    } else {
+      // If we're in day view, use the selected date, otherwise use today
+      const dateToUse = state.currentView === "day" && state.selectedDate 
+        ? state.selectedDate 
+        : new Date();
+      setPreSelectedDate(dateToUse);
+    }
     setCreateDialogOpen(true);
   };
 

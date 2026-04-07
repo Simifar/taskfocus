@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/store";
-import { ApiResponse, Task } from "@/types";
+import { ApiResponse, Task, StatsResponse } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,7 @@ interface CreateTaskDialogProps {
 }
 
 export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: CreateTaskDialogProps) {
-  const { addTask, currentEnergy } = useAppStore();
+  const { addTask, setStats, currentEnergy } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
 
   const [title, setTitle] = useState("");
@@ -69,9 +69,15 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
   // Update dates when dialog opens or preSelectedDate changes
   useEffect(() => {
     if (open) {
-      const defaultDate = preSelectedDate || new Date();
-      setDueDateStart(defaultDate);
-      setDueDateEnd(defaultDate);
+      if (preSelectedDate === undefined) {
+        // For inbox tasks, no dates
+        setDueDateStart(undefined);
+        setDueDateEnd(undefined);
+      } else {
+        // For dated tasks
+        setDueDateStart(preSelectedDate);
+        setDueDateEnd(preSelectedDate);
+      }
     }
   }, [open, preSelectedDate]);
 
@@ -102,13 +108,30 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
       if (data.success && data.data) {
         addTask(data.data);
         toast.success("Задача создана! 🎉");
+        
+        // Обновляем статистику
+        try {
+          const statsResponse = await fetch("/api/stats");
+          const statsData: ApiResponse<StatsResponse> = await statsResponse.json();
+          if (statsData.success && statsData.data) {
+            setStats(statsData.data);
+          }
+        } catch (error) {
+          console.error("Failed to update stats:", error);
+        }
+        
         // Reset form
         setTitle("");
         setDescription("");
         setPriority("medium");
         setEnergyLevel(currentEnergy || 3);
-        setDueDateStart(preSelectedDate || new Date());
-        setDueDateEnd(preSelectedDate || new Date());
+        if (preSelectedDate === undefined) {
+          setDueDateStart(undefined);
+          setDueDateEnd(undefined);
+        } else {
+          setDueDateStart(preSelectedDate || new Date());
+          setDueDateEnd(preSelectedDate || new Date());
+        }
         onOpenChange(false);
       } else {
         toast.error(data.error?.message || "Ошибка создания задачи");
