@@ -15,6 +15,7 @@ import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { EditTaskDialog } from "@/components/tasks/edit-task-dialog";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { addDays } from "date-fns";
 
 export function DashboardLayout() {
   const router = useRouter();
@@ -211,6 +212,69 @@ export function DashboardLayout() {
     }
   };
 
+  const handleAssignToToday = async (taskId: string) => {
+    try {
+      const today = new Date();
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dueDateStart: today.toISOString(),
+          dueDateEnd: today.toISOString(),
+        }),
+      });
+      const data: ApiResponse<Task> = await response.json();
+
+      if (data.success && data.data) {
+        updateTask(taskId, data.data);
+        toast.success("Задача назначена на сегодня");
+
+        // Refresh stats
+        const statsResponse = await fetch("/api/stats");
+        const statsData: ApiResponse<StatsResponse> = await statsResponse.json();
+        if (statsData.success && statsData.data) {
+          setStats(statsData.data);
+        }
+      } else {
+        toast.error(data.error?.message || "Ошибка назначения задачи");
+      }
+    } catch {
+      toast.error("Ошибка соединения");
+    }
+  };
+
+  const handleAssignToWeek = async (taskId: string) => {
+    try {
+      const today = new Date();
+      const weekEnd = addDays(today, 7);
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dueDateStart: today.toISOString(),
+          dueDateEnd: weekEnd.toISOString(),
+        }),
+      });
+      const data: ApiResponse<Task> = await response.json();
+
+      if (data.success && data.data) {
+        updateTask(taskId, data.data);
+        toast.success("Задача назначена на неделю");
+
+        // Refresh stats
+        const statsResponse = await fetch("/api/stats");
+        const statsData: ApiResponse<StatsResponse> = await statsResponse.json();
+        if (statsData.success && statsData.data) {
+          setStats(statsData.data);
+        }
+      } else {
+        toast.error(data.error?.message || "Ошибка назначения задачи");
+      }
+    } catch {
+      toast.error("Ошибка соединения");
+    }
+  };
+
   // Handle task reordering
   const handleReorderTasks = (reorderedTasks: Task[]) => {
     console.log("📋 handleReorderTasks called in dashboard-layout");
@@ -362,7 +426,8 @@ export function DashboardLayout() {
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
-              onAddTask={handleAddTask}
+              onAddTask={handleAddTask}              onAssignToToday={handleAssignToToday}
+              onAssignToWeek={handleAssignToWeek}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
               onEditSubtask={handleEditSubtask}

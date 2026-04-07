@@ -6,13 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SortableTasksList } from "@/components/tasks/sortable-tasks-list";
 import { CreateSubtaskDialog } from "@/components/tasks/create-subtask-dialog";
 import { cn } from "@/lib/utils";
-import { Plus, Inbox, CheckCircle2, Calendar } from "lucide-react";
+import { Plus, Inbox, CheckCircle2, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useAppStore } from "@/store";
 
 interface InboxViewProps {
   tasks: Task[];
@@ -24,6 +32,8 @@ interface InboxViewProps {
   onAssignToToday?: (taskId: string) => void;
   onAssignToWeek?: (taskId: string) => void;
   onAddTask?: () => void;
+  onAddTaskToInbox?: (task: Task) => void;
+  onReorder?: (tasks: Task[]) => void;
   // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
@@ -41,6 +51,8 @@ export function InboxView({
   onAssignToToday,
   onAssignToWeek,
   onAddTask,
+  onAddTaskToInbox,
+  onReorder,
   onToggleSubtask,
   onAddSubtask,
   onEditSubtask,
@@ -52,11 +64,20 @@ export function InboxView({
   const [quickAddTitle, setQuickAddTitle] = useState("");
   const [isQuickAdding, setIsQuickAdding] = useState(false);
 
-  // Inbox задачи: это задачи без установленной даты или с priority=null
+  // Inbox задачи: это активные задачи без установленной даты
+  // Более надежная фильтрация
   const inboxTasks = tasks.filter((task) => {
     if (task.status !== "active") return false;
-    const hasDate = task.dueDateStart || task.dueDateEnd;
-    return !hasDate;
+    // Задача в Inbox если у нее нет dueDateStart ИЛИ (dueDateStart есть но это будущая дата)
+    if (!task.dueDateStart) return true;
+    
+    const startDate = new Date(task.dueDateStart);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    startDate.setHours(0, 0, 0, 0);
+    
+    // Если дата начала в будущем - это не Inbox задача
+    return startDate.getTime() > today.getTime();
   });
 
   // Поиск
@@ -69,47 +90,12 @@ export function InboxView({
 
   // Обработчик назначения на сегодня
   const handleAssignToToday = async (taskId: string) => {
-    try {
-      const today = new Date();
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dueDateStart: today.toISOString(),
-          dueDateEnd: today.toISOString(),
-        }),
-      });
-
-      if (response.ok) {
-        toast.success("Задача назначена на сегодня");
-        onAssignToToday?.(taskId);
-      }
-    } catch {
-      toast.error("Ошибка назначения задачи");
-    }
+    onAssignToToday?.(taskId);
   };
 
   // Обработчик назначения на эту неделю
   const handleAssignToWeek = async (taskId: string) => {
-    try {
-      const today = new Date();
-      const weekEnd = addDays(today, 7);
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dueDateStart: today.toISOString(),
-          dueDateEnd: weekEnd.toISOString(),
-        }),
-      });
-
-      if (response.ok) {
-        toast.success("Задача назначена на неделю");
-        onAssignToWeek?.(taskId);
-      }
-    } catch {
-      toast.error("Ошибка назначения задачи");
-    }
+    onAssignToWeek?.(taskId);
   };
 
   // Обработчик быстрого добавления задачи
@@ -128,11 +114,15 @@ export function InboxView({
         }),
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success && data.data) {
+        // Добавляем задачу в локальный state
+        onAddTaskToInbox?.(data.data);
         toast.success("Задача добавлена!");
         setQuickAddTitle("");
       } else {
-        toast.error("Ошибка добавления задачи");
+        toast.error(data.error?.message || "Ошибка добавления задачи");
       }
     } catch {
       toast.error("Ошибка соединения");
@@ -156,44 +146,43 @@ export function InboxView({
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <Inbox className="h-6 w-6 text-blue-500" />
-              Входящие
+              Входящие задачи
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {inboxTasks.length} задач без даты
+            <p className="text-sm text-muted-foreground mt-1">
+              {inboxTasks.length} задач без даты • Соберите фокус перед началом работы
             </p>
           </div>
-          <Button
-            onClick={onAddTask}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Добавить
-          </Button>
         </div>
 
-        {/* Quick Add Form */}
-        <Card>
+        {/* Quick Add */}
+        <Card className="border-blue-200 dark:border-blue-800">
           <CardContent className="p-4">
-            <div className="flex gap-2">
-              <Input 
-                placeholder="Быстрое добавление задачи..." 
-                className="flex-1"
-                value={quickAddTitle}
-                onChange={(e) => setQuickAddTitle(e.target.value)}
-                onKeyPress={handleQuickAddKeyPress}
-                disabled={isQuickAdding}
-              />
-              <Button 
-                size="sm" 
-                className="bg-blue-600"
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Input
+                  placeholder="Что нужно сделать?"
+                  className="border-0 shadow-none text-base placeholder:text-muted-foreground/60 focus-visible:ring-0"
+                  value={quickAddTitle}
+                  onChange={(e) => setQuickAddTitle(e.target.value)}
+                  onKeyPress={handleQuickAddKeyPress}
+                  disabled={isQuickAdding}
+                />
+              </div>
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 shrink-0"
                 onClick={handleQuickAdd}
                 disabled={isQuickAdding || !quickAddTitle.trim()}
               >
-                <Plus className="h-4 w-4" />
+                {isQuickAdding ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Нажмите Enter или кнопку для добавления. Вы сможете отредактировать детали позже.
+              Нажмите Enter или кнопку для быстрого добавления • Детали можно отредактировать позже
             </p>
           </CardContent>
         </Card>
@@ -248,58 +237,82 @@ export function InboxView({
                       )}
                     </div>
 
-                    {/* Quick Actions */}
-                    <div className="flex flex-col gap-2 min-w-max">
-                      {onAddSubtask && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs"
-                          onClick={() => {
-                            setParentTaskForSubtask(task);
-                            setSubtaskDialogOpen(true);
-                          }}
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Подзадача
+                    {/* Actions Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs"
-                        onClick={() => handleAssignToToday(task.id)}
-                      >
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Сегодня
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs"
-                        onClick={() => handleAssignToWeek(task.id)}
-                      >
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Неделя
-                      </Button>
-                    </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => onEdit?.(task)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Редактировать
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onAssignToToday?.(task.id)}>
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Назначить на сегодня
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onAssignToWeek?.(task.id)}>
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Назначить на неделю
+                        </DropdownMenuItem>
+                        {onAddSubtask && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setParentTaskForSubtask(task);
+                                setSubtaskDialogOpen(true);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Добавить подзадачу
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => onArchive?.(task.id)}
+                          className="text-orange-600"
+                        >
+                          <Archive className="h-4 w-4 mr-2" />
+                          В архив
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onDelete?.(task.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Удалить
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : (
-          <Card className="border-dashed">
-            <CardContent className="p-8 text-center">
-              <Inbox className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-medium text-muted-foreground">
+          <Card className="border-dashed border-blue-200 dark:border-blue-800">
+            <CardContent className="p-12 text-center">
+              <div className="mx-auto w-24 h-24 bg-blue-50 dark:bg-blue-950/50 rounded-full flex items-center justify-center mb-6">
+                <Inbox className="h-10 w-10 text-blue-500" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">
                 {searchQuery ? "Ничего не найдено" : "Входящие пусты"}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 {searchQuery
-                  ? "Попробуйте другой поисковый запрос"
-                  : "Все задачи уже распределены по датам. Молодец!"}
+                  ? "Попробуйте другой поисковый запрос или проверьте написание"
+                  : "Отлично! Все задачи распределены по времени. Теперь вы можете сосредоточиться на выполнении или добавить новые идеи для будущих задач."}
               </p>
+              {!searchQuery && (
+                <Button onClick={onAddTask} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Добавить задачу
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
