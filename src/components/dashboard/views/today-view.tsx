@@ -30,6 +30,8 @@ interface TodayViewProps {
   onDelete: (taskId: string) => void;
   onAddTask: () => void;
   onReorder?: (tasks: Task[]) => void;
+  showCompleted: boolean;
+  onShowCompletedChange: (show: boolean) => void;
   // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
@@ -69,6 +71,8 @@ export function TodayView({
   onDelete,
   onAddTask,
   onReorder,
+  showCompleted,
+  onShowCompletedChange,
   onToggleSubtask,
   onAddSubtask,
   onEditSubtask,
@@ -77,7 +81,7 @@ export function TodayView({
 }: TodayViewProps) {
   // Filter tasks for today
   const todayTasks = tasks.filter((task) => {
-    if (task.status !== "active") return false;
+    if (task.status !== "active" && task.status !== "completed") return false;
     if (!task.dueDateStart && !task.dueDateEnd) return false;
 
     const today = new Date();
@@ -105,14 +109,14 @@ export function TodayView({
 
   // Separate completed and active
   const activeTasks = filteredTasks.filter((t) => t.status === "active");
-  const completedTasks = todayTasks.filter((t) => t.status === "completed");
+  const completedTasks = filteredTasks.filter((t) => t.status === "completed");
 
   const maxActive = 5;
   const canAddMore = activeTasks.length < maxActive;
   const progressPercent = todayTasks.length > 0 
     ? (completedTasks.length / todayTasks.length) * 100 
     : 0;
-  const hasTasksButFiltered = currentEnergy !== null && activeTasks.length === 0 && todayTasks.length > 0;
+  const hasTasksButFiltered = currentEnergy !== null && activeTasks.length === 0 && filteredTasks.length > 0;
 
   // Handle task reordering - preserve the new order
   const handleReorder = (reorderedActiveTasks: Task[]) => {
@@ -125,9 +129,7 @@ export function TodayView({
     
     // Create new tasks array with reordered active tasks
     // Find all task IDs that need to be reordered
-    const reorderedIds = new Set(reorderedActiveTasks.map(t => t.id));
-    
-    // Separate tasks: reordered ones, and non-reordered ones
+      // Separate tasks: reordered ones, and non-reordered ones
     const sorted = tasks.slice().sort((a, b) => {
       const aIdx = reorderedMap.get(a.id);
       const bIdx = reorderedMap.get(b.id);
@@ -185,7 +187,7 @@ export function TodayView({
 
         {/* Active Tasks Section */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
                 <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
@@ -253,8 +255,29 @@ export function TodayView({
           </Card>
         </div>
 
-        {/* Completed Tasks Section */}
+        {/* Completed Tasks Toggle */}
         {completedTasks.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold">Выполненные задачи</p>
+                <p className="text-sm text-muted-foreground">{completedTasks.length} задача{completedTasks.length === 1 ? "" : "и"} на сегодня</p>
+              </div>
+              <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={showCompleted}
+                  onChange={(event) => onShowCompletedChange(event.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                Показать выполненные
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* Completed Tasks Section */}
+        {completedTasks.length > 0 && showCompleted && (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
@@ -281,10 +304,10 @@ export function TodayView({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onDelete(task.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-destructive"
+                        onClick={() => onComplete(task)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600 hover:text-emerald-700"
                       >
-                        ✕
+                        Вернуть
                       </Button>
                     </div>
                   ))}

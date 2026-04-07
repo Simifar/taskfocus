@@ -344,6 +344,8 @@ export function DashboardLayout() {
               onDelete={handleDeleteTask}
               onAddTask={handleAddTask}
               onReorder={handleReorderTasks}
+              showCompleted={state.showCompleted}
+              onShowCompletedChange={actions.setShowCompleted}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
               onEditSubtask={handleEditSubtask}
