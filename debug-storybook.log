@@ -1,0 +1,41 @@
+[09:28:16.240] [INFO] storybook v10.3.5
+[09:28:17.547] [DEBUG] Getting package.json info for C:/Users/ginger/Documents/taskfocus/package.json...
+[09:28:17.550] [WARN] You are currently using Storybook [1m10.3.5[22m but you have packages which are incompatible with it:
+
+- @storybook/addon-essentials@8.6.14 which depends on 8.6.14
+ Repo: https://github.com/storybookjs/storybook/tree/next/code/addons/essentials
+- @storybook/addon-interactions@8.6.14 which depends on 8.6.14
+ Repo: https://github.com/storybookjs/storybook/tree/next/code/addons/interactions
+
+Please consider updating your packages or contacting the maintainers for compatibility details.
+
+For more details on compatibility guidance, see:
+https://github.com/storybookjs/storybook/issues/32836
+[09:28:29.015] [INFO] Storybook collects completely anonymous usage telemetry. We use it to shape Storybook's roadmap and prioritize features. You can learn more, including how to opt out, at https://storybook.js.org/telemetry
+[09:28:29.043] [WARN] Could not resolve addon "@storybook/addon-essentials", skipping. Is it installed?
+[09:28:29.043] [WARN] Could not resolve addon "@storybook/addon-interactions", skipping. Is it installed?
+[09:28:29.044] [WARN] Could not resolve addon "@storybook/addon-docs", skipping. Is it installed?
+[09:28:32.222] [INFO] Starting...
+[09:28:32.460] [DEBUG] Starting preview..
+[09:28:32.475] [INFO] Using implicit CSS loaders
+[09:28:33.150] [INFO] Using SWC as compiler
+[09:28:33.171] [INFO] Using default Webpack5 setup
+[09:28:36.387] [DEBUG] Using tsconfig paths for react-docgen
+[09:28:42.074] [ERROR] Failed to build the preview
+[09:28:42.078] [WARN] Force closed preview build
+[09:28:42.078] [ERROR] [38;2;241;97;97mSB_BUILDER-WEBPACK5_0003 (WebpackCompilationError): There were problems when compiling your code with Webpack.
+Run Storybook with --debug-webpack for more information.[39m
+    at <anonymous> (.\node_modules\@storybook\builder-webpack5\dist\index.js:799:11)
+    at next (native)
+    at <anonymous> (.\node_modules\@storybook\builder-webpack5\dist\index.js:857:34)
+    at processTicksAndRejections (native)
+    at resolve (native)
+    at <anonymous> (.\node_modules\storybook\dist\_node-chunks\chunk-DIONJ7BC.js:323:38)
+    at <anonymous> (.\node_modules\storybook\dist\_node-chunks\chunk-DIONJ7BC.js:309:29)
+    at <anonymous> (.\node_modules\storybook\dist\_node-chunks\chunk-DIONJ7BC.js:745:39)
+    at native
+    at native
+    at processTicksAndRejections (native)
+[09:28:42.080] [WARN] Broken build, fix the error above.
+You may need to refresh the browser.
+[09:28:42.086] [WARN] Could not resolve addon "C:\Users\ginger\Documents\taskfocus\node_modules\@storybook\addon-essentials\node_modules\@storybook\addon-docs\node_modules\@storybook\react-dom-shim\dist\preset.js", skipping. Is it installed?
