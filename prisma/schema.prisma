@@ -37,6 +37,7 @@ model Task {
   status       String     @default("active")
   priority     String     @default("medium")
   energyLevel  Int        @default(3)    // 1-5: уровень энергии для задачи
+  category     String?
   dueDateStart DateTime?                 // Мягкий дедлайн - начало диапазона
   dueDateEnd   DateTime?                 // Мягкий дедлайн - конец диапазона
   parentTaskId String?                   // Для подзадач - ссылка на родительскую

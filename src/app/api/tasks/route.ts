@@ -11,6 +11,7 @@ const createTaskSchema = z.object({
   description: z.string().max(2000).optional(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   energyLevel: z.number().int().min(1).max(5).default(3),
+  category: z.string().max(100).optional(),
   dueDateStart: z.string().optional(),
   dueDateEnd: z.string().optional(),
   parentTaskId: z.string().optional(),
@@ -35,12 +36,14 @@ export async function GET(request: Request) {
   const status = searchParams.get("status");
   const energy = searchParams.get("energy");
   const search = searchParams.get("search");
+  const category = searchParams.get("category");
 
   // Строим фильтры
   const where: {
     userId: string;
     status?: "active" | "completed" | "archived";
     energyLevel?: number;
+    category?: string;
     OR?: Array<{ title: { contains: string } } | { description: { contains: string } }>;
     parentTaskId: string | null;
   } = {
@@ -64,6 +67,10 @@ export async function GET(request: Request) {
       { title: { contains: search } },
       { description: { contains: search } },
     ];
+  }
+
+  if (category) {
+    where.category = category;
   }
 
   // Получаем задачи с подзадачами
@@ -149,6 +156,7 @@ export async function POST(request: Request) {
         description: validatedData.description,
         priority: validatedData.priority,
         energyLevel: validatedData.energyLevel,
+        category: validatedData.category ?? null,
         dueDateStart: validatedData.dueDateStart
           ? new Date(validatedData.dueDateStart)
           : null,

@@ -29,9 +29,10 @@ interface EditTaskDialogProps {
   task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  categories: string[];
 }
 
-export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps) {
+export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTaskDialogProps) {
   const { updateTask } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,6 +40,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
   const [description, setDescription] = useState(task.description || "");
   const [priority, setPriority] = useState<"low" | "medium" | "high">(task.priority);
   const [energyLevel, setEnergyLevel] = useState(task.energyLevel);
+  const [category, setCategory] = useState(task.category || "");
   const [dueDateStart, setDueDateStart] = useState(
     task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : ""
   );
@@ -52,6 +54,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
       setDescription(task.description || "");
       setPriority(task.priority);
       setEnergyLevel(task.energyLevel);
+      setCategory(task.category || "");
       setDueDateStart(
         task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : ""
       );
@@ -78,6 +81,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
           description: description.trim() || null,
           priority,
           energyLevel,
+          category: category || null,
           dueDateStart: dueDateStart || null,
           dueDateEnd: dueDateEnd || null,
         }),
@@ -146,6 +150,23 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
                     <SelectItem value="low">Низкий</SelectItem>
                     <SelectItem value="medium">Средний</SelectItem>
                     <SelectItem value="high">Высокий</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>List / Project</Label>
+                <Select value={category} onValueChange={(v) => setCategory(v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Без списка" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Без списка</SelectItem>
+                    {categories.map((item) => (
+                      <SelectItem key={item} value={item}>
+                        {item}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

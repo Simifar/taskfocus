@@ -1,7 +1,7 @@
 "use client";
 
 import { User, Task } from "@/types";
-import { DashboardView, useDashboardState } from "@/hooks/useDashboardState";
+import { DashboardView } from "@/hooks/useDashboardState";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -25,7 +25,11 @@ interface DashboardSidebarProps {
   stats: any;
   tasks: Task[];
   currentView: DashboardView;
+  currentCategory?: string;
+  categories: string[];
   onViewChange: (view: DashboardView) => void;
+  onCategorySelect: (category?: string) => void;
+  onAddCategory: (category: string) => void;
   onLogout: () => void;
 }
 
@@ -34,7 +38,11 @@ export function DashboardSidebar({
   stats,
   tasks,
   currentView,
+  currentCategory,
+  categories,
   onViewChange,
+  onCategorySelect,
+  onAddCategory,
   onLogout,
 }: DashboardSidebarProps) {
   const router = useRouter();
@@ -145,25 +153,57 @@ export function DashboardSidebar({
           </Button>
         </div>
 
-        {/* My Lists */}
+        {/* Projects / Lists */}
         <Separator className="my-4" />
         <div>
-          <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">LISTS</p>
+          <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">PROJECTS</p>
           <div className="space-y-1">
             <Button
-              variant="ghost"
-              className="w-full justify-start text-sm"
-              disabled
+              variant={!currentCategory ? "default" : "ghost"}
+              className={cn(
+                "w-full justify-start text-sm",
+                !currentCategory && "bg-emerald-600 hover:bg-emerald-700 text-white"
+              )}
+              onClick={() => onCategorySelect(undefined)}
             >
-              <span className="text-muted-foreground">No lists yet</span>
+              <span>All projects</span>
             </Button>
+            {categories.length > 0 ? (
+              categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={currentCategory === category ? "default" : "ghost"}
+                  className={cn(
+                    "w-full justify-between text-sm",
+                    currentCategory === category && "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  )}
+                  onClick={() => onCategorySelect(category)}
+                >
+                  <span>{category}</span>
+                  {currentCategory === category && <span className="text-xs bg-white/20 px-2 py-1 rounded">Selected</span>}
+                </Button>
+              ))
+            ) : (
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sm"
+                disabled
+              >
+                <span className="text-muted-foreground">No projects yet</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               className="w-full justify-start text-sm gap-2"
-              disabled
+              onClick={() => {
+                const name = window.prompt("Название нового листа / проекта:");
+                if (name && name.trim()) {
+                  onAddCategory(name.trim());
+                }
+              }}
             >
               <Plus className="h-3 w-3" />
-              <span className="text-xs">Add List</span>
+              <span className="text-xs">Add Project</span>
             </Button>
           </div>
         </div>

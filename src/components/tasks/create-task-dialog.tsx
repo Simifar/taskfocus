@@ -38,9 +38,11 @@ interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   preSelectedDate?: Date;
+  categories: string[];
+  currentCategory?: string;
 }
 
-export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ open, onOpenChange, preSelectedDate, categories, currentCategory }: CreateTaskDialogProps) {
   const { addTask, setStats, currentEnergy } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,6 +50,7 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [energyLevel, setEnergyLevel] = useState(currentEnergy || 3);
+  const [category, setCategory] = useState<string>(currentCategory || "");
   const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate || new Date());
   const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate || new Date());
 
@@ -78,8 +81,9 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
         setDueDateStart(preSelectedDate);
         setDueDateEnd(preSelectedDate);
       }
+      setCategory(currentCategory || "");
     }
-  }, [open, preSelectedDate]);
+  }, [open, preSelectedDate, currentCategory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +102,7 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
           description: description.trim() || undefined,
           priority,
           energyLevel,
+          category: category || undefined,
           dueDateStart: dueDateStart ? dueDateStart.toISOString() : undefined,
           dueDateEnd: dueDateEnd ? dueDateEnd.toISOString() : undefined,
         }),
@@ -208,6 +213,24 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate }: Create
                 {energyLevel === 3 && "Сбалансированные задачи среднего уровня"}
                 {energyLevel >= 4 && "Для важных дел, которые требуют полной концентрации"}
               </p>
+            </div>
+
+            {/* Project / Category */}
+            <div className="space-y-2">
+              <Label>List / Project</Label>
+              <Select value={category} onValueChange={(v) => setCategory(v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Без списка" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Без списка</SelectItem>
+                  {categories.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Priority */}

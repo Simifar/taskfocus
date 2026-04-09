@@ -25,6 +25,7 @@ import { useAppStore } from "@/store";
 interface InboxViewProps {
   tasks: Task[];
   stats: StatsResponse | null;
+  currentCategory?: string;
   onEdit?: (task: Task) => void;
   onComplete?: (task: Task) => void;
   onArchive?: (taskId: string) => void;
@@ -111,6 +112,7 @@ export function InboxView({
           title: quickAddTitle.trim(),
           priority: "medium",
           energyLevel: 3,
+          category: currentCategory || undefined,
         }),
       });
 

@@ -9,6 +9,7 @@ const updateTaskSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   energyLevel: z.number().int().min(1).max(5).optional(),
+  category: z.string().max(100).optional().nullable(),
   status: z.enum(["active", "completed", "archived"]).optional(),
   dueDateStart: z.string().optional().nullable(),
   dueDateEnd: z.string().optional().nullable(),
@@ -139,6 +140,7 @@ export async function PUT(
       where: { id },
       data: {
         ...validatedData,
+        category: validatedData.category ?? undefined,
         dueDateStart: validatedData.dueDateStart
           ? new Date(validatedData.dueDateStart)
           : validatedData.dueDateStart === null

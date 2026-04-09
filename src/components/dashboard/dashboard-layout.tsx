@@ -39,6 +39,10 @@ export function DashboardLayout() {
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
+  const filteredTasks = state.currentCategory
+    ? tasks.filter((task) => task.category === state.currentCategory)
+    : tasks;
+
   // Authentication check
   useEffect(() => {
     if (!user) {
@@ -386,9 +390,13 @@ export function DashboardLayout() {
       <DashboardSidebar
         user={user}
         stats={stats}
-        tasks={tasks}
+        tasks={filteredTasks}
         currentView={state.currentView}
+        currentCategory={state.currentCategory}
+        categories={state.categories}
         onViewChange={(view: DashboardView) => actions.setView(view)}
+        onCategorySelect={(category) => actions.setCategory(category)}
+        onAddCategory={(category) => actions.addCategory(category)}
         onLogout={handleLogout}
       />
 
@@ -396,9 +404,15 @@ export function DashboardLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Content Area with Padding */}
         <div className="flex-1 overflow-auto p-6 md:p-8">
+          {state.currentCategory && (
+            <div className="mb-4 flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200">
+              <span className="font-semibold">Project:</span>
+              <span>{state.currentCategory}</span>
+            </div>
+          )}
           {state.currentView === "today" && (
             <TodayView
-              tasks={tasks}
+              tasks={filteredTasks}
               stats={stats}
               currentEnergy={state.currentEnergy}
               onEnergyChange={actions.setEnergy}
@@ -420,13 +434,15 @@ export function DashboardLayout() {
 
           {state.currentView === "inbox" && (
             <InboxView
-              tasks={tasks}
+              tasks={filteredTasks}
               stats={stats}
+              currentCategory={state.currentCategory}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
-              onAddTask={handleAddTask}              onAssignToToday={handleAssignToToday}
+              onAddTask={handleAddTask}
+              onAssignToToday={handleAssignToToday}
               onAssignToWeek={handleAssignToWeek}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
@@ -437,7 +453,7 @@ export function DashboardLayout() {
 
           {state.currentView === "week" && (
             <WeekView
-              tasks={tasks}
+              tasks={filteredTasks}
               stats={stats}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
@@ -454,7 +470,7 @@ export function DashboardLayout() {
 
           {state.currentView === "calendar" && (
             <CalendarView
-              tasks={tasks}
+              tasks={filteredTasks}
               stats={stats}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
@@ -464,14 +480,14 @@ export function DashboardLayout() {
               onSelectDay={handleSelectDay}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
-              onEditSubtask={handleEditSubtask}
-              onDeleteSubtask={handleDeleteSubtask}
+              onEditSubtask={onEditSubtask}
+              onDeleteSubtask={onDeleteSubtask}
             />
           )}
 
           {state.currentView === "day" && state.selectedDate && (
             <DayView
-              tasks={tasks}
+              tasks={filteredTasks}
               stats={stats}
               selectedDate={state.selectedDate}
               onBack={handleBackFromDay}
@@ -499,11 +515,14 @@ export function DashboardLayout() {
           setCreateDialogOpen(open);
         }}
         preSelectedDate={preSelectedDate}
+        categories={state.categories}
+        currentCategory={state.currentCategory}
       />
       {editingTask && (
         <EditTaskDialog
           task={editingTask}
           open={!!editingTask}
+          categories={state.categories}
           onOpenChange={(open) => !open && setEditingTask(null)}
         />
       )}

@@ -19,6 +19,7 @@ export interface Task {
   status: TaskStatus;
   priority: Priority;
   energyLevel: number; // 1-5
+  category?: string | null;
   dueDateStart?: string | null;
   dueDateEnd?: string | null;
   parentTaskId?: string | null;
