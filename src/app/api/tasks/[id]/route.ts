@@ -105,36 +105,6 @@ export async function PUT(
     const body = await request.json();
     const validatedData = updateTaskSchema.parse(body);
 
-    // Если задача становится активной, проверяем лимит
-    if (
-      validatedData.status === "active" &&
-      existingTask.status !== "active" &&
-      !existingTask.parentTaskId
-    ) {
-      const activeCount = await db.task.count({
-        where: {
-          userId: user.id,
-          status: "active",
-          parentTaskId: null,
-          id: { not: id },
-        },
-      });
-
-      if (activeCount >= 3) {
-        return NextResponse.json(
-          {
-            success: false,
-            data: null,
-            error: {
-              code: "TASK_LIMIT_EXCEEDED",
-              message: "Максимум 3 активные задачи. Завершите или отложите существующую.",
-            },
-          },
-          { status: 400 }
-        );
-      }
-    }
-
     // Обновляем задачу
     const task = await db.task.update({
       where: { id },

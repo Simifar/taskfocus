@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Создаем подзадачу (подзадачи не учитываются в лимите 3)
+    // Создаем подзадачу
     const subtask = await db.task.create({
       data: {
         userId: user.id,

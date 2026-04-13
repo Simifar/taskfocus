@@ -480,8 +480,8 @@ export function DashboardLayout() {
               onSelectDay={handleSelectDay}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
-              onEditSubtask={onEditSubtask}
-              onDeleteSubtask={onDeleteSubtask}
+              onEditSubtask={handleEditSubtask}
+              onDeleteSubtask={handleDeleteSubtask}
             />
           )}
 

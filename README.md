@@ -5,7 +5,6 @@
 ## Features
 
 ### Core Functionality
-- **Limited Active Tasks**: Maximum 3 active tasks to prevent overload
 - **Energy-Based Task Management**: 1-5 energy level scale for task allocation
 - **Flexible Deadlines**: Date ranges instead of fixed deadlines
 - **Task Hierarchies**: Support for subtasks and nested task structures
@@ -179,7 +178,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Key Features in Detail
 
 ### ADHD-Focused Design
-- **Task Limiting**: Maximum 3 active tasks prevent overwhelm
 - **Energy Matching**: Tasks tagged with required energy levels (1-5)
 - **Flexible Timing**: Date range deadlines reduce time pressure
 - **Visual Organization**: Clean, distraction-free interface

@@ -109,8 +109,8 @@ export function AuthPage() {
                 <CheckCircle className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Максимум 3 активные задачи</p>
-                <p className="text-white/80 text-sm">Никакой перегрузки — фокусируйтесь на главном</p>
+                <p className="font-medium">Фокус на главном</p>
+                <p className="text-white/80 text-sm">Структурируйте задачи так, как удобно вам</p>
               </div>
             </div>
             <div className="flex items-start gap-3">

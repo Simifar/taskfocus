@@ -218,12 +218,15 @@ export function CreateTaskDialog({ open, onOpenChange, preSelectedDate, categori
             {/* Project / Category */}
             <div className="space-y-2">
               <Label>List / Project</Label>
-              <Select value={category} onValueChange={(v) => setCategory(v)}>
+              <Select
+                value={category === "" ? "__none__" : category}
+                onValueChange={(v) => setCategory(v === "__none__" ? "" : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Без списка" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Без списка</SelectItem>
+                  <SelectItem value="__none__">Без списка</SelectItem>
                   {categories.map((item) => (
                     <SelectItem key={item} value={item}>
                       {item}

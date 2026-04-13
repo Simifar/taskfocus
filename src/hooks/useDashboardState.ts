@@ -40,9 +40,22 @@ export function useDashboardState() {
     const savedCategories = window.localStorage.getItem("taskfocus.categories");
     const savedCategory = window.localStorage.getItem("taskfocus.currentCategory");
 
+    const parsedCategories = (() => {
+      if (!savedCategories) return null;
+      try {
+        const parsed = JSON.parse(savedCategories);
+        if (Array.isArray(parsed) && parsed.every((x) => typeof x === "string")) {
+          return parsed as string[];
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    })();
+
     setState((prev) => ({
       ...prev,
-      categories: savedCategories ? JSON.parse(savedCategories) : prev.categories,
+      categories: parsedCategories ?? prev.categories,
       currentCategory: savedCategory || prev.currentCategory,
     }));
   }, []);

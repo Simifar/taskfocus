@@ -3,8 +3,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const MAX_ACTIVE_TASKS = 3;
-
 // Схема создания задачи
 const createTaskSchema = z.object({
   title: z.string().min(1, "Название обязательно").max(200),
@@ -122,31 +120,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const validatedData = createTaskSchema.parse(body);
-
-    // Проверяем лимит активных задач (только для корневых задач)
-    if (!validatedData.parentTaskId) {
-      const activeCount = await db.task.count({
-        where: {
-          userId: user.id,
-          status: "active",
-          parentTaskId: null,
-        },
-      });
-
-      if (activeCount >= MAX_ACTIVE_TASKS) {
-        return NextResponse.json(
-          {
-            success: false,
-            data: null,
-            error: {
-              code: "TASK_LIMIT_EXCEEDED",
-              message: `Максимум ${MAX_ACTIVE_TASKS} активные задачи. Завершите или отложите существующую.`,
-            },
-          },
-          { status: 400 }
-        );
-      }
-    }
 
     // Создаем задачу
     const task = await db.task.create({
