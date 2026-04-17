@@ -60,68 +60,10 @@ export function DashboardLayout() {
 
       setIsLoading(true);
       try {
-        // Load tasks
         const tasksResponse = await fetch("/api/tasks");
         const tasksData: ApiResponse<TasksListResponse> = await tasksResponse.json();
         if (tasksData.success && tasksData.data) {
-          let tasks = tasksData.data.items;
-          
-          // Если нет задач, добавляем тестовую задачу с подзадачей
-          if (tasks.length === 0) {
-            const userId = user.id;
-            const testTask = {
-              id: "test-task-1",
-              userId,
-              title: "Тестовая задача с подзадачами",
-              description: "Это тестовая задача для проверки функциональности подзадач",
-              status: "active" as const,
-              priority: "medium" as const,
-              energyLevel: 3,
-              dueDateStart: new Date().toISOString(),
-              dueDateEnd: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-              parentTaskId: null,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              completedAt: null,
-              subtasks: [
-                {
-                  id: "test-subtask-1",
-                  userId,
-                  title: "Подзадача 1",
-                  description: "Первая подзадача",
-                  status: "active" as const,
-                  priority: "low" as const,
-                  energyLevel: 2,
-                  dueDateStart: null,
-                  dueDateEnd: null,
-                  parentTaskId: "test-task-1",
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  completedAt: null,
-                  subtasks: []
-                },
-                {
-                  id: "test-subtask-2", 
-                  userId,
-                  title: "Подзадача 2",
-                  description: "Вторая подзадача",
-                  status: "completed" as const,
-                  priority: "low" as const,
-                  energyLevel: 2,
-                  dueDateStart: null,
-                  dueDateEnd: null,
-                  parentTaskId: "test-task-1",
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  completedAt: new Date().toISOString(),
-                  subtasks: []
-                }
-              ]
-            };
-            tasks = [testTask];
-          }
-          
-          setTasks(tasks);
+          setTasks(tasksData.data.items);
         }
 
         // Load stats
@@ -279,10 +221,7 @@ export function DashboardLayout() {
     }
   };
 
-  // Handle task reordering
   const handleReorderTasks = (reorderedTasks: Task[]) => {
-    console.log("📋 handleReorderTasks called in dashboard-layout");
-    console.log("  Reordered tasks:", reorderedTasks.map(t => ({ id: t.id, title: t.title })));
     setTasks(reorderedTasks);
   };
 

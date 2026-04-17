@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store";
 import { ApiResponse, User } from "@/types";
-import { Dashboard } from "@/components/dashboard";
+import { DashboardLayout as Dashboard } from "@/components/dashboard/dashboard-layout";
 import { AuthPage } from "@/components/auth/auth-page";
 import { Loader2 } from "lucide-react";
 

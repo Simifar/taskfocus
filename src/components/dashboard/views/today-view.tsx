@@ -118,39 +118,16 @@ export function TodayView({
     : 0;
   const hasTasksButFiltered = currentEnergy !== null && activeTasks.length === 0 && filteredTasks.length > 0;
 
-  // Handle task reordering - preserve the new order
   const handleReorder = (reorderedActiveTasks: Task[]) => {
-    console.log("🔄 handleReorder called");
-    console.log("  Reordered active tasks:", reorderedActiveTasks.map(t => ({ id: t.id, title: t.title })));
-    console.log("  Total tasks before:", tasks.length);
-    
-    // Create a map of reordered task IDs in their new order
     const reorderedMap = new Map(reorderedActiveTasks.map((t, i) => [t.id, i]));
-    
-    // Create new tasks array with reordered active tasks
-    // Find all task IDs that need to be reordered
-      // Separate tasks: reordered ones, and non-reordered ones
     const sorted = tasks.slice().sort((a, b) => {
       const aIdx = reorderedMap.get(a.id);
       const bIdx = reorderedMap.get(b.id);
-      
-      // Both are in reordered set - sort by their new order
-      if (aIdx !== undefined && bIdx !== undefined) {
-        return aIdx - bIdx;
-      }
-      
-      // Only a is in reordered set - keep it before others
+      if (aIdx !== undefined && bIdx !== undefined) return aIdx - bIdx;
       if (aIdx !== undefined) return -1;
-      
-      // Only b is in reordered set - keep it before others
       if (bIdx !== undefined) return 1;
-      
-      // Neither in reordered set - preserve their original relative order
       return 0;
     });
-    
-    console.log("  New tasks order:", sorted.map(t => ({ id: t.id, title: t.title })));
-    console.log("  Calling onReorder...");
     onReorder?.(sorted);
   };
 
