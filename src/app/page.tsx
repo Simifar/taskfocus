@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppStore } from "@/store";
-import { ApiResponse, User } from "@/types";
-import { DashboardLayout as Dashboard } from "@/components/dashboard/dashboard-layout";
-import { AuthPage } from "@/components/auth/auth-page";
+import { useAppStore } from "@/features/dashboard/store";
+import { ApiResponse, User } from "@/shared/types";
+import { DashboardLayout as Dashboard } from "@/features/dashboard/components/dashboard-layout";
+import { AuthPage } from "@/features/auth/components/auth-page";
 import { Loader2 } from "lucide-react";
 
 export default function Home() {
