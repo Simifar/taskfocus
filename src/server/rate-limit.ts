@@ -19,10 +19,7 @@ export function checkRateLimit(opts: {
   }
 
   if (existing.count >= opts.limit) {
-    const retryAfterSeconds = Math.max(
-      1,
-      Math.ceil((existing.resetAtMs - now) / 1000)
-    );
+    const retryAfterSeconds = Math.max(1, Math.ceil((existing.resetAtMs - now) / 1000));
     return { ok: false, retryAfterSeconds };
   }
 
@@ -35,4 +32,3 @@ export function getClientIp(request: Request): string {
   if (xff) return xff.split(",")[0].trim();
   return request.headers.get("x-real-ip") ?? "unknown";
 }
-

@@ -1,36 +1,13 @@
-import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { db } from "@/server/db";
+import { ok, withAuth } from "@/server/api";
 
-// GET /api/stats - получение статистики пользователя
-export async function GET() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "UNAUTHORIZED", message: "Не авторизован" },
-      },
-      { status: 401 }
-    );
-  }
-
-  // Подсчитываем задачи по статусам
+export const GET = withAuth(async (_request, { user }) => {
   const [activeTasks, completedTasks, archivedTasks] = await Promise.all([
-    db.task.count({
-      where: { userId: user.id, status: "active", parentTaskId: null },
-    }),
-    db.task.count({
-      where: { userId: user.id, status: "completed", parentTaskId: null },
-    }),
-    db.task.count({
-      where: { userId: user.id, status: "archived", parentTaskId: null },
-    }),
+    db.task.count({ where: { userId: user.id, status: "active", parentTaskId: null } }),
+    db.task.count({ where: { userId: user.id, status: "completed", parentTaskId: null } }),
+    db.task.count({ where: { userId: user.id, status: "archived", parentTaskId: null } }),
   ]);
 
-  // Задачи за последние 7 дней
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -43,7 +20,6 @@ export async function GET() {
     },
   });
 
-  // Задачи за сегодня
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -56,16 +32,12 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json({
-    success: true,
-    data: {
-      activeTasks,
-      completedTasks,
-      archivedTasks,
-      completedThisWeek,
-      completedToday,
-      totalTasks: activeTasks + completedTasks + archivedTasks,
-    },
-    error: null,
+  return ok({
+    activeTasks,
+    completedTasks,
+    archivedTasks,
+    completedThisWeek,
+    completedToday,
+    totalTasks: activeTasks + completedTasks + archivedTasks,
   });
-}
+});
