@@ -1,182 +1,113 @@
-import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
+import { db } from "@/server/db";
+import { handleUnknownError, ok, withAuth } from "@/server/api";
 
-// Схема создания задачи
 const createTaskSchema = z.object({
   title: z.string().min(1, "Название обязательно").max(200),
   description: z.string().max(2000).optional(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   energyLevel: z.number().int().min(1).max(5).default(3),
-  category: z.string().max(100).optional(),
-  dueDateStart: z.string().optional(),
-  dueDateEnd: z.string().optional(),
-  parentTaskId: z.string().optional(),
+  categoryId: z.string().nullish(),
+  dueDateStart: z.string().datetime().nullish(),
+  dueDateEnd: z.string().datetime().nullish(),
+  parentTaskId: z.string().nullish(),
 });
 
-// GET /api/tasks - получение списка задач
-export async function GET(request: Request) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "UNAUTHORIZED", message: "Не авторизован" },
-      },
-      { status: 401 }
-    );
-  }
-
+export const GET = withAuth(async (request, { user }) => {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const energy = searchParams.get("energy");
   const search = searchParams.get("search");
-  const category = searchParams.get("category");
+  const categoryId = searchParams.get("categoryId");
 
-  // Строим фильтры
-  const where: {
-    userId: string;
-    status?: "active" | "completed" | "archived";
-    energyLevel?: number;
-    category?: string;
-    OR?: Array<{ title: { contains: string } } | { description: { contains: string } }>;
-    parentTaskId: string | null;
-  } = {
+  const where: Prisma.TaskWhereInput = {
     userId: user.id,
-    parentTaskId: null, // Только корневые задачи
+    parentTaskId: null,
   };
 
   if (status && ["active", "completed", "archived"].includes(status)) {
-    where.status = status as "active" | "completed" | "archived";
+    where.status = status;
   }
 
   if (energy) {
-    const energyNum = parseInt(energy);
-    if (!isNaN(energyNum) && energyNum >= 1 && energyNum <= 5) {
-      where.energyLevel = energyNum;
-    }
+    const n = Number.parseInt(energy, 10);
+    if (Number.isInteger(n) && n >= 1 && n <= 5) where.energyLevel = n;
   }
 
   if (search) {
     where.OR = [
-      { title: { contains: search } },
-      { description: { contains: search } },
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
     ];
   }
 
-  if (category) {
-    where.category = category;
+  if (categoryId) {
+    where.categoryId = categoryId === "none" ? null : categoryId;
   }
 
-  // Получаем задачи с подзадачами
-  const tasks = await db.task.findMany({
-    where,
-    include: {
-      subtasks: {
-        orderBy: { createdAt: "asc" },
+  const [tasks, activeCount] = await Promise.all([
+    db.task.findMany({
+      where,
+      include: {
+        category: true,
+        subtasks: { orderBy: { position: "asc" } },
       },
-    },
-    orderBy: { id: "asc" },  // Stable order by ID only - preserves manual reordering
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    }),
+    db.task.count({
+      where: { userId: user.id, status: "active", parentTaskId: null },
+    }),
+  ]);
+
+  return ok({
+    items: tasks,
+    totalCount: tasks.length,
+    activeCount,
   });
+});
 
-  // Подсчитываем активные задачи
-  const activeCount = await db.task.count({
-    where: {
-      userId: user.id,
-      status: "active",
-      parentTaskId: null,
-    },
-  });
-
-  return NextResponse.json({
-    success: true,
-    data: {
-      items: tasks,
-      totalCount: tasks.length,
-      activeCount,
-    },
-    error: null,
-  });
-}
-
-// POST /api/tasks - создание задачи
-export async function POST(request: Request) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "UNAUTHORIZED", message: "Не авторизован" },
-      },
-      { status: 401 }
-    );
-  }
-
+export const POST = withAuth(async (request, { user }) => {
   try {
     const body = await request.json();
-    const validatedData = createTaskSchema.parse(body);
+    const parsed = createTaskSchema.parse(body);
 
-    // Создаем задачу
+    if (parsed.categoryId) {
+      const owns = await db.category.findFirst({
+        where: { id: parsed.categoryId, userId: user.id },
+        select: { id: true },
+      });
+      if (!owns) {
+        return handleUnknownError("create task", new Error("Category not found"));
+      }
+    }
+
+    const maxPosition = await db.task.aggregate({
+      where: { userId: user.id, parentTaskId: parsed.parentTaskId ?? null },
+      _max: { position: true },
+    });
+
     const task = await db.task.create({
       data: {
         userId: user.id,
-        title: validatedData.title,
-        description: validatedData.description,
-        priority: validatedData.priority,
-        energyLevel: validatedData.energyLevel,
-        category: validatedData.category ?? null,
-        dueDateStart: validatedData.dueDateStart
-          ? new Date(validatedData.dueDateStart)
-          : null,
-        dueDateEnd: validatedData.dueDateEnd
-          ? new Date(validatedData.dueDateEnd)
-          : null,
-        parentTaskId: validatedData.parentTaskId || null,
+        title: parsed.title,
+        description: parsed.description,
+        priority: parsed.priority,
+        energyLevel: parsed.energyLevel,
+        categoryId: parsed.categoryId ?? null,
+        dueDateStart: parsed.dueDateStart ? new Date(parsed.dueDateStart) : null,
+        dueDateEnd: parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null,
+        parentTaskId: parsed.parentTaskId ?? null,
+        position: (maxPosition._max.position ?? -1) + 1,
       },
       include: {
+        category: true,
         subtasks: true,
       },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: task,
-        error: null,
-      },
-      { status: 201 }
-    );
+    return ok(task, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: null,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: error.issues[0]?.message ?? "Ошибка валидации",
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    console.error("Create task error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Внутренняя ошибка сервера",
-        },
-      },
-      { status: 500 }
-    );
+    return handleUnknownError("create task", error);
   }
-}
+});

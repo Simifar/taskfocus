@@ -1,213 +1,88 @@
-import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { db } from "@/server/db";
+import { handleUnknownError, notFound, ok, withAuth } from "@/server/api";
 
-// Схема обновления задачи
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  description: z.string().max(2000).optional().nullable(),
+  description: z.string().max(2000).nullish(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   energyLevel: z.number().int().min(1).max(5).optional(),
-  category: z.string().max(100).optional().nullable(),
+  categoryId: z.string().nullish(),
   status: z.enum(["active", "completed", "archived"]).optional(),
-  dueDateStart: z.string().optional().nullable(),
-  dueDateEnd: z.string().optional().nullable(),
+  dueDateStart: z.string().datetime().nullish(),
+  dueDateEnd: z.string().datetime().nullish(),
 });
 
-// GET /api/tasks/[id] - получение одной задачи
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const user = await getCurrentUser();
+type RouteCtx = { params: Promise<{ id: string }> };
 
-  if (!user) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "UNAUTHORIZED", message: "Не авторизован" },
-      },
-      { status: 401 }
-    );
-  }
-
-  const { id } = await params;
-
-  const task = await db.task.findFirst({
-    where: {
-      id,
-      userId: user.id,
-    },
-    include: {
-      subtasks: {
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
-
-  if (!task) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "TASK_NOT_FOUND", message: "Задача не найдена" },
-      },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    data: task,
-    error: null,
-  });
+async function ownedTask(id: string, userId: string) {
+  return db.task.findFirst({ where: { id, userId }, select: { id: true, userId: true } });
 }
 
-// PUT /api/tasks/[id] - обновление задачи
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "UNAUTHORIZED", message: "Не авторизован" },
-      },
-      { status: 401 }
-    );
-  }
-
+export const GET = withAuth<RouteCtx>(async (_req, { params, user }) => {
   const { id } = await params;
-
-  // Проверяем существование задачи
-  const existingTask = await db.task.findFirst({
+  const task = await db.task.findFirst({
     where: { id, userId: user.id },
+    include: {
+      category: true,
+      subtasks: { orderBy: { position: "asc" } },
+    },
   });
+  if (!task) return notFound("Задача не найдена");
+  return ok(task);
+});
 
-  if (!existingTask) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "TASK_NOT_FOUND", message: "Задача не найдена" },
-      },
-      { status: 404 }
-    );
-  }
-
+export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
+  const { id } = await params;
   try {
+    const existing = await ownedTask(id, user.id);
+    if (!existing) return notFound("Задача не найдена");
+
     const body = await request.json();
-    const validatedData = updateTaskSchema.parse(body);
+    const parsed = updateTaskSchema.parse(body);
 
-    // Обновляем задачу
-    const task = await db.task.update({
-      where: { id },
-      data: {
-        ...validatedData,
-        category: validatedData.category ?? undefined,
-        dueDateStart: validatedData.dueDateStart
-          ? new Date(validatedData.dueDateStart)
-          : validatedData.dueDateStart === null
-          ? null
-          : undefined,
-        dueDateEnd: validatedData.dueDateEnd
-          ? new Date(validatedData.dueDateEnd)
-          : validatedData.dueDateEnd === null
-          ? null
-          : undefined,
-        completedAt:
-          validatedData.status === "completed"
-            ? new Date()
-            : validatedData.status === "active" || validatedData.status === "archived"
-            ? null
-            : undefined,
-      },
-      include: {
-        subtasks: true,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: task,
-      error: null,
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: null,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: error.issues[0]?.message ?? "Ошибка валидации",
-          },
-        },
-        { status: 400 }
-      );
+    if (parsed.categoryId) {
+      const owns = await db.category.findFirst({
+        where: { id: parsed.categoryId, userId: user.id },
+        select: { id: true },
+      });
+      if (!owns) return notFound("Категория не найдена");
     }
 
-    console.error("Update task error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Внутренняя ошибка сервера",
-        },
-      },
-      { status: 500 }
-    );
+    const data: Record<string, unknown> = {};
+    if (parsed.title !== undefined) data.title = parsed.title;
+    if (parsed.description !== undefined) data.description = parsed.description;
+    if (parsed.priority !== undefined) data.priority = parsed.priority;
+    if (parsed.energyLevel !== undefined) data.energyLevel = parsed.energyLevel;
+    if (parsed.categoryId !== undefined) data.categoryId = parsed.categoryId;
+    if (parsed.status !== undefined) {
+      data.status = parsed.status;
+      data.completedAt = parsed.status === "completed" ? new Date() : null;
+    }
+    if (parsed.dueDateStart !== undefined) {
+      data.dueDateStart = parsed.dueDateStart ? new Date(parsed.dueDateStart) : null;
+    }
+    if (parsed.dueDateEnd !== undefined) {
+      data.dueDateEnd = parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null;
+    }
+
+    const task = await db.task.update({
+      where: { id },
+      data,
+      include: { category: true, subtasks: true },
+    });
+
+    return ok(task);
+  } catch (error) {
+    return handleUnknownError("update task", error);
   }
-}
+});
 
-// DELETE /api/tasks/[id] - удаление задачи
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "UNAUTHORIZED", message: "Не авторизован" },
-      },
-      { status: 401 }
-    );
-  }
-
+export const DELETE = withAuth<RouteCtx>(async (_req, { params, user }) => {
   const { id } = await params;
+  const existing = await ownedTask(id, user.id);
+  if (!existing) return notFound("Задача не найдена");
 
-  // Проверяем существование задачи
-  const task = await db.task.findFirst({
-    where: { id, userId: user.id },
-  });
-
-  if (!task) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "TASK_NOT_FOUND", message: "Задача не найдена" },
-      },
-      { status: 404 }
-    );
-  }
-
-  // Удаляем задачу (каскадно удалит подзадачи)
-  await db.task.delete({
-    where: { id },
-  });
-
-  return new NextResponse(null, { status: 204 });
-}
+  await db.task.delete({ where: { id } });
+  return new Response(null, { status: 204 });
+});

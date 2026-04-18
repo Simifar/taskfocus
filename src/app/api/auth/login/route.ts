@@ -1,133 +1,45 @@
-import { db } from "@/lib/db";
-import { verifyPassword, createToken } from "@/lib/auth";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
+import { db } from "@/server/db";
+import { verifyPassword, createToken, setAuthCookie } from "@/server/auth";
+import { err, getClientIp, handleUnknownError, ok, withRateLimit } from "@/server/api";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
   password: z.string().min(1, "Введите пароль"),
 });
 
-export async function POST(request: Request) {
+async function handler(request: Request) {
   try {
-    const ip = getClientIp(request);
-    const ipLimit = checkRateLimit({
-      key: `auth:login:ip:${ip}`,
-      limit: 20,
-      windowMs: 10 * 60 * 1000,
-    });
-    if (!ipLimit.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: null,
-          error: {
-            code: "RATE_LIMITED",
-            message: `Слишком много попыток. Повторите через ${ipLimit.retryAfterSeconds} сек.`,
-          },
-        },
-        { status: 429 }
-      );
-    }
-
     const body = await request.json();
-    const validatedData = loginSchema.parse(body);
-    const email = validatedData.email.trim().toLowerCase();
+    const { email: rawEmail, password } = loginSchema.parse(body);
+    const email = rawEmail.trim().toLowerCase();
 
-    // Находим пользователя
-    const user = await db.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: null,
-          error: {
-            code: "INVALID_CREDENTIALS",
-            message: "Неверный email или пароль",
-          },
-        },
-        { status: 401 }
-      );
+    const user = await db.user.findUnique({ where: { email } });
+    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+      return err("INVALID_CREDENTIALS", "Неверный email или пароль", 401);
     }
 
-    // Проверяем пароль
-    const isValidPassword = await verifyPassword(
-      validatedData.password,
-      user.passwordHash
-    );
-
-    if (!isValidPassword) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: null,
-          error: {
-            code: "INVALID_CREDENTIALS",
-            message: "Неверный email или пароль",
-          },
-        },
-        { status: 401 }
-      );
-    }
-
-    // Создаем токен
     const token = await createToken({
       userId: user.id,
       email: user.email,
       username: user.username,
     });
+    await setAuthCookie(token);
 
-    // Устанавливаем cookie
-    const cookieStore = await cookies();
-    cookieStore.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 дней
-      path: "/",
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        name: user.name,
-      },
-      error: null,
+    return ok({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      name: user.name,
+      avatar: user.avatar,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: null,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: error.issues[0]?.message ?? "Ошибка валидации",
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    console.error("Login error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Внутренняя ошибка сервера",
-        },
-      },
-      { status: 500 }
-    );
+    return handleUnknownError("login", error);
   }
 }
+
+export const POST = withRateLimit(
+  (req) => `auth:login:ip:${getClientIp(req)}`,
+  { limit: 20, windowMs: 10 * 60 * 1000 },
+  handler,
+);

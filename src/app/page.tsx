@@ -1,40 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAppStore } from "@/store";
-import { ApiResponse, User } from "@/types";
-import { Dashboard } from "@/components/dashboard";
-import { AuthPage } from "@/components/auth/auth-page";
+import { useCurrentUser } from "@/features/auth/hooks";
+import { DashboardLayout as Dashboard } from "@/features/dashboard/components/dashboard-layout";
+import { AuthPage } from "@/features/auth/components/auth-page";
 import { Loader2 } from "lucide-react";
 
 export default function Home() {
-  const router = useRouter();
-  const { user, setUser, isAuthenticated } = useAppStore();
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Проверяем авторизацию при загрузке
-    const checkAuth = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data: ApiResponse<User> = await response.json();
-
-        if (data.success && data.data) {
-          setUser(data.data);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [setUser]);
+  const { data: user, isLoading } = useCurrentUser();
 
   if (isLoading) {
     return (
@@ -47,9 +19,6 @@ export default function Home() {
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return <AuthPage />;
-  }
-
+  if (!user) return <AuthPage />;
   return <Dashboard />;
 }

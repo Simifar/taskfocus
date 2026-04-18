@@ -1,4 +1,4 @@
-import { ProfilePage } from "@/components/profile-page";
+import { ProfilePage } from "@/features/profile/components/profile-page";
 
 export const metadata = {
   title: "Профиль - TaskFocus",

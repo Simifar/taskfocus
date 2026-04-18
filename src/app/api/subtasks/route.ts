@@ -1,7 +1,6 @@
-import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { db } from "@/server/db";
+import { handleUnknownError, notFound, ok, withAuth } from "@/server/api";
 
 const createSubtaskSchema = z.object({
   parentId: z.string().min(1, "ID родительской задачи обязателен"),
@@ -9,85 +8,34 @@ const createSubtaskSchema = z.object({
   energyLevel: z.number().int().min(1).max(5).optional().default(2),
 });
 
-// POST /api/subtasks - создание подзадачи
-export async function POST(request: Request) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: { code: "UNAUTHORIZED", message: "Не авторизован" },
-      },
-      { status: 401 }
-    );
-  }
-
+export const POST = withAuth(async (request, { user }) => {
   try {
     const body = await request.json();
-    const validatedData = createSubtaskSchema.parse(body);
+    const parsed = createSubtaskSchema.parse(body);
 
-    // Проверяем существование родительской задачи
-    const parentTask = await db.task.findFirst({
-      where: { id: validatedData.parentId, userId: user.id },
+    const parent = await db.task.findFirst({
+      where: { id: parsed.parentId, userId: user.id },
+      select: { id: true },
+    });
+    if (!parent) return notFound("Родительская задача не найдена");
+
+    const maxPosition = await db.task.aggregate({
+      where: { parentTaskId: parent.id },
+      _max: { position: true },
     });
 
-    if (!parentTask) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: null,
-          error: { code: "TASK_NOT_FOUND", message: "Родительская задача не найдена" },
-        },
-        { status: 404 }
-      );
-    }
-
-    // Создаем подзадачу
     const subtask = await db.task.create({
       data: {
         userId: user.id,
-        title: validatedData.title,
-        energyLevel: validatedData.energyLevel,
-        parentTaskId: validatedData.parentId,
+        title: parsed.title,
+        energyLevel: parsed.energyLevel,
+        parentTaskId: parent.id,
+        position: (maxPosition._max.position ?? -1) + 1,
       },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: subtask,
-        error: null,
-      },
-      { status: 201 }
-    );
+    return ok(subtask, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          data: null,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: error.issues[0]?.message ?? "Ошибка валидации",
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    console.error("Create subtask error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Внутренняя ошибка сервера",
-        },
-      },
-      { status: 500 }
-    );
+    return handleUnknownError("create subtask", error);
   }
-}
+});
