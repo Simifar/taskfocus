@@ -1,202 +1,104 @@
 import { create } from "zustand";
-import { User, Task, StatsResponse } from "@/shared/types";
+import { persist } from "zustand/middleware";
 
-interface AppState {
-  // Пользователь
-  user: User | null;
-  isAuthenticated: boolean;
-  setUser: (user: User | null) => void;
-  logout: () => void;
+export type DashboardView = "today" | "inbox" | "week" | "calendar" | "day";
+export type SortBy = "energy" | "priority" | "dueDate" | "created";
+export type SortOrder = "asc" | "desc";
 
-  // Задачи
-  tasks: Task[];
-  activeTasks: Task[];
-  completedTasks: Task[];
-  archivedTasks: Task[];
-  setTasks: (tasks: Task[]) => void;
-  addTask: (task: Task) => void;
-  updateTask: (id: string, task: Partial<Task>) => void;
-  removeTask: (id: string) => void;
-
-  // Подзадачи
-  addSubtask: (parentId: string, subtask: Task) => void;
-  updateSubtask: (id: string, subtask: Partial<Task>) => void;
-  removeSubtask: (id: string) => void;
-
-  // Фильтры
-  statusFilter: "all" | "active" | "completed" | "archived";
-  searchQuery: string;
-  setStatusFilter: (status: "all" | "active" | "completed" | "archived") => void;
-  setSearchQuery: (query: string) => void;
-
-  // Статистика
-  stats: StatsResponse | null;
-  setStats: (stats: StatsResponse) => void;
-
-  // Текущий уровень энергии пользователя (null = без фильтра)
+interface DashboardState {
+  currentView: DashboardView;
+  currentCategoryId: string | null;
+  selectedDateIso: string | null;
   currentEnergy: number | null;
-  setCurrentEnergy: (level: number | null) => void;
-
-  // Загрузка
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
+  searchQuery: string;
+  showCompleted: boolean;
+  sortBy: SortBy;
+  sortOrder: SortOrder;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  // Пользователь
-  user: null,
-  isAuthenticated: false,
-  setUser: (user) =>
-    set({
-      user,
-      isAuthenticated: !!user,
-    }),
-  logout: () =>
-    set({
-      user: null,
-      isAuthenticated: false,
-      tasks: [],
-      activeTasks: [],
-      completedTasks: [],
-      archivedTasks: [],
-      stats: null,
-    }),
+interface DashboardActions {
+  setView: (view: DashboardView, categoryId?: string | null, selectedDate?: Date) => void;
+  setCategory: (categoryId: string | null) => void;
+  setEnergy: (level: number | null) => void;
+  setSearch: (query: string) => void;
+  setShowCompleted: (show: boolean) => void;
+  setSortBy: (sortBy: SortBy) => void;
+  setSelectedDate: (date: Date | null) => void;
+  resetFilters: () => void;
+}
 
-  // Задачи
-  tasks: [],
-  activeTasks: [],
-  completedTasks: [],
-  archivedTasks: [],
-  setTasks: (tasks) =>
-    set({
-      tasks,
-      activeTasks: tasks.filter((t) => t.status === "active"),
-      completedTasks: tasks.filter((t) => t.status === "completed"),
-      archivedTasks: tasks.filter((t) => t.status === "archived"),
-    }),
-  addTask: (task) =>
-    set((state) => {
-      const newTasks = [task, ...state.tasks];
-      return {
-        tasks: newTasks,
-        activeTasks: newTasks.filter((t) => t.status === "active"),
-        completedTasks: newTasks.filter((t) => t.status === "completed"),
-        archivedTasks: newTasks.filter((t) => t.status === "archived"),
-      };
-    }),
-  updateTask: (id, updatedTask) =>
-    set((state) => {
-      const newTasks = state.tasks.map((t) =>
-        t.id === id ? { ...t, ...updatedTask } : t
-      );
-      return {
-        tasks: newTasks,
-        activeTasks: newTasks.filter((t) => t.status === "active"),
-        completedTasks: newTasks.filter((t) => t.status === "completed"),
-        archivedTasks: newTasks.filter((t) => t.status === "archived"),
-      };
-    }),
-  removeTask: (id) =>
-    set((state) => {
-      const newTasks = state.tasks.filter((t) => t.id !== id);
-      return {
-        tasks: newTasks,
-        activeTasks: newTasks.filter((t) => t.status === "active"),
-        completedTasks: newTasks.filter((t) => t.status === "completed"),
-        archivedTasks: newTasks.filter((t) => t.status === "archived"),
-      };
-    }),
-
-  // Подзадачи
-  addSubtask: (parentId, subtask) =>
-    set((state) => {
-      // Добавляем подзадачу в общий список
-      const newTasks = [subtask, ...state.tasks];
-      
-      // Обновляем родительскую задачу, добавляя подзадачу в ее subtasks
-      const updatedTasks = newTasks.map((task) => {
-        if (task.id === parentId) {
-          return {
-            ...task,
-            subtasks: [...(task.subtasks || []), subtask]
-          };
-        }
-        return task;
-      });
-      
-      return {
-        tasks: updatedTasks,
-        activeTasks: updatedTasks.filter((t) => t.status === "active"),
-        completedTasks: updatedTasks.filter((t) => t.status === "completed"),
-        archivedTasks: updatedTasks.filter((t) => t.status === "archived"),
-      };
-    }),
-  updateSubtask: (id, updatedSubtask) =>
-    set((state) => {
-      // Обновляем подзадачу в общем списке
-      const newTasks = state.tasks.map((t) =>
-        t.id === id ? { ...t, ...updatedSubtask } : t
-      );
-      
-      // Обновляем подзадачу в массиве subtasks родительской задачи
-      const finalTasks = newTasks.map((task) => {
-        if (task.subtasks && task.subtasks.some(st => st.id === id)) {
-          return {
-            ...task,
-            subtasks: task.subtasks.map(st => 
-              st.id === id ? { ...st, ...updatedSubtask } : st
-            )
-          };
-        }
-        return task;
-      });
-      
-      return {
-        tasks: finalTasks,
-        activeTasks: finalTasks.filter((t) => t.status === "active"),
-        completedTasks: finalTasks.filter((t) => t.status === "completed"),
-        archivedTasks: finalTasks.filter((t) => t.status === "archived"),
-      };
-    }),
-  removeSubtask: (id) =>
-    set((state) => {
-      // Удаляем подзадачу из общего списка
-      const newTasks = state.tasks.filter((t) => t.id !== id);
-      
-      // Удаляем подзадачу из массивов subtasks родительских задач
-      const finalTasks = newTasks.map((task) => {
-        if (task.subtasks) {
-          return {
-            ...task,
-            subtasks: task.subtasks.filter(st => st.id !== id)
-          };
-        }
-        return task;
-      });
-      
-      return {
-        tasks: finalTasks,
-        activeTasks: finalTasks.filter((t) => t.status === "active"),
-        completedTasks: finalTasks.filter((t) => t.status === "completed"),
-        archivedTasks: finalTasks.filter((t) => t.status === "archived"),
-      };
-    }),
-
-  // Фильтры
-  statusFilter: "all",
+const defaults: DashboardState = {
+  currentView: "today",
+  currentCategoryId: null,
+  selectedDateIso: null,
+  currentEnergy: null,
   searchQuery: "",
-  setStatusFilter: (status) => set({ statusFilter: status }),
-  setSearchQuery: (query) => set({ searchQuery: query }),
+  showCompleted: false,
+  sortBy: "energy",
+  sortOrder: "asc",
+};
 
-  // Статистика
-  stats: null,
-  setStats: (stats) => set({ stats }),
+export const useDashboardStore = create<DashboardState & DashboardActions>()(
+  persist(
+    (set, get) => ({
+      ...defaults,
 
-  // Текущая энергия
-  currentEnergy: 3,
-  setCurrentEnergy: (level) => set({ currentEnergy: level }),
+      setView: (view, categoryId, selectedDate) =>
+        set({
+          currentView: view,
+          currentCategoryId: categoryId ?? null,
+          selectedDateIso: selectedDate ? selectedDate.toISOString() : null,
+        }),
 
-  // Загрузка
-  isLoading: false,
-  setIsLoading: (loading) => set({ isLoading: loading }),
-}));
+      setCategory: (categoryId) => set({ currentCategoryId: categoryId }),
+      setEnergy: (level) => set({ currentEnergy: level }),
+      setSearch: (query) => set({ searchQuery: query }),
+      setShowCompleted: (show) => set({ showCompleted: show }),
+
+      setSortBy: (sortBy) => {
+        const prev = get();
+        set({
+          sortBy,
+          sortOrder: prev.sortBy === sortBy ? (prev.sortOrder === "asc" ? "desc" : "asc") : "asc",
+        });
+      },
+
+      setSelectedDate: (date) =>
+        set({ selectedDateIso: date ? date.toISOString() : null }),
+
+      resetFilters: () =>
+        set({
+          currentEnergy: null,
+          searchQuery: "",
+          showCompleted: false,
+          sortBy: "energy",
+          sortOrder: "asc",
+        }),
+    }),
+    {
+      name: "taskfocus.dashboard",
+      partialize: (state) => ({
+        currentView: state.currentView,
+        currentCategoryId: state.currentCategoryId,
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder,
+        showCompleted: state.showCompleted,
+      }),
+    },
+  ),
+);
+
+export function useHasActiveFilters(): boolean {
+  return useDashboardStore(
+    (s) =>
+      s.currentEnergy !== null ||
+      s.searchQuery.length > 0 ||
+      s.showCompleted ||
+      s.sortBy !== defaults.sortBy ||
+      s.sortOrder !== defaults.sortOrder,
+  );
+}
+
+export function useSelectedDate(): Date | null {
+  return useDashboardStore((s) => (s.selectedDateIso ? new Date(s.selectedDateIso) : null));
+}

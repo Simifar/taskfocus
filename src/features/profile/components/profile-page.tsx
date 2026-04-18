@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppStore } from "@/features/dashboard/store";
-import { ApiResponse, User } from "@/shared/types";
+import { useCurrentUser, useLogout, useUpdateProfile } from "@/features/auth/hooks";
+import { ApiError } from "@/shared/lib/fetcher";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
@@ -30,30 +30,19 @@ import {
 
 export function ProfilePage() {
   const router = useRouter();
-  const { user, setUser, logout } = useAppStore();
+  const { data: user, isLoading: isLoadingUser } = useCurrentUser();
+  const updateProfile = useUpdateProfile();
+  const logout = useLogout();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    avatar: "",
-  });
-  const [originalData, setOriginalData] = useState({
-    name: "",
-    avatar: "",
-  });
+  const [formData, setFormData] = useState({ name: "", avatar: "" });
+  const [originalData, setOriginalData] = useState({ name: "", avatar: "" });
 
   useEffect(() => {
     if (user) {
-      setFormData({
-        name: user.name || "",
-        avatar: user.avatar || "",
-      });
-      setOriginalData({
-        name: user.name || "",
-        avatar: user.avatar || "",
-      });
+      const next = { name: user.name ?? "", avatar: user.avatar ?? "" };
+      setFormData(next);
+      setOriginalData(next);
     }
   }, [user]);
 
@@ -65,54 +54,36 @@ export function ProfilePage() {
       toast.info("Нет изменений");
       return;
     }
-
-    setIsLoading(true);
     try {
-      const response = await fetch("/api/auth/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          avatar: formData.avatar,
-        }),
+      const updated = await updateProfile.mutateAsync({
+        name: formData.name,
+        avatar: formData.avatar,
       });
-
-      const data: ApiResponse<User> = await response.json();
-
-      if (data.success && data.data) {
-        setUser(data.data);
-        setOriginalData({
-          name: data.data.name || "",
-          avatar: data.data.avatar || "",
-        });
-        toast.success("Профиль обновлен");
-      } else {
-        toast.error(data.error?.message || "Ошибка обновления профиля");
-      }
-    } catch (error) {
-      toast.error("Ошибка соединения");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+      setOriginalData({ name: updated.name ?? "", avatar: updated.avatar ?? "" });
+      toast.success("Профиль обновлен");
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Ошибка соединения";
+      toast.error(message);
     }
   };
 
   const handleDeleteAccount = async () => {
-    setIsDeleting(true);
     try {
-      // In a real app, you would call DELETE /api/auth/user
-      // For now, we'll just logout and redirect
-      await fetch("/api/auth/logout", { method: "POST" });
-      logout();
+      await logout.mutateAsync();
       toast.success("Аккаунт удален");
       router.push("/");
-    } catch (error) {
+    } catch {
       toast.error("Ошибка удаления аккаунта");
-      console.error(error);
-    } finally {
-      setIsDeleting(false);
     }
   };
+
+  if (isLoadingUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
 
   if (!user) {
     return null;
@@ -121,13 +92,8 @@ export function ProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-4">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-          >
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -136,19 +102,15 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* Main Profile Card */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserIcon className="h-5 w-5" />
               Основная информация
             </CardTitle>
-            <CardDescription>
-              Информация о вашем аккаунте
-            </CardDescription>
+            <CardDescription>Информация о вашем аккаунте</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Email (read-only) */}
             <div>
               <Label className="flex items-center gap-2 mb-2">
                 <Mail className="h-4 w-4" />
@@ -160,7 +122,6 @@ export function ProfilePage() {
               </p>
             </div>
 
-            {/* Username (read-only) */}
             <div>
               <Label className="mb-2">Username</Label>
               <Input value={user.username} disabled className="bg-muted" />
@@ -171,7 +132,6 @@ export function ProfilePage() {
 
             <Separator />
 
-            {/* Name */}
             <div>
               <Label htmlFor="name" className="mb-2">
                 Имя (Отображаемое имя)
@@ -179,14 +139,11 @@ export function ProfilePage() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Введите ваше имя"
               />
             </div>
 
-            {/* Avatar URL */}
             <div>
               <Label htmlFor="avatar" className="mb-2">
                 Аватар (URL)
@@ -194,14 +151,13 @@ export function ProfilePage() {
               <Input
                 id="avatar"
                 value={formData.avatar}
-                onChange={(e) =>
-                  setFormData({ ...formData, avatar: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
                 placeholder="https://example.com/avatar.jpg"
                 type="url"
               />
               {formData.avatar && (
                 <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={formData.avatar}
                     alt="Avatar preview"
@@ -214,14 +170,13 @@ export function ProfilePage() {
 
             <Separator />
 
-            {/* Save Button */}
             <div className="flex gap-2">
               <Button
                 onClick={handleSaveProfile}
-                disabled={!hasChanges || isLoading}
+                disabled={!hasChanges || updateProfile.isPending}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
-                {isLoading ? (
+                {updateProfile.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Сохранение...
@@ -231,10 +186,7 @@ export function ProfilePage() {
                 )}
               </Button>
               {hasChanges && (
-                <Button
-                  variant="outline"
-                  onClick={() => setFormData(originalData)}
-                >
+                <Button variant="outline" onClick={() => setFormData(originalData)}>
                   Отменить
                 </Button>
               )}
@@ -242,16 +194,13 @@ export function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Danger Zone */}
         <Card className="border-red-200 dark:border-red-800">
           <CardHeader>
             <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
               Опасная зона
             </CardTitle>
-            <CardDescription>
-              Необратимые действия
-            </CardDescription>
+            <CardDescription>Необратимые действия</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md mb-4">
@@ -260,17 +209,13 @@ export function ProfilePage() {
                 Это действие не может быть отменено.
               </p>
             </div>
-            <Button
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-            >
+            <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Удалить аккаунт
             </Button>
           </CardContent>
         </Card>
 
-        {/* Delete Confirmation Dialog */}
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -282,10 +227,10 @@ export function ProfilePage() {
             <AlertDialogCancel>Отменить</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
-              disabled={isDeleting}
+              disabled={logout.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? (
+              {logout.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Удаляю...

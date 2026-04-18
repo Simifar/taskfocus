@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Task, StatsResponse } from "@/shared/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import type { Task, StatsResponse } from "@/shared/types";
+import { useCreateTask } from "@/features/tasks/hooks";
+import { useDashboardStore } from "@/features/dashboard/store";
+import { ApiError } from "@/shared/lib/fetcher";
+import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
@@ -13,19 +16,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
 import { CreateSubtaskDialog } from "@/features/tasks/components/create-subtask-dialog";
 import { cn } from "@/shared/lib/utils";
-import { Plus, Inbox, CheckCircle2, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2, GripVertical } from "lucide-react";
+import { Plus, Inbox, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { format, addDays } from "date-fns";
-import { ru } from "date-fns/locale";
-import { useAppStore } from "@/features/dashboard/store";
 
 interface InboxViewProps {
   tasks: Task[];
   stats: StatsResponse | null;
-  currentCategory?: string;
   onEdit?: (task: Task) => void;
   onComplete?: (task: Task) => void;
   onArchive?: (taskId: string) => void;
@@ -33,9 +31,6 @@ interface InboxViewProps {
   onAssignToToday?: (taskId: string) => void;
   onAssignToWeek?: (taskId: string) => void;
   onAddTask?: () => void;
-  onAddTaskToInbox?: (task: Task) => void;
-  onReorder?: (tasks: Task[]) => void;
-  // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
@@ -44,7 +39,6 @@ interface InboxViewProps {
 
 export function InboxView({
   tasks,
-  stats,
   onEdit,
   onComplete,
   onArchive,
@@ -52,36 +46,28 @@ export function InboxView({
   onAssignToToday,
   onAssignToWeek,
   onAddTask,
-  onAddTaskToInbox,
-  onReorder,
-  onToggleSubtask,
   onAddSubtask,
-  onEditSubtask,
-  onDeleteSubtask,
 }: InboxViewProps) {
+  const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
+  const createTask = useCreateTask();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
   const [parentTaskForSubtask, setParentTaskForSubtask] = useState<Task | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");
-  const [isQuickAdding, setIsQuickAdding] = useState(false);
 
-  // Inbox задачи: это активные задачи без установленной даты
-  // Более надежная фильтрация
   const inboxTasks = tasks.filter((task) => {
     if (task.status !== "active") return false;
-    // Задача в Inbox если у нее нет dueDateStart ИЛИ (dueDateStart есть но это будущая дата)
     if (!task.dueDateStart) return true;
-    
+
     const startDate = new Date(task.dueDateStart);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     startDate.setHours(0, 0, 0, 0);
-    
-    // Если дата начала в будущем - это не Inbox задача
+
     return startDate.getTime() > today.getTime();
   });
 
-  // Поиск
   const filteredTasks = inboxTasks.filter((task) => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
@@ -89,61 +75,26 @@ export function InboxView({
     return haystack.includes(q);
   });
 
-  // Обработчик назначения на сегодня
-  const handleAssignToToday = async (taskId: string) => {
-    onAssignToToday?.(taskId);
-  };
-
-  // Обработчик назначения на эту неделю
-  const handleAssignToWeek = async (taskId: string) => {
-    onAssignToWeek?.(taskId);
-  };
-
-  // Обработчик быстрого добавления задачи
   const handleQuickAdd = async () => {
     if (!quickAddTitle.trim()) return;
-
-    setIsQuickAdding(true);
     try {
-      const response = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: quickAddTitle.trim(),
-          priority: "medium",
-          energyLevel: 3,
-          category: currentCategory || undefined,
-        }),
+      await createTask.mutateAsync({
+        title: quickAddTitle.trim(),
+        priority: "medium",
+        energyLevel: 3,
+        categoryId: currentCategoryId ?? null,
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.success && data.data) {
-        // Добавляем задачу в локальный state
-        onAddTaskToInbox?.(data.data);
-        toast.success("Задача добавлена!");
-        setQuickAddTitle("");
-      } else {
-        toast.error(data.error?.message || "Ошибка добавления задачи");
-      }
-    } catch {
-      toast.error("Ошибка соединения");
-    } finally {
-      setIsQuickAdding(false);
-    }
-  };
-
-  // Обработчик Enter в поле быстрого добавления
-  const handleQuickAddKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleQuickAdd();
+      toast.success("Задача добавлена!");
+      setQuickAddTitle("");
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Ошибка соединения";
+      toast.error(message);
     }
   };
 
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -156,7 +107,6 @@ export function InboxView({
           </div>
         </div>
 
-        {/* Quick Add */}
         <Card className="border-blue-200 dark:border-blue-800">
           <CardContent className="p-4">
             <div className="flex gap-3">
@@ -166,17 +116,19 @@ export function InboxView({
                   className="border-0 shadow-none text-base placeholder:text-muted-foreground/60 focus-visible:ring-0"
                   value={quickAddTitle}
                   onChange={(e) => setQuickAddTitle(e.target.value)}
-                  onKeyPress={handleQuickAddKeyPress}
-                  disabled={isQuickAdding}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleQuickAdd();
+                  }}
+                  disabled={createTask.isPending}
                 />
               </div>
               <Button
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 shrink-0"
                 onClick={handleQuickAdd}
-                disabled={isQuickAdding || !quickAddTitle.trim()}
+                disabled={createTask.isPending || !quickAddTitle.trim()}
               >
-                {isQuickAdding ? (
+                {createTask.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Plus className="h-4 w-4" />
@@ -189,7 +141,6 @@ export function InboxView({
           </CardContent>
         </Card>
 
-        {/* Search */}
         <div className="relative">
           <Input
             value={searchQuery}
@@ -199,7 +150,6 @@ export function InboxView({
           />
         </div>
 
-        {/* Tasks */}
         {filteredTasks.length > 0 ? (
           <div className="space-y-3">
             {filteredTasks.map((task) => (
@@ -214,18 +164,32 @@ export function InboxView({
                           onChange={() => onComplete?.(task)}
                           className="h-5 w-5 rounded cursor-pointer"
                         />
-                        <h3 className={cn(
-                          "font-medium",
-                          task.status === "completed" && "line-through text-muted-foreground"
-                        )}>
+                        <h3
+                          className={cn(
+                            "font-medium",
+                            task.status === "completed" && "line-through text-muted-foreground",
+                          )}
+                        >
                           {task.title}
                         </h3>
                         <Badge variant="outline" className="text-xs">
                           Энергия: {task.energyLevel}
                         </Badge>
                         {task.priority && (
-                          <Badge variant={task.priority === "high" ? "destructive" : "secondary"} className="text-xs">
-                            {task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий"}
+                          <Badge
+                            variant={task.priority === "high" ? "destructive" : "secondary"}
+                            className="text-xs"
+                          >
+                            {task.priority === "high"
+                              ? "Высокий"
+                              : task.priority === "medium"
+                                ? "Средний"
+                                : "Низкий"}
+                          </Badge>
+                        )}
+                        {task.category && (
+                          <Badge variant="secondary" className="text-xs">
+                            {task.category.name}
                           </Badge>
                         )}
                         {task.subtasks && task.subtasks.length > 0 && (
@@ -239,7 +203,6 @@ export function InboxView({
                       )}
                     </div>
 
-                    {/* Actions Dropdown */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -318,10 +281,8 @@ export function InboxView({
             </CardContent>
           </Card>
         )}
-
       </div>
 
-      {/* Create Subtask Dialog */}
       {parentTaskForSubtask && (
         <CreateSubtaskDialog
           open={subtaskDialogOpen}
@@ -329,9 +290,7 @@ export function InboxView({
           parentTaskId={parentTaskForSubtask.id}
           parentTaskTitle={parentTaskForSubtask.title}
           onSubmit={(parentId, title) => {
-            if (onAddSubtask) {
-              onAddSubtask(parentId, title);
-            }
+            if (onAddSubtask) onAddSubtask(parentId, title);
           }}
         />
       )}

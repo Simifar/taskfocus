@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAppStore } from "@/features/dashboard/store";
-import { ApiResponse, User } from "@/shared/types";
+import { useLogin, useRegister } from "@/features/auth/hooks";
+import { ApiError } from "@/shared/lib/fetcher";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -12,17 +12,21 @@ import { AlertCircle, Brain, CheckCircle, Loader2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 
+function describe(error: unknown, fallback: string) {
+  if (error instanceof ApiError) return error.message;
+  return fallback;
+}
+
 export function AuthPage() {
-  const { setUser } = useAppStore();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Login state
+  const login = useLogin();
+  const register = useRegister();
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // Register state
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
@@ -31,65 +35,36 @@ export function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
-
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
-      });
-
-      const data: ApiResponse<User> = await response.json();
-
-      if (data.success && data.data) {
-        setUser(data.data);
-        toast.success("Добро пожаловать!");
-      } else {
-        setError(data.error?.message || "Ошибка входа");
-      }
-    } catch {
-      setError("Ошибка соединения");
-    } finally {
-      setIsLoading(false);
+      await login.mutateAsync({ email: loginEmail, password: loginPassword });
+      toast.success("Добро пожаловать!");
+    } catch (err) {
+      setError(describe(err, "Ошибка соединения"));
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
-
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: registerEmail,
-          username: registerUsername,
-          password: registerPassword,
-          name: registerName || undefined,
-        }),
+      await register.mutateAsync({
+        email: registerEmail,
+        username: registerUsername,
+        password: registerPassword,
       });
-
-      const data: ApiResponse<User> = await response.json();
-
-      if (data.success && data.data) {
-        setUser(data.data);
-        toast.success("Аккаунт создан! Добро пожаловать!");
-      } else {
-        setError(data.error?.message || "Ошибка регистрации");
+      if (registerName.trim()) {
+        // best-effort post-register name update is handled in Profile page
       }
-    } catch {
-      setError("Ошибка соединения");
-    } finally {
-      setIsLoading(false);
+      toast.success("Аккаунт создан! Добро пожаловать!");
+    } catch (err) {
+      setError(describe(err, "Ошибка соединения"));
     }
   };
 
+  const isLoading = login.isPending || register.isPending;
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left side - Branding */}
       <div className="lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 p-8 lg:p-16 flex flex-col justify-center text-white">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center gap-3 mb-8">
@@ -139,7 +114,6 @@ export function AuthPage() {
         </div>
       </div>
 
-      {/* Right side - Auth form */}
       <div className="lg:w-1/2 p-8 lg:p-16 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="w-full max-w-md">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")}>

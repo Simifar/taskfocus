@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAppStore } from "@/features/dashboard/store";
-import { ApiResponse, Task } from "@/shared/types";
+import { useUpdateTask } from "@/features/tasks/hooks";
+import { useCategories } from "@/features/categories/hooks";
+import { ApiError } from "@/shared/lib/fetcher";
+import type { Task } from "@/shared/types";
 import {
   Dialog,
   DialogContent,
@@ -29,39 +31,33 @@ interface EditTaskDialogProps {
   task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categories: string[];
 }
 
-export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTaskDialogProps) {
-  const { updateTask } = useAppStore();
-  const [isLoading, setIsLoading] = useState(false);
+export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps) {
+  const { data: categories = [] } = useCategories();
+  const updateTask = useUpdateTask();
 
   const [title, setTitle] = useState(task.title);
-  const [description, setDescription] = useState(task.description || "");
+  const [description, setDescription] = useState(task.description ?? "");
   const [priority, setPriority] = useState<"low" | "medium" | "high">(task.priority);
   const [energyLevel, setEnergyLevel] = useState(task.energyLevel);
-  const [category, setCategory] = useState(task.category || "");
+  const [categoryId, setCategoryId] = useState<string>(task.categoryId ?? "");
   const [dueDateStart, setDueDateStart] = useState(
-    task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : ""
+    task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : "",
   );
   const [dueDateEnd, setDueDateEnd] = useState(
-    task.dueDateEnd ? new Date(task.dueDateEnd).toISOString().split("T")[0] : ""
+    task.dueDateEnd ? new Date(task.dueDateEnd).toISOString().split("T")[0] : "",
   );
 
   useEffect(() => {
-    if (open) {
-      setTitle(task.title);
-      setDescription(task.description || "");
-      setPriority(task.priority);
-      setEnergyLevel(task.energyLevel);
-      setCategory(task.category || "");
-      setDueDateStart(
-        task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : ""
-      );
-      setDueDateEnd(
-        task.dueDateEnd ? new Date(task.dueDateEnd).toISOString().split("T")[0] : ""
-      );
-    }
+    if (!open) return;
+    setTitle(task.title);
+    setDescription(task.description ?? "");
+    setPriority(task.priority);
+    setEnergyLevel(task.energyLevel);
+    setCategoryId(task.categoryId ?? "");
+    setDueDateStart(task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : "");
+    setDueDateEnd(task.dueDateEnd ? new Date(task.dueDateEnd).toISOString().split("T")[0] : "");
   }, [open, task]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,35 +67,24 @@ export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTas
       return;
     }
 
-    setIsLoading(true);
     try {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await updateTask.mutateAsync({
+        id: task.id,
+        input: {
           title: title.trim(),
           description: description.trim() || null,
           priority,
           energyLevel,
-          category: category || null,
-          dueDateStart: dueDateStart || null,
-          dueDateEnd: dueDateEnd || null,
-        }),
+          categoryId: categoryId || null,
+          dueDateStart: dueDateStart ? new Date(dueDateStart).toISOString() : null,
+          dueDateEnd: dueDateEnd ? new Date(dueDateEnd).toISOString() : null,
+        },
       });
-
-      const data: ApiResponse<Task> = await response.json();
-
-      if (data.success && data.data) {
-        updateTask(task.id, data.data);
-        toast.success("Задача обновлена");
-        onOpenChange(false);
-      } else {
-        toast.error(data.error?.message || "Ошибка обновления задачи");
-      }
-    } catch {
-      toast.error("Ошибка соединения");
-    } finally {
-      setIsLoading(false);
+      toast.success("Задача обновлена");
+      onOpenChange(false);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Ошибка соединения";
+      toast.error(message);
     }
   };
 
@@ -109,9 +94,7 @@ export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTas
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Редактировать задачу</DialogTitle>
-            <DialogDescription>
-              Измените параметры задачи.
-            </DialogDescription>
+            <DialogDescription>Измените параметры задачи.</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -156,15 +139,18 @@ export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTas
 
               <div className="space-y-2">
                 <Label>List / Project</Label>
-                <Select value={category} onValueChange={(v) => setCategory(v)}>
+                <Select
+                  value={categoryId === "" ? "__none__" : categoryId}
+                  onValueChange={(v) => setCategoryId(v === "__none__" ? "" : v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Без списка" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Без списка</SelectItem>
-                    {categories.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
+                    <SelectItem value="__none__">Без списка</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -175,7 +161,7 @@ export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTas
                 <Label>Уровень энергии</Label>
                 <Select
                   value={energyLevel.toString()}
-                  onValueChange={(v) => setEnergyLevel(parseInt(v))}
+                  onValueChange={(v) => setEnergyLevel(parseInt(v, 10))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -195,9 +181,7 @@ export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTas
               <Label>Мягкий дедлайн (диапазон дат)</Label>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label htmlFor="edit-dateStart" className="text-xs text-muted-foreground">
-                    От
-                  </Label>
+                  <Label htmlFor="edit-dateStart" className="text-xs text-muted-foreground">От</Label>
                   <Input
                     id="edit-dateStart"
                     type="date"
@@ -206,9 +190,7 @@ export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTas
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-dateEnd" className="text-xs text-muted-foreground">
-                    До
-                  </Label>
+                  <Label htmlFor="edit-dateEnd" className="text-xs text-muted-foreground">До</Label>
                   <Input
                     id="edit-dateEnd"
                     type="date"
@@ -224,8 +206,8 @@ export function EditTaskDialog({ task, open, onOpenChange, categories }: EditTas
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Отмена
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={updateTask.isPending}>
+              {updateTask.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Сохранить
             </Button>
           </DialogFooter>

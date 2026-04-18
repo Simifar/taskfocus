@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Progress } from "@/shared/ui/progress";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
-import { EnergyStatus } from "../shared/energy-status";
+import { EnergyStatus } from "./energy-status";
 import {
   CheckCircle2,
   Calendar,

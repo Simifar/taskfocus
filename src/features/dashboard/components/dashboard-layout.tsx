@@ -2,190 +2,128 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppStore } from "@/features/dashboard/store";
-import { ApiResponse, Task, TasksListResponse, StatsResponse } from "@/shared/types";
-import { useDashboardState, DashboardView } from "@/features/dashboard/hooks/use-dashboard-state";
-import { DashboardSidebar } from "./sidebar/dashboard-sidebar";
-import { TodayView } from "./views/today-view";
-import { InboxView } from "./views/inbox-view";
-import { WeekView } from "./views/week-view";
-import { CalendarView } from "./views/calendar-view";
-import { DayView } from "./views/day-view";
-import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
-import { EditTaskDialog } from "@/features/tasks/components/edit-task-dialog";
+import { addDays } from "date-fns";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { addDays } from "date-fns";
+
+import type { Task } from "@/shared/types";
+import { ApiError } from "@/shared/lib/fetcher";
+import { useCurrentUser, useLogout } from "@/features/auth/hooks";
+import { useStats } from "@/features/stats/hooks";
+import {
+  useCreateSubtask,
+  useDeleteTask,
+  useReorderTasks,
+  useTasks,
+  useToggleComplete,
+  useUpdateTask,
+} from "@/features/tasks/hooks";
+import { useDashboardStore, useSelectedDate } from "@/features/dashboard/store";
+
+import { DashboardSidebar } from "./dashboard-sidebar";
+import { TodayView } from "./today-view";
+import { InboxView } from "./inbox-view";
+import { WeekView } from "./week-view";
+import { CalendarView } from "./calendar-view";
+import { DayView } from "./day-view";
+import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
+import { EditTaskDialog } from "@/features/tasks/components/edit-task-dialog";
+
+function reportError(err: unknown, fallback: string) {
+  const message = err instanceof ApiError ? err.message : fallback;
+  toast.error(message);
+}
 
 export function DashboardLayout() {
   const router = useRouter();
-  const {
-    user,
-    tasks,
-    setTasks,
-    updateTask,
-    removeTask,
-    addSubtask,
-    updateSubtask,
-    removeSubtask,
-    stats,
-    setStats,
-    logout: logoutStore,
-  } = useAppStore();
+  const { data: user } = useCurrentUser();
+  const logout = useLogout();
 
-  const { state, actions } = useDashboardState();
-  const [isLoading, setIsLoading] = useState(true);
+  const currentView = useDashboardStore((s) => s.currentView);
+  const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
+  const currentEnergy = useDashboardStore((s) => s.currentEnergy);
+  const showCompleted = useDashboardStore((s) => s.showCompleted);
+  const setEnergy = useDashboardStore((s) => s.setEnergy);
+  const setShowCompleted = useDashboardStore((s) => s.setShowCompleted);
+  const setView = useDashboardStore((s) => s.setView);
+  const selectedDate = useSelectedDate();
+
+  const tasksQuery = useTasks({ categoryId: currentCategoryId });
+  const statsQuery = useStats();
+
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+  const toggleComplete = useToggleComplete();
+  const createSubtask = useCreateSubtask();
+  const reorderTasks = useReorderTasks();
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const filteredTasks = state.currentCategory
-    ? tasks.filter((task) => task.category === state.currentCategory)
-    : tasks;
-
-  // Authentication check
   useEffect(() => {
-    if (!user) {
-      router.push("/");
-    }
+    if (!user) router.push("/");
   }, [user, router]);
 
-  // Load data
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
+  const tasks = tasksQuery.data?.items ?? [];
+  const stats = statsQuery.data ?? null;
+  const isLoading = tasksQuery.isLoading;
 
-      setIsLoading(true);
-      try {
-        const tasksResponse = await fetch("/api/tasks");
-        const tasksData: ApiResponse<TasksListResponse> = await tasksResponse.json();
-        if (tasksData.success && tasksData.data) {
-          setTasks(tasksData.data.items);
-        }
-
-        // Load stats
-        const statsResponse = await fetch("/api/stats");
-        const statsData: ApiResponse<StatsResponse> = await statsResponse.json();
-        if (statsData.success && statsData.data) {
-          setStats(statsData.data);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to load data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [setTasks, setStats]);
-
-  // Handlers
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      logoutStore();
+      await logout.mutateAsync();
       toast.success("Logged out");
       router.push("/");
-    } catch {
-      toast.error("Logout failed");
+    } catch (err) {
+      reportError(err, "Logout failed");
     }
   };
 
   const handleToggleCompleteTask = async (task: Task) => {
     try {
-      const nextStatus = task.status === "completed" ? "active" : "completed";
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
+      await toggleComplete.mutateAsync({
+        id: task.id,
+        completed: task.status !== "completed",
       });
-      const data: ApiResponse<Task> = await response.json();
-
-      if (data.success && data.data) {
-        updateTask(task.id, data.data);
-        toast.success(
-          nextStatus === "completed" ? "Task completed! ✨" : "Task moved back"
-        );
-
-        // Refresh stats
-        const statsResponse = await fetch("/api/stats");
-        const statsData: ApiResponse<StatsResponse> = await statsResponse.json();
-        if (statsData.success && statsData.data) {
-          setStats(statsData.data);
-        }
-      } else {
-        toast.error(data.error?.message || "Failed to update task");
-      }
-    } catch {
-      toast.error("Connection error");
+      toast.success(
+        task.status === "completed" ? "Task moved back" : "Task completed! ✨",
+      );
+    } catch (err) {
+      reportError(err, "Failed to update task");
     }
   };
 
   const handleArchiveTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "archived" }),
-      });
-      const data: ApiResponse<Task> = await response.json();
-
-      if (data.success && data.data) {
-        updateTask(taskId, data.data);
-        toast.success("Task archived");
-      }
-    } catch {
-      toast.error("Failed to archive");
+      await updateTask.mutateAsync({ id: taskId, input: { status: "archived" } });
+      toast.success("Task archived");
+    } catch (err) {
+      reportError(err, "Failed to archive");
     }
   };
 
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        removeTask(taskId);
-        toast.success("Task deleted");
-      }
-    } catch {
-      toast.error("Failed to delete");
+      await deleteTask.mutateAsync(taskId);
+      toast.success("Task deleted");
+    } catch (err) {
+      reportError(err, "Failed to delete");
     }
   };
 
   const handleAssignToToday = async (taskId: string) => {
     try {
       const today = new Date();
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await updateTask.mutateAsync({
+        id: taskId,
+        input: {
           dueDateStart: today.toISOString(),
           dueDateEnd: today.toISOString(),
-        }),
+        },
       });
-      const data: ApiResponse<Task> = await response.json();
-
-      if (data.success && data.data) {
-        updateTask(taskId, data.data);
-        toast.success("Задача назначена на сегодня");
-
-        // Refresh stats
-        const statsResponse = await fetch("/api/stats");
-        const statsData: ApiResponse<StatsResponse> = await statsResponse.json();
-        if (statsData.success && statsData.data) {
-          setStats(statsData.data);
-        }
-      } else {
-        toast.error(data.error?.message || "Ошибка назначения задачи");
-      }
-    } catch {
-      toast.error("Ошибка соединения");
+      toast.success("Задача назначена на сегодня");
+    } catch (err) {
+      reportError(err, "Ошибка назначения задачи");
     }
   };
 
@@ -193,98 +131,48 @@ export function DashboardLayout() {
     try {
       const today = new Date();
       const weekEnd = addDays(today, 7);
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await updateTask.mutateAsync({
+        id: taskId,
+        input: {
           dueDateStart: today.toISOString(),
           dueDateEnd: weekEnd.toISOString(),
-        }),
+        },
       });
-      const data: ApiResponse<Task> = await response.json();
-
-      if (data.success && data.data) {
-        updateTask(taskId, data.data);
-        toast.success("Задача назначена на неделю");
-
-        // Refresh stats
-        const statsResponse = await fetch("/api/stats");
-        const statsData: ApiResponse<StatsResponse> = await statsResponse.json();
-        if (statsData.success && statsData.data) {
-          setStats(statsData.data);
-        }
-      } else {
-        toast.error(data.error?.message || "Ошибка назначения задачи");
-      }
-    } catch {
-      toast.error("Ошибка соединения");
+      toast.success("Задача назначена на неделю");
+    } catch (err) {
+      reportError(err, "Ошибка назначения задачи");
     }
   };
 
-  const handleReorderTasks = (reorderedTasks: Task[]) => {
-    setTasks(reorderedTasks);
-  };
-
-  // Subtask handlers
   const handleToggleSubtask = async (subtask: Task) => {
     try {
-      const nextStatus = subtask.status === "completed" ? "active" : "completed";
-      const response = await fetch(`/api/tasks/${subtask.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
+      await toggleComplete.mutateAsync({
+        id: subtask.id,
+        completed: subtask.status !== "completed",
       });
-      const data: ApiResponse<Task> = await response.json();
-
-      if (data.success && data.data) {
-        updateSubtask(subtask.id, data.data);
-        toast.success(
-          nextStatus === "completed" ? "Subtask completed! ✨" : "Subtask moved back"
-        );
-      } else {
-        toast.error(data.error?.message || "Failed to update subtask");
-      }
-    } catch {
-      toast.error("Connection error");
+      toast.success(
+        subtask.status === "completed" ? "Subtask moved back" : "Subtask completed! ✨",
+      );
+    } catch (err) {
+      reportError(err, "Failed to update subtask");
     }
   };
 
   const handleAddSubtask = async (parentId: string, title: string) => {
     try {
-      const response = await fetch("/api/subtasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parentId: parentId, title }),
-      });
-      const data: ApiResponse<Task> = await response.json();
-
-      if (data.success && data.data) {
-        addSubtask(parentId, data.data);
-        toast.success("Subtask added!");
-      } else {
-        toast.error(data.error?.message || "Failed to add subtask");
-      }
-    } catch {
-      toast.error("Connection error");
+      await createSubtask.mutateAsync({ parentId, title });
+      toast.success("Subtask added!");
+    } catch (err) {
+      reportError(err, "Failed to add subtask");
     }
-  };
-
-  const handleEditSubtask = async (subtask: Task) => {
-    setEditingTask(subtask);
   };
 
   const handleDeleteSubtask = async (subtaskId: string) => {
     try {
-      const response = await fetch(`/api/tasks/${subtaskId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        removeSubtask(subtaskId);
-        toast.success("Subtask deleted");
-      }
-    } catch {
-      toast.error("Failed to delete subtask");
+      await deleteTask.mutateAsync(subtaskId);
+      toast.success("Subtask deleted");
+    } catch (err) {
+      reportError(err, "Failed to delete subtask");
     }
   };
 
@@ -294,23 +182,30 @@ export function DashboardLayout() {
   };
 
   const handleSelectDay = (date: Date) => {
-    actions.setView("day", undefined, date);
+    setView("day", undefined, date);
   };
 
   const handleBackFromDay = () => {
-    actions.setView("today");
+    setView("today");
+  };
+
+  const handleReorder = async (reordered: Task[]) => {
+    try {
+      await reorderTasks.mutateAsync({
+        items: reordered.map((task, index) => ({ id: task.id, position: index })),
+      });
+    } catch (err) {
+      reportError(err, "Не удалось сохранить порядок");
+    }
   };
 
   const handleAddTask = () => {
-    // For inbox view, don't set a date so tasks are created without dates
-    if (state.currentView === "inbox") {
+    if (currentView === "inbox") {
       setPreSelectedDate(undefined);
+    } else if (currentView === "day" && selectedDate) {
+      setPreSelectedDate(selectedDate);
     } else {
-      // If we're in day view, use the selected date, otherwise use today
-      const dateToUse = state.currentView === "day" && state.selectedDate 
-        ? state.selectedDate 
-        : new Date();
-      setPreSelectedDate(dateToUse);
+      setPreSelectedDate(new Date());
     }
     setCreateDialogOpen(true);
   };
@@ -325,57 +220,41 @@ export function DashboardLayout() {
 
   return (
     <div className="flex h-screen bg-white dark:bg-gray-950">
-      {/* Sidebar */}
       <DashboardSidebar
-        user={user}
+        user={user ?? null}
         stats={stats}
-        tasks={filteredTasks}
-        currentView={state.currentView}
-        currentCategory={state.currentCategory}
-        categories={state.categories}
-        onViewChange={(view: DashboardView) => actions.setView(view)}
-        onCategorySelect={(category) => actions.setCategory(category)}
-        onAddCategory={(category) => actions.addCategory(category)}
+        tasks={tasks}
         onLogout={handleLogout}
       />
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Content Area with Padding */}
         <div className="flex-1 overflow-auto p-6 md:p-8">
-          {state.currentCategory && (
-            <div className="mb-4 flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200">
-              <span className="font-semibold">Project:</span>
-              <span>{state.currentCategory}</span>
-            </div>
-          )}
-          {state.currentView === "today" && (
+          {currentView === "today" && (
             <TodayView
-              tasks={filteredTasks}
+              tasks={tasks}
               stats={stats}
-              currentEnergy={state.currentEnergy}
-              onEnergyChange={actions.setEnergy}
+              currentEnergy={currentEnergy}
+              onEnergyChange={setEnergy}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
               onAddTask={handleAddTask}
-              onReorder={handleReorderTasks}
-              showCompleted={state.showCompleted}
-              onShowCompletedChange={actions.setShowCompleted}
+              onReorder={handleReorder}
+              showCompleted={showCompleted}
+              onShowCompletedChange={setShowCompleted}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
-              onEditSubtask={handleEditSubtask}
+              onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
               isLoading={isLoading}
             />
           )}
 
-          {state.currentView === "inbox" && (
+          {currentView === "inbox" && (
             <InboxView
-              tasks={filteredTasks}
+              tasks={tasks}
               stats={stats}
-              currentCategory={state.currentCategory}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
@@ -385,14 +264,14 @@ export function DashboardLayout() {
               onAssignToWeek={handleAssignToWeek}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
-              onEditSubtask={handleEditSubtask}
+              onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
             />
           )}
 
-          {state.currentView === "week" && (
+          {currentView === "week" && (
             <WeekView
-              tasks={filteredTasks}
+              tasks={tasks}
               stats={stats}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
@@ -402,14 +281,14 @@ export function DashboardLayout() {
               onSelectDay={handleSelectDay}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
-              onEditSubtask={handleEditSubtask}
+              onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
             />
           )}
 
-          {state.currentView === "calendar" && (
+          {currentView === "calendar" && (
             <CalendarView
-              tasks={filteredTasks}
+              tasks={tasks}
               stats={stats}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
@@ -419,16 +298,16 @@ export function DashboardLayout() {
               onSelectDay={handleSelectDay}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
-              onEditSubtask={handleEditSubtask}
+              onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
             />
           )}
 
-          {state.currentView === "day" && state.selectedDate && (
+          {currentView === "day" && selectedDate && (
             <DayView
-              tasks={filteredTasks}
+              tasks={tasks}
               stats={stats}
-              selectedDate={state.selectedDate}
+              selectedDate={selectedDate}
               onBack={handleBackFromDay}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
@@ -437,31 +316,27 @@ export function DashboardLayout() {
               onAddTask={handleAddTask}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
-              onEditSubtask={handleEditSubtask}
+              onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
             />
           )}
         </div>
       </div>
 
-      {/* Dialogs */}
-      <CreateTaskDialog 
-        open={createDialogOpen} 
+      <CreateTaskDialog
+        open={createDialogOpen}
         onOpenChange={(open) => {
-          if (!open) {
-            setPreSelectedDate(undefined);
-          }
+          if (!open) setPreSelectedDate(undefined);
           setCreateDialogOpen(open);
         }}
         preSelectedDate={preSelectedDate}
-        categories={state.categories}
-        currentCategory={state.currentCategory}
+        currentCategoryId={currentCategoryId}
+        defaultEnergy={currentEnergy}
       />
       {editingTask && (
         <EditTaskDialog
           task={editingTask}
           open={!!editingTask}
-          categories={state.categories}
           onOpenChange={(open) => !open && setEditingTask(null)}
         />
       )}
