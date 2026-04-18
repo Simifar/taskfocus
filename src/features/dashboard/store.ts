@@ -39,16 +39,18 @@ const defaults: DashboardState = {
 };
 
 export const useDashboardStore = create<DashboardState & DashboardActions>()(
-  persist(
-    (set, get) => ({
+  // persist(
+  (set, get) => ({
       ...defaults,
 
-      setView: (view, categoryId, selectedDate) =>
-        set({
+      setView: (view, categoryId, selectedDate) => {
+        console.log('Store setView called with:', { view, categoryId, selectedDate });
+        return set({
           currentView: view,
           currentCategoryId: categoryId ?? null,
           selectedDateIso: selectedDate ? selectedDate.toISOString() : null,
-        }),
+        });
+      },
 
       setCategory: (categoryId) => set({ currentCategoryId: categoryId }),
       setEnergy: (level) => set({ currentEnergy: level }),
@@ -74,18 +76,18 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           sortBy: "energy",
           sortOrder: "asc",
         }),
-    }),
-    {
-      name: "taskfocus.dashboard",
-      partialize: (state) => ({
-        currentView: state.currentView,
-        currentCategoryId: state.currentCategoryId,
-        sortBy: state.sortBy,
-        sortOrder: state.sortOrder,
-        showCompleted: state.showCompleted,
-      }),
-    },
-  ),
+    })
+  // {
+  //   name: "taskfocus.dashboard",
+  //   partialize: (state) => ({
+  //     currentView: state.currentView,
+  //     currentCategoryId: state.currentCategoryId,
+  //     sortBy: state.sortBy,
+  //     sortOrder: state.sortOrder,
+  //     showCompleted: state.showCompleted,
+  //   }),
+  // },
+  // ),
 );
 
 export function useHasActiveFilters(): boolean {
@@ -100,5 +102,6 @@ export function useHasActiveFilters(): boolean {
 }
 
 export function useSelectedDate(): Date | null {
-  return useDashboardStore((s) => (s.selectedDateIso ? new Date(s.selectedDateIso) : null));
+  const selectedDateIso = useDashboardStore((s) => s.selectedDateIso);
+  return selectedDateIso ? new Date(selectedDateIso) : null;
 }

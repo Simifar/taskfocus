@@ -27,7 +27,6 @@ interface CalendarViewProps {
   onDelete?: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
   onSelectDay?: (date: Date) => void;
-  // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
@@ -48,6 +47,7 @@ export function CalendarView({
   onEditSubtask,
   onDeleteSubtask,
 }: CalendarViewProps) {
+  console.log('CalendarView render');
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const monthStart = startOfMonth(currentMonth);
