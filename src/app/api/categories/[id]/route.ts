@@ -10,9 +10,52 @@ const updateCategorySchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/)
     .nullish(),
   icon: z.string().max(50).nullish(),
+  description: z.string().max(200).nullish(),
+  isFavorite: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
+  parentId: z.string().cuid().nullish(),
+  position: z.number().int().min(0).optional(),
 });
 
 type RouteCtx = { params: Promise<{ id: string }> };
+
+export const GET = withAuth<RouteCtx>(async (_request, { params, user }) => {
+  const { id } = await params;
+  
+  const category = await db.category.findFirst({
+    where: { id, userId: user.id },
+    include: {
+      _count: {
+        select: {
+          tasks: true,
+        },
+      },
+    },
+  });
+  
+  if (!category) return notFound("Категория не найдена");
+  
+  // Add computed stats
+  const [activeCount, completedCount] = await Promise.all([
+    db.task.count({
+      where: { categoryId: category.id, status: "active" },
+    }),
+    db.task.count({
+      where: { categoryId: category.id, status: "completed" },
+    }),
+  ]);
+  
+  const categoryWithStats = {
+    ...category,
+    _count: {
+      tasks: category._count.tasks,
+      activeTasks: activeCount,
+      completedTasks: completedCount,
+    },
+  };
+  
+  return ok(categoryWithStats);
+});
 
 export const PATCH = withAuth<RouteCtx>(async (request, { params, user }) => {
   const { id } = await params;

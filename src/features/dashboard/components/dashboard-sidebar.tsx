@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import type { Task, User, StatsResponse } from "@/shared/types";
 import { useCategories, useCreateCategory } from "@/features/categories/hooks";
 import { useDashboardStore, type DashboardView } from "@/features/dashboard/store";
+import { ProjectSidebar } from "@/features/projects/components/project-sidebar";
+import { useCreateProject, useToggleProjectFavorite, useArchiveProject, useUpdateProject, useDeleteProject } from "@/features/projects/hooks";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import {
@@ -16,6 +18,7 @@ import {
   Plus,
   Brain,
   BarChart3,
+  FolderOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
@@ -33,6 +36,11 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
   const router = useRouter();
   const { data: categories = [] } = useCategories();
   const createCategory = useCreateCategory();
+  const createProject = useCreateProject();
+  const toggleFavorite = useToggleProjectFavorite();
+  const archiveProject = useArchiveProject();
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
 
   const currentView = useDashboardStore((s) => s.currentView);
   const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
@@ -84,6 +92,10 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
     { id: "calendar", label: "Calendar", icon: <BarChart3 className="h-4 w-4" /> },
   ];
 
+  const handleProjectsNavigation = () => {
+    router.push("/projects");
+  };
+
   const handleAddCategory = async () => {
     const name = window.prompt("Название нового листа / проекта:");
     if (!name || !name.trim()) return;
@@ -92,6 +104,42 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
       setCategory(created.id);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Не удалось создать категорию";
+      toast.error(message);
+    }
+  };
+
+  const handleCreateProject = () => {
+    // This would open a more sophisticated project creation dialog
+    handleAddCategory();
+  };
+
+  const handleProjectSelect = (projectId: string | null) => {
+    setCategory(projectId);
+    if (projectId) {
+      setView("inbox");
+    }
+  };
+
+  const handleProjectAction = async (action: string, projectId: string) => {
+    try {
+      switch (action) {
+        case "toggleFavorite":
+          await toggleFavorite.mutateAsync(projectId);
+          break;
+        case "archive":
+          await archiveProject.mutateAsync(projectId);
+          break;
+        case "delete":
+          if (window.confirm("Are you sure you want to delete this project?")) {
+            await deleteProject.mutateAsync(projectId);
+            if (currentCategoryId === projectId) {
+              setCategory(null);
+            }
+          }
+          break;
+      }
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to perform action";
       toast.error(message);
     }
   };
@@ -152,49 +200,35 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
         </div>
 
         <Separator className="my-4" />
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">PROJECTS</p>
-          <div className="space-y-1">
-            <Button
-              variant={!currentCategoryId ? "default" : "ghost"}
-              className={cn(
-                "w-full justify-start text-sm",
-                !currentCategoryId && "bg-emerald-600 hover:bg-emerald-700 text-white",
-              )}
-              onClick={() => setCategory(null)}
-            >
-              <span>All projects</span>
-            </Button>
-            {categories.length > 0 ? (
-              categories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={currentCategoryId === category.id ? "default" : "ghost"}
-                  className={cn(
-                    "w-full justify-between text-sm",
-                    currentCategoryId === category.id && "bg-emerald-600 hover:bg-emerald-700 text-white",
-                  )}
-                  onClick={() => setCategory(category.id)}
-                >
-                  <span className="truncate">{category.name}</span>
-                </Button>
-              ))
-            ) : (
-              <Button variant="ghost" className="w-full justify-start text-sm" disabled>
-                <span className="text-muted-foreground">No projects yet</span>
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-sm gap-2"
-              onClick={handleAddCategory}
-              disabled={createCategory.isPending}
-            >
-              <Plus className="h-3 w-3" />
-              <span className="text-xs">Add Project</span>
-            </Button>
-          </div>
+        <div className="mb-6">
+          <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">MANAGEMENT</p>
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2"
+            onClick={handleProjectsNavigation}
+          >
+            <FolderOpen className="h-4 w-4 text-blue-500" />
+            <span>Manage Projects</span>
+          </Button>
         </div>
+
+        <Separator className="my-4" />
+        <ProjectSidebar
+          projects={categories}
+          selectedProjectId={currentCategoryId}
+          onProjectSelect={handleProjectSelect}
+          onCreateProject={handleCreateProject}
+          onToggleFavorite={(id) => handleProjectAction("toggleFavorite", id)}
+          onArchiveProject={(id) => handleProjectAction("archive", id)}
+          onEditProject={(project) => {
+            // TODO: Implement edit dialog
+            const newName = window.prompt("Edit project name:", project.name);
+            if (newName && newName.trim() && newName !== project.name) {
+              updateProject.mutateAsync({ id: project.id, data: { name: newName.trim() } });
+            }
+          }}
+          onDeleteProject={(id) => handleProjectAction("delete", id)}
+        />
       </div>
 
       <div className="border-t border-gray-200 dark:border-gray-800 p-3 space-y-2">

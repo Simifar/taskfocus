@@ -15,8 +15,20 @@ export interface Category {
   name: string;
   color: string | null;
   icon: string | null;
+  description: string | null;
+  isFavorite: boolean;
+  isArchived: boolean;
+  parentId: string | null;
+  position: number;
   createdAt: string;
   updatedAt: string;
+  children?: Category[];
+  parent?: Category | null;
+  _count?: {
+    tasks: number;
+    activeTasks: number;
+    completedTasks: number;
+  };
 }
 
 export interface Task {
@@ -61,4 +73,26 @@ export interface StatsResponse {
   completedThisWeek: number;
   completedToday: number;
   totalTasks: number;
+}
+
+export interface ProjectStatsResponse {
+  totalProjects: number;
+  activeProjects: number;
+  archivedProjects: number;
+  favoriteProjects: number;
+  projectsWithTasks: number;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  tasks: Array<{
+    title: string;
+    description?: string;
+    priority?: Priority;
+    energyLevel?: number;
+  }>;
 }
