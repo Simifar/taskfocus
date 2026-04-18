@@ -176,6 +176,65 @@ export function DashboardLayout() {
     }
   };
 
+  const handleBatchArchive = async (taskIds: string[]) => {
+    try {
+      await Promise.all(
+        taskIds.map(id => updateTask.mutateAsync({ id, input: { status: "archived" } }))
+      );
+      toast.success(`${taskIds.length} задач отправлено в архив`);
+    } catch (err) {
+      reportError(err, "Ошибка архивации задач");
+    }
+  };
+
+  const handleBatchDelete = async (taskIds: string[]) => {
+    try {
+      await Promise.all(
+        taskIds.map(id => deleteTask.mutateAsync(id))
+      );
+      toast.success(`${taskIds.length} задач удалено`);
+    } catch (err) {
+      reportError(err, "Ошибка удаления задач");
+    }
+  };
+
+  const handleBatchAssignToToday = async (taskIds: string[]) => {
+    try {
+      const today = new Date();
+      await Promise.all(
+        taskIds.map(id => updateTask.mutateAsync({
+          id,
+          input: {
+            dueDateStart: today.toISOString(),
+            dueDateEnd: today.toISOString(),
+          },
+        }))
+      );
+      toast.success(`${taskIds.length} задач назначено на сегодня`);
+    } catch (err) {
+      reportError(err, "Ошибка назначения задач");
+    }
+  };
+
+  const handleBatchAssignToWeek = async (taskIds: string[]) => {
+    try {
+      const today = new Date();
+      const weekEnd = addDays(today, 7);
+      await Promise.all(
+        taskIds.map(id => updateTask.mutateAsync({
+          id,
+          input: {
+            dueDateStart: today.toISOString(),
+            dueDateEnd: weekEnd.toISOString(),
+          },
+        }))
+      );
+      toast.success(`${taskIds.length} задач назначено на неделю`);
+    } catch (err) {
+      reportError(err, "Ошибка назначения задач");
+    }
+  };
+
   const handleCreateTaskWithDate = (date: Date) => {
     setPreSelectedDate(date);
     setCreateDialogOpen(true);
@@ -266,6 +325,10 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onBatchArchive={handleBatchArchive}
+              onBatchDelete={handleBatchDelete}
+              onBatchAssignToToday={handleBatchAssignToToday}
+              onBatchAssignToWeek={handleBatchAssignToWeek}
             />
           )}
 
