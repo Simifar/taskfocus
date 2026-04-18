@@ -11,10 +11,10 @@ export const categoryKeys = {
   list: () => ["categories", "list"] as const,
 };
 
-export function useCategories() {
+export function useCategories(includeArchived = false) {
   return useQuery({
-    queryKey: categoryKeys.list(),
-    queryFn: categoriesApi.list,
+    queryKey: [...categoryKeys.list(), includeArchived],
+    queryFn: () => categoriesApi.list(includeArchived),
     staleTime: 5 * 60 * 1000,
   });
 }

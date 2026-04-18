@@ -69,19 +69,25 @@ export default function ProjectsPage() {
 
   const handleToggleFavorite = async (id: string) => {
     try {
-      await toggleFavorite.mutateAsync(id);
+      const updatedProject = await toggleFavorite.mutateAsync(id);
+      toast.success("Project favorite status updated");
+      return updatedProject;
     } catch (error) {
       const message = error instanceof ApiError ? error.message : "Failed to toggle favorite";
       toast.error(message);
+      throw error;
     }
   };
 
   const handleArchiveProject = async (id: string) => {
     try {
-      await archiveProject.mutateAsync(id);
+      const updatedProject = await archiveProject.mutateAsync(id);
+      toast.success("Project archived successfully");
+      return updatedProject;
     } catch (error) {
       const message = error instanceof ApiError ? error.message : "Failed to archive project";
       toast.error(message);
+      throw error;
     }
   };
 
