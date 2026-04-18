@@ -74,10 +74,13 @@ export function CalendarView({
   });
 
   // Добавляем дни следующего месяца до конца недели
-  while (calendarDays[calendarDays.length - 1].getDay() !== 0) {
-    const lastDay = calendarDays[calendarDays.length - 1];
-    calendarDays.push(new Date(lastDay.getTime() + 24 * 60 * 60 * 1000));
+  const additionalDays: Date[] = [];
+  let lastDay = calendarDays[calendarDays.length - 1];
+  while (lastDay.getDay() !== 0) {
+    lastDay = new Date(lastDay.getTime() + 24 * 60 * 60 * 1000);
+    additionalDays.push(lastDay);
   }
+  const finalCalendarDays = [...calendarDays, ...additionalDays];
 
   // Фильтруем активные задачи
   const activeTasks = tasks.filter((t) => t.status === "active" && t.dueDateStart);
@@ -142,7 +145,7 @@ export function CalendarView({
 
           {/* Calendar days */}
           <div className="grid grid-cols-7 gap-2">
-            {calendarDays.map((day) => {
+            {finalCalendarDays.map((day) => {
               const dateStr = format(day, "yyyy-MM-dd");
               const dayTasks = tasksByDay.get(dateStr) || [];
               const isCurrentMonth = isSameMonth(day, currentMonth);
