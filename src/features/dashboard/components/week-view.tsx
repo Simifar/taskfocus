@@ -121,7 +121,10 @@ export function WeekView({
                         <div
                           key={task.id}
                           className="p-2 rounded bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
-                          onClick={() => onEdit?.(task)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit?.(task);
+                          }}
                         >
                           <p className="text-xs font-medium line-clamp-2">{task.title}</p>
                           <div className="flex gap-1 mt-1">
@@ -141,7 +144,10 @@ export function WeekView({
                       variant="outline"
                       size="sm"
                       className="w-full mt-2"
-                      onClick={() => onCreateTask?.(day.date)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCreateTask?.(day.date);
+                      }}
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       Добавить
@@ -156,7 +162,10 @@ export function WeekView({
                       variant="outline"
                       size="sm"
                       className="w-full"
-                      onClick={() => onCreateTask?.(day.date)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCreateTask?.(day.date);
+                      }}
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       Добавить

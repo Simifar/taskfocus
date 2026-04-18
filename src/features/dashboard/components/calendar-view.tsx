@@ -183,7 +183,10 @@ export function CalendarView({
                       <div
                         key={task.id}
                         className="text-xs p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors line-clamp-1"
-                        onClick={() => onEdit?.(task)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit?.(task);
+                        }}
                         title={task.title}
                       >
                         <span className="font-medium">{task.title}</span>
@@ -200,7 +203,10 @@ export function CalendarView({
                       variant="ghost"
                       size="sm"
                       className="w-full mt-1 h-7 text-xs"
-                      onClick={() => onCreateTask?.(day)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCreateTask?.(day);
+                      }}
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       Добавить
