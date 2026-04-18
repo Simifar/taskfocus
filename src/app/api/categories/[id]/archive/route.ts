@@ -12,10 +12,13 @@ export const POST = withAuth<RouteCtx>(async (_request, { params, user }) => {
   
   if (!category) return notFound("Project not found");
   
-  const updated = await db.category.update({
-    where: { id },
-    data: { isArchived: true },
+  // Use raw SQL until Prisma schema is updated
+  const updated = await db.$executeRaw`UPDATE categories SET is_archived = true WHERE id = ${id}`;
+  
+  // Return the updated category
+  const result = await db.category.findFirst({
+    where: { id, userId: user.id },
   });
   
-  return ok(updated);
+  return ok(result);
 });

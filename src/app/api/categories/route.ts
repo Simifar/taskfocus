@@ -10,9 +10,10 @@ const createCategorySchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "Цвет должен быть в формате #rrggbb")
     .optional(),
   icon: z.string().max(50).optional(),
-  description: z.string().max(200).optional(),
-  parentId: z.string().cuid().optional(),
-  position: z.number().int().min(0).optional(),
+  // Temporarily remove new fields until migration
+  // description: z.string().max(200).optional(),
+  // parentId: z.string().cuid().optional(),
+  // position: z.number().int().min(0).optional(),
 });
 
 export const GET = withAuth(async (request, { user }) => {
@@ -20,27 +21,17 @@ export const GET = withAuth(async (request, { user }) => {
   const includeArchived = searchParams.get("includeArchived") === "true";
   
   const categories = await db.category.findMany({
-    where: { 
-      userId: user.id,
-      ...(includeArchived ? {} : { isArchived: false })
-    },
-    orderBy: [
-      { position: "asc" },
-      { name: "asc" }
-    ],
-    include: {
-      _count: {
-        select: {
-          tasks: true,
-        },
-      },
-    },
+    where: { userId: user.id },
+    orderBy: { name: "asc" },
   });
   
   // Add computed stats for each category
   const categoriesWithStats = await Promise.all(
     categories.map(async (category) => {
-      const [activeCount, completedCount] = await Promise.all([
+      const [totalCount, activeCount, completedCount] = await Promise.all([
+        db.task.count({
+          where: { categoryId: category.id },
+        }),
         db.task.count({
           where: { categoryId: category.id, status: "active" },
         }),
@@ -51,8 +42,14 @@ export const GET = withAuth(async (request, { user }) => {
       
       return {
         ...category,
+        // Add new fields with default values
+        description: null,
+        isFavorite: false,
+        isArchived: false,
+        parentId: null,
+        position: 0,
         _count: {
-          tasks: category._count.tasks,
+          tasks: totalCount,
           activeTasks: activeCount,
           completedTasks: completedCount,
         },
@@ -68,28 +65,29 @@ export const POST = withAuth(async (request, { user }) => {
     const body = await request.json();
     const parsed = createCategorySchema.parse(body);
     
-    // If position is not provided, put it at the end
-    let position = parsed.position;
-    if (position === undefined) {
-      const maxPosition = await db.category.findFirst({
-        where: { 
-          userId: user.id,
-          parentId: parsed.parentId || null,
-        },
-        orderBy: { position: "desc" },
-        select: { position: true },
-      });
-      position = (maxPosition?.position ?? -1) + 1;
-    }
-    
     const category = await db.category.create({
       data: { 
         userId: user.id, 
         ...parsed,
-        position,
       },
     });
-    return ok(category, { status: 201 });
+    
+    // Add new fields with default values
+    const result = {
+      ...category,
+      description: null,
+      isFavorite: false,
+      isArchived: false,
+      parentId: null,
+      position: 0,
+      _count: {
+        tasks: 0,
+        activeTasks: 0,
+        completedTasks: 0,
+      },
+    };
+    
+    return ok(result, { status: 201 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return err("CATEGORY_EXISTS", "Категория с таким именем уже существует", 409);

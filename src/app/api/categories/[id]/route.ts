@@ -10,11 +10,12 @@ const updateCategorySchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/)
     .nullish(),
   icon: z.string().max(50).nullish(),
-  description: z.string().max(200).nullish(),
-  isFavorite: z.boolean().optional(),
-  isArchived: z.boolean().optional(),
-  parentId: z.string().cuid().nullish(),
-  position: z.number().int().min(0).optional(),
+  // Temporarily remove new fields until migration
+  // description: z.string().max(200).nullish(),
+  // isFavorite: z.boolean().optional(),
+  // isArchived: z.boolean().optional(),
+  // parentId: z.string().cuid().nullish(),
+  // position: z.number().int().min(0).optional(),
 });
 
 type RouteCtx = { params: Promise<{ id: string }> };
@@ -24,19 +25,15 @@ export const GET = withAuth<RouteCtx>(async (_request, { params, user }) => {
   
   const category = await db.category.findFirst({
     where: { id, userId: user.id },
-    include: {
-      _count: {
-        select: {
-          tasks: true,
-        },
-      },
-    },
   });
   
   if (!category) return notFound("Категория не найдена");
   
   // Add computed stats
-  const [activeCount, completedCount] = await Promise.all([
+  const [totalCount, activeCount, completedCount] = await Promise.all([
+    db.task.count({
+      where: { categoryId: category.id },
+    }),
     db.task.count({
       where: { categoryId: category.id, status: "active" },
     }),
@@ -47,8 +44,14 @@ export const GET = withAuth<RouteCtx>(async (_request, { params, user }) => {
   
   const categoryWithStats = {
     ...category,
+    // Add new fields with default values
+    description: null,
+    isFavorite: false,
+    isArchived: false,
+    parentId: null,
+    position: 0,
     _count: {
-      tasks: category._count.tasks,
+      tasks: totalCount,
       activeTasks: activeCount,
       completedTasks: completedCount,
     },

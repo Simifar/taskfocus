@@ -29,15 +29,9 @@ export const PATCH = withAuth(async (request, { user }) => {
       return err("INVALID_CATEGORIES", "Some categories not found or don't belong to user", 400);
     }
     
-    // Update positions in a transaction
+    // Update positions using raw SQL until Prisma schema is updated
     const updates = items.map(item => 
-      db.category.update({
-        where: { id: item.id },
-        data: { 
-          position: item.position,
-          parentId: item.parentId,
-        },
-      })
+      db.$executeRaw`UPDATE categories SET position = ${item.position}, parent_id = ${item.parentId} WHERE id = ${item.id}`
     );
     
     await db.$transaction(updates);
