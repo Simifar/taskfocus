@@ -129,7 +129,7 @@ export function AuthPage() {
                   <CardDescription>Введите свои данные для входа</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 pb-6">
                     {error && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
@@ -176,7 +176,7 @@ export function AuthPage() {
                   <CardDescription>Зарегистрируйтесь бесплатно</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleRegister}>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 pb-6">
                     {error && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
