@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+// src/server/api.ts
+import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentUser } from "@/server/auth";
 import { checkRateLimit, getClientIp } from "@/server/rate-limit";
@@ -44,25 +45,37 @@ export function handleUnknownError(label: string, error: unknown) {
   return err("INTERNAL_ERROR", "Внутренняя ошибка сервера", 500);
 }
 
-type AuthedHandler<Ctx> = (
-  request: Request,
+// ✅ Обновлённые типы для совместимости с Next.js 16 App Router
+type NextContext = {
+  params: Promise<Record<string, string>>;
+};
+
+type AuthedHandler<Ctx extends NextContext> = (
+  request: NextRequest,
   ctx: Ctx & { user: AuthedUser },
 ) => Promise<Response> | Response;
 
-export function withAuth<Ctx = Record<string, never>>(handler: AuthedHandler<Ctx>) {
-  return async (request: Request, ctx: Ctx): Promise<Response> => {
+export function withAuth<Ctx extends NextContext = NextContext>(
+  handler: AuthedHandler<Ctx>
+) {
+  return async (
+    request: NextRequest,
+    context: Ctx
+  ): Promise<Response> => {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
-    return handler(request, { ...ctx, user });
+    
+    // ✅ Пробрасываем оригинальный context (включая params) + добавляем user
+    return handler(request, { ...context, user } as Ctx & { user: AuthedUser });
   };
 }
 
 export function withRateLimit(
-  key: (req: Request) => string,
+  key: (req: NextRequest) => string,
   opts: { limit: number; windowMs: number },
-  handler: (req: Request) => Promise<Response> | Response,
+  handler: (req: NextRequest) => Promise<Response> | Response,
 ) {
-  return async (req: Request): Promise<Response> => {
+  return async (req: NextRequest): Promise<Response> => {
     const result = checkRateLimit({ key: key(req), ...opts });
     if (!result.ok) return rateLimited(result.retryAfterSeconds);
     return handler(req);
