@@ -47,7 +47,6 @@ export function CalendarView({
   onEditSubtask,
   onDeleteSubtask,
 }: CalendarViewProps) {
-  console.log('CalendarView render');
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const monthStart = startOfMonth(currentMonth);

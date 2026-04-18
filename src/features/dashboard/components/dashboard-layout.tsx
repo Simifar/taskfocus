@@ -182,7 +182,6 @@ export function DashboardLayout() {
   };
 
   const handleSelectDay = (date: Date) => {
-    console.log('DashboardLayout handleSelectDay called with:', date);
     setView("day", undefined, date);
   };
 

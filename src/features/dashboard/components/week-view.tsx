@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
 import { cn } from "@/shared/lib/utils";
 import { Calendar, Plus } from "lucide-react";
-import { format, startOfWeek, addDays, isWithinInterval, parseISO, isSameDay } from "date-fns";
+import { format, startOfWeek, addDays, isWithinInterval, parseISO, isSameDay, startOfDay, endOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
 
 interface WeekViewProps {
@@ -73,107 +73,130 @@ export function WeekView({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Calendar className="h-6 w-6 text-purple-500" />
-          На этой неделе
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {format(weekStart, "d MMM", { locale: ru })} — {format(weekEnd, "d MMM yyyy", { locale: ru })}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Calendar className="h-6 w-6 text-purple-500" />
+            Неделя
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {format(weekStart, "d MMM", { locale: ru })} — {format(weekEnd, "d MMM yyyy", { locale: ru })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="text-right">
+            <p className="text-sm font-medium">{weekTasks.length} задач</p>
+            <p className="text-xs text-muted-foreground">на этой неделе</p>
+          </div>
+        </div>
       </div>
 
-      {/* Week Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
+      {/* Week Timeline */}
+      <div className="grid grid-cols-7 gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
         {tasksByDay.map((day) => {
           const isToday = isSameDay(day.date, today);
-          const dayName = format(day.date, "EEE", { locale: ru }).toUpperCase();
+          const dayName = format(day.date, "EEE", { locale: ru });
           const dayNumber = format(day.date, "d");
+          const hasOverflow = day.tasks.length > 3;
 
           return (
-            <Card
+            <div
               key={day.date.toISOString()}
-              className={cn(
-                "transition-all hover:shadow-lg flex flex-col",
-                isToday && "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-              )}
+              className="flex flex-col h-full"
             >
-              <CardHeader 
-                className="pb-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+              {/* Day Header */}
+              <div 
+                className={cn(
+                  "flex flex-col items-center p-2 rounded-t-lg cursor-pointer transition-colors",
+                  isToday 
+                    ? "bg-emerald-500 text-white" 
+                    : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                )}
                 onClick={() => onSelectDay?.(day.date)}
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground">{dayName}</p>
-                    <p className="text-lg font-bold">{dayNumber}</p>
-                  </div>
-                  <Badge variant={isToday ? "default" : "outline"} className="text-xs">
+                <p className="text-xs font-medium">{dayName}</p>
+                <p className="text-lg font-bold">{dayNumber}</p>
+                {day.tasks.length > 0 && (
+                  <Badge 
+                    variant={isToday ? "secondary" : "outline"} 
+                    className={cn("text-xs mt-1", isToday && "bg-white/20 text-white border-white/30")}
+                  >
                     {day.tasks.length}
                   </Badge>
-                </div>
-              </CardHeader>
+                )}
+              </div>
 
-              <CardContent className="space-y-2 flex-1 flex flex-col">
+              {/* Tasks Container */}
+              <div className={cn(
+                "flex-1 p-2 space-y-1 min-h-[200px] rounded-b-lg",
+                isToday 
+                  ? "bg-emerald-50 dark:bg-emerald-900/20" 
+                  : "bg-white dark:bg-gray-900"
+              )}>
                 {day.tasks.length > 0 ? (
                   <>
-                    <div className="space-y-2 flex-1">
-                      {day.tasks.map((task) => (
+                    {day.tasks.slice(0, 3).map((task) => (
+                      <div
+                        key={task.id}
+                        className="group relative"
+                      >
                         <div
-                          key={task.id}
-                          className="p-2 rounded bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                          className={cn(
+                            "p-2 rounded text-xs cursor-pointer transition-all",
+                            "hover:shadow-sm hover:scale-[1.02] border border-transparent hover:border-gray-200 dark:hover:border-gray-700",
+                            task.priority === "high" 
+                              ? "bg-red-50 dark:bg-red-900/20 border-l-2 border-l-red-500" 
+                              : "bg-gray-50 dark:bg-gray-800"
+                          )}
                           onClick={(e) => {
                             e.stopPropagation();
                             onEdit?.(task);
                           }}
                         >
-                          <p className="text-xs font-medium line-clamp-2">{task.title}</p>
-                          <div className="flex gap-1 mt-1">
-                            <Badge variant="outline" className="text-xs h-5">
+                          <p className="font-medium line-clamp-2 text-xs">{task.title}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <Badge variant="outline" className="text-xs h-4 px-1">
                               E{task.energyLevel}
                             </Badge>
                             {task.priority === "high" && (
-                              <Badge variant="destructive" className="text-xs h-5">
-                                ★
-                              </Badge>
+                              <span className="text-red-500 text-xs">★</span>
                             )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full mt-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCreateTask?.(day.date);
-                      }}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Добавить
-                    </Button>
+                      </div>
+                    ))}
+                    {hasOverflow && (
+                      <div 
+                        className="text-xs text-muted-foreground text-center py-1 cursor-pointer hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectDay?.(day.date);
+                        }}
+                      >
+                        +{day.tasks.length - 3} ещё
+                      </div>
+                    )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-4 flex-1">
-                    <p className="text-xs text-muted-foreground text-center mb-2">
-                      Нет задач
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCreateTask?.(day.date);
-                      }}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Добавить
-                    </Button>
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <p className="text-xs">Нет задач</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+                
+                {/* Quick Add Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateTask?.(day.date);
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
           );
         })}
       </div>
