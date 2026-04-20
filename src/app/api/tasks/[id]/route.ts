@@ -7,7 +7,6 @@ const updateTaskSchema = z.object({
   description: z.string().max(2000).nullish(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   energyLevel: z.number().int().min(1).max(5).optional(),
-  categoryId: z.string().nullish(),
   status: z.enum(["active", "completed", "archived"]).optional(),
   dueDateStart: z.string().datetime().nullish(),
   dueDateEnd: z.string().datetime().nullish(),
@@ -24,7 +23,6 @@ export const GET = withAuth<RouteCtx>(async (_req, { params, user }) => {
   const task = await db.task.findFirst({
     where: { id, userId: user.id },
     include: {
-      category: true,
       subtasks: { orderBy: { position: "asc" } },
     },
   });
@@ -41,20 +39,11 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
     const body = await request.json();
     const parsed = updateTaskSchema.parse(body);
 
-    if (parsed.categoryId) {
-      const owns = await db.category.findFirst({
-        where: { id: parsed.categoryId, userId: user.id },
-        select: { id: true },
-      });
-      if (!owns) return notFound("Категория не найдена");
-    }
-
     const data: Record<string, unknown> = {};
     if (parsed.title !== undefined) data.title = parsed.title;
     if (parsed.description !== undefined) data.description = parsed.description;
     if (parsed.priority !== undefined) data.priority = parsed.priority;
     if (parsed.energyLevel !== undefined) data.energyLevel = parsed.energyLevel;
-    if (parsed.categoryId !== undefined) data.categoryId = parsed.categoryId;
     if (parsed.status !== undefined) {
       data.status = parsed.status;
       data.completedAt = parsed.status === "completed" ? new Date() : null;
@@ -69,7 +58,7 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
     const task = await db.task.update({
       where: { id },
       data,
-      include: { category: true, subtasks: true },
+      include: { subtasks: true },
     });
 
     return ok(task);

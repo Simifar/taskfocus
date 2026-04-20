@@ -40,7 +40,6 @@ export function DashboardLayout() {
   const logout = useLogout();
 
   const currentView = useDashboardStore((s) => s.currentView);
-  const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
   const currentEnergy = useDashboardStore((s) => s.currentEnergy);
   const showCompleted = useDashboardStore((s) => s.showCompleted);
   const setEnergy = useDashboardStore((s) => s.setEnergy);
@@ -48,7 +47,7 @@ export function DashboardLayout() {
   const setView = useDashboardStore((s) => s.setView);
   const selectedDate = useSelectedDate();
 
-  const tasksQuery = useTasks({ categoryId: currentCategoryId });
+  const tasksQuery = useTasks({});
   const statsQuery = useStats();
 
   const updateTask = useUpdateTask();
@@ -241,7 +240,7 @@ export function DashboardLayout() {
   };
 
   const handleSelectDay = (date: Date) => {
-    setView("day", undefined, date);
+    setView("day", date);
   };
 
   const handleBackFromDay = () => {
@@ -393,7 +392,6 @@ export function DashboardLayout() {
           setCreateDialogOpen(open);
         }}
         preSelectedDate={preSelectedDate}
-        currentCategoryId={currentCategoryId}
         defaultEnergy={currentEnergy}
       />
       {editingTask && (

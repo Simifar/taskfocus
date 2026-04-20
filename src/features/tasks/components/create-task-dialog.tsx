@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useCreateTask } from "@/features/tasks/hooks";
-import { useCategories } from "@/features/categories/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import {
   Dialog,
@@ -39,7 +38,6 @@ interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   preSelectedDate?: Date;
-  currentCategoryId?: string | null;
   defaultEnergy?: number | null;
 }
 
@@ -47,17 +45,14 @@ export function CreateTaskDialog({
   open,
   onOpenChange,
   preSelectedDate,
-  currentCategoryId,
   defaultEnergy,
 }: CreateTaskDialogProps) {
-  const { data: categories = [] } = useCategories();
   const createTask = useCreateTask();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [energyLevel, setEnergyLevel] = useState(defaultEnergy ?? 3);
-  const [categoryId, setCategoryId] = useState<string>(currentCategoryId ?? "");
   const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate ?? new Date());
   const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate ?? new Date());
 
@@ -83,8 +78,7 @@ export function CreateTaskDialog({
       setDueDateStart(preSelectedDate);
       setDueDateEnd(preSelectedDate);
     }
-    setCategoryId(currentCategoryId ?? "");
-  }, [open, preSelectedDate, currentCategoryId]);
+  }, [open, preSelectedDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +93,6 @@ export function CreateTaskDialog({
         description: description.trim() || null,
         priority,
         energyLevel,
-        categoryId: categoryId || null,
         dueDateStart: dueDateStart ? dueDateStart.toISOString() : null,
         dueDateEnd: dueDateEnd ? dueDateEnd.toISOString() : null,
       });
@@ -177,26 +170,6 @@ export function CreateTaskDialog({
                 {energyLevel === 3 && "Сбалансированные задачи среднего уровня"}
                 {energyLevel >= 4 && "Для важных дел, которые требуют полной концентрации"}
               </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>List / Project</Label>
-              <Select
-                value={categoryId === "" ? "__none__" : categoryId}
-                onValueChange={(v) => setCategoryId(v === "__none__" ? "" : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Без списка" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Без списка</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useUpdateTask } from "@/features/tasks/hooks";
-import { useCategories } from "@/features/categories/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import type { Task } from "@/shared/types";
 import {
@@ -34,14 +33,12 @@ interface EditTaskDialogProps {
 }
 
 export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps) {
-  const { data: categories = [] } = useCategories();
   const updateTask = useUpdateTask();
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
   const [priority, setPriority] = useState<"low" | "medium" | "high">(task.priority);
   const [energyLevel, setEnergyLevel] = useState(task.energyLevel);
-  const [categoryId, setCategoryId] = useState<string>(task.categoryId ?? "");
   const [dueDateStart, setDueDateStart] = useState(
     task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : "",
   );
@@ -55,7 +52,6 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
     setDescription(task.description ?? "");
     setPriority(task.priority);
     setEnergyLevel(task.energyLevel);
-    setCategoryId(task.categoryId ?? "");
     setDueDateStart(task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : "");
     setDueDateEnd(task.dueDateEnd ? new Date(task.dueDateEnd).toISOString().split("T")[0] : "");
   }, [open, task]);
@@ -75,7 +71,6 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
           description: description.trim() || null,
           priority,
           energyLevel,
-          categoryId: categoryId || null,
           dueDateStart: dueDateStart ? new Date(dueDateStart).toISOString() : null,
           dueDateEnd: dueDateEnd ? new Date(dueDateEnd).toISOString() : null,
         },
@@ -133,26 +128,6 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
                     <SelectItem value="low">Низкий</SelectItem>
                     <SelectItem value="medium">Средний</SelectItem>
                     <SelectItem value="high">Высокий</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>List / Project</Label>
-                <Select
-                  value={categoryId === "" ? "__none__" : categoryId}
-                  onValueChange={(v) => setCategoryId(v === "__none__" ? "" : v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Без списка" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Без списка</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
                   </SelectContent>
                 </Select>
               </div>

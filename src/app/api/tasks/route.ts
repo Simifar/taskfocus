@@ -8,7 +8,6 @@ const createTaskSchema = z.object({
   description: z.string().max(2000).optional(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   energyLevel: z.number().int().min(1).max(5).default(3),
-  categoryId: z.string().nullish(),
   dueDateStart: z.string().datetime().nullish(),
   dueDateEnd: z.string().datetime().nullish(),
   parentTaskId: z.string().nullish(),
@@ -19,7 +18,6 @@ export const GET = withAuth(async (request, { user }) => {
   const status = searchParams.get("status");
   const energy = searchParams.get("energy");
   const search = searchParams.get("search");
-  const categoryId = searchParams.get("categoryId");
 
   const where: Prisma.TaskWhereInput = {
     userId: user.id,
@@ -42,15 +40,10 @@ export const GET = withAuth(async (request, { user }) => {
     ];
   }
 
-  if (categoryId) {
-    where.categoryId = categoryId === "none" ? null : categoryId;
-  }
-
   const [tasks, activeCount] = await Promise.all([
     db.task.findMany({
       where,
       include: {
-        category: true,
         subtasks: { orderBy: { position: "asc" } },
       },
       orderBy: [{ position: "asc" }, { createdAt: "asc" }],
@@ -72,16 +65,6 @@ export const POST = withAuth(async (request, { user }) => {
     const body = await request.json();
     const parsed = createTaskSchema.parse(body);
 
-    if (parsed.categoryId) {
-      const owns = await db.category.findFirst({
-        where: { id: parsed.categoryId, userId: user.id },
-        select: { id: true },
-      });
-      if (!owns) {
-        return handleUnknownError("create task", new Error("Category not found"));
-      }
-    }
-
     const maxPosition = await db.task.aggregate({
       where: { userId: user.id, parentTaskId: parsed.parentTaskId ?? null },
       _max: { position: true },
@@ -94,14 +77,12 @@ export const POST = withAuth(async (request, { user }) => {
         description: parsed.description,
         priority: parsed.priority,
         energyLevel: parsed.energyLevel,
-        categoryId: parsed.categoryId ?? null,
         dueDateStart: parsed.dueDateStart ? new Date(parsed.dueDateStart) : null,
         dueDateEnd: parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null,
         parentTaskId: parsed.parentTaskId ?? null,
         position: (maxPosition._max.position ?? -1) + 1,
       },
       include: {
-        category: true,
         subtasks: true,
       },
     });

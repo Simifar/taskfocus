@@ -7,7 +7,6 @@ export type SortOrder = "asc" | "desc";
 
 interface DashboardState {
   currentView: DashboardView;
-  currentCategoryId: string | null;
   selectedDateIso: string | null;
   currentEnergy: number | null;
   searchQuery: string;
@@ -17,8 +16,7 @@ interface DashboardState {
 }
 
 interface DashboardActions {
-  setView: (view: DashboardView, categoryId?: string | null, selectedDate?: Date) => void;
-  setCategory: (categoryId: string | null) => void;
+  setView: (view: DashboardView, selectedDate?: Date) => void;
   setEnergy: (level: number | null) => void;
   setSearch: (query: string) => void;
   setShowCompleted: (show: boolean) => void;
@@ -29,7 +27,6 @@ interface DashboardActions {
 
 const defaults: DashboardState = {
   currentView: "today",
-  currentCategoryId: null,
   selectedDateIso: null,
   currentEnergy: null,
   searchQuery: "",
@@ -43,14 +40,12 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
     (set, get) => ({
       ...defaults,
 
-      setView: (view, categoryId, selectedDate) =>
+      setView: (view, selectedDate) =>
         set({
           currentView: view,
-          currentCategoryId: categoryId ?? null,
           selectedDateIso: selectedDate ? selectedDate.toISOString() : null,
         }),
 
-      setCategory: (categoryId) => set({ currentCategoryId: categoryId }),
       setEnergy: (level) => set({ currentEnergy: level }),
       setSearch: (query) => set({ searchQuery: query }),
       setShowCompleted: (show) => set({ showCompleted: show }),
@@ -79,7 +74,6 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
       name: "taskfocus.dashboard",
       partialize: (state) => ({
         currentView: state.currentView,
-        currentCategoryId: state.currentCategoryId,
         sortBy: state.sortBy,
         sortOrder: state.sortOrder,
         showCompleted: state.showCompleted,

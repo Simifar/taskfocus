@@ -2,10 +2,7 @@
 
 import { useMemo } from "react";
 import type { Task, User, StatsResponse } from "@/shared/types";
-import { useCategories, useCreateCategory } from "@/features/categories/hooks";
 import { useDashboardStore, type DashboardView } from "@/features/dashboard/store";
-import { EnhancedProjectSidebar } from "@/features/projects/components/enhanced-project-sidebar";
-import { useProjects } from "@/features/projects/hooks/use-projects";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import {
@@ -15,15 +12,11 @@ import {
   Zap,
   Settings,
   LogOut,
-  Plus,
   Brain,
   BarChart3,
-  FolderOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
-import { toast } from "sonner";
-import { ApiError } from "@/shared/lib/fetcher";
 
 interface DashboardSidebarProps {
   user: User | null;
@@ -34,26 +27,9 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSidebarProps) {
   const router = useRouter();
-  const { data: categories = [] } = useCategories();
-  const createCategory = useCreateCategory();
-  
-  // Use the enhanced projects hook
-  const {
-    projects: projectData,
-    createProject,
-    toggleFavorite,
-    archiveProject,
-    updateProject,
-    deleteProject,
-    selectProject,
-    reorderProjects,
-    selectedProjectId,
-  } = useProjects({ initialProjects: categories });
 
   const currentView = useDashboardStore((s) => s.currentView);
-  const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
   const setView = useDashboardStore((s) => s.setView);
-  const setCategory = useDashboardStore((s) => s.setCategory);
 
   const counts = useMemo(() => {
     const today = new Date();
@@ -99,58 +75,6 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
     { id: "week", label: "This Week", icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
     { id: "calendar", label: "Calendar", icon: <BarChart3 className="h-4 w-4" /> },
   ];
-
-  const handleProjectsNavigation = () => {
-    router.push("/projects");
-  };
-
-  const handleAddCategory = async () => {
-    const name = window.prompt("Название нового листа / проекта:");
-    if (!name || !name.trim()) return;
-    try {
-      const created = await createCategory.mutateAsync({ name: name.trim() });
-      setCategory(created.id);
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Не удалось создать категорию";
-      toast.error(message);
-    }
-  };
-
-  const handleCreateProject = () => {
-    // This would open a more sophisticated project creation dialog
-    handleAddCategory();
-  };
-
-  const handleProjectSelect = (projectId: string | null) => {
-    setCategory(projectId);
-    if (projectId) {
-      setView("inbox");
-    }
-  };
-
-  const handleProjectAction = async (action: string, projectId: string) => {
-    try {
-      switch (action) {
-        case "toggleFavorite":
-          await toggleFavorite(projectId);
-          break;
-        case "archive":
-          await archiveProject(projectId);
-          break;
-        case "delete":
-          if (window.confirm("Are you sure you want to delete this project?")) {
-            await deleteProject(projectId);
-            if (currentCategoryId === projectId) {
-              setCategory(null);
-            }
-          }
-          break;
-      }
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Failed to perform action";
-      toast.error(message);
-    }
-  };
 
   return (
     <div className="w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen">
@@ -206,41 +130,6 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
             <span>Energy Focus</span>
           </Button>
         </div>
-
-        <Separator className="my-4" />
-        <div className="mb-6">
-          <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">MANAGEMENT</p>
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2"
-            onClick={handleProjectsNavigation}
-          >
-            <FolderOpen className="h-4 w-4 text-blue-500" />
-            <span>Manage Projects</span>
-          </Button>
-        </div>
-
-        <Separator className="my-4" />
-        <EnhancedProjectSidebar
-          projects={projectData}
-          selectedProjectId={selectedProjectId || currentCategoryId}
-          onProjectSelect={(projectId) => {
-            selectProject(projectId);
-            handleProjectSelect(projectId);
-          }}
-          onCreateProject={handleCreateProject}
-          onToggleFavorite={(id) => handleProjectAction("toggleFavorite", id)}
-          onArchiveProject={(id) => handleProjectAction("archive", id)}
-          onEditProject={(project) => {
-            // TODO: Implement edit dialog
-            const newName = window.prompt("Edit project name:", project.name);
-            if (newName && newName.trim() && newName !== project.name) {
-              updateProject(project.id, { name: newName.trim() });
-            }
-          }}
-          onDeleteProject={(id) => handleProjectAction("delete", id)}
-          onReorderProjects={reorderProjects}
-        />
       </div>
 
       <div className="border-t border-gray-200 dark:border-gray-800 p-3 space-y-2">

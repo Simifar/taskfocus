@@ -3,8 +3,6 @@
 import { useState, useMemo, useCallback } from "react";
 import type { Task, StatsResponse } from "@/shared/types";
 import { useCreateTask } from "@/features/tasks/hooks";
-import { useDashboardStore } from "@/features/dashboard/store";
-import { useCategories } from "@/features/categories/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
@@ -63,9 +61,7 @@ export function InboxView({
   onBatchAssignToToday,
   onBatchAssignToWeek,
 }: InboxViewProps) {
-  const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
   const createTask = useCreateTask();
-  const { data: categories = [] } = useCategories();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
@@ -180,7 +176,6 @@ export function InboxView({
         title: quickAddTitle.trim(),
         priority: "medium",
         energyLevel: 3,
-        categoryId: currentCategoryId ?? null,
       });
       toast.success("Задача добавлена!");
       setQuickAddTitle("");
@@ -489,11 +484,6 @@ export function InboxView({
                             {getEnergyIcon(task.energyLevel)}
                             <span className="text-xs text-muted-foreground">{task.energyLevel}</span>
                           </div>
-                          {task.category && (
-                            <Badge variant="secondary" className="text-xs">
-                              {task.category.name}
-                            </Badge>
-                          )}
                           {task.subtasks && task.subtasks.length > 0 && (
                             <Badge variant="secondary" className="text-xs">
                               {task.subtasks.filter(st => st.status === "completed").length}/{task.subtasks.length}

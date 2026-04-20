@@ -8,7 +8,6 @@ export interface TasksQuery {
   status?: TaskStatus;
   energy?: number | null;
   search?: string;
-  categoryId?: string | null;
 }
 
 export interface CreateTaskInput {
@@ -16,7 +15,6 @@ export interface CreateTaskInput {
   description?: string | null;
   priority?: Priority;
   energyLevel?: number;
-  categoryId?: string | null;
   dueDateStart?: string | null;
   dueDateEnd?: string | null;
   parentTaskId?: string | null;
@@ -27,7 +25,6 @@ export interface UpdateTaskInput {
   description?: string | null;
   priority?: Priority;
   energyLevel?: number;
-  categoryId?: string | null;
   status?: TaskStatus;
   dueDateStart?: string | null;
   dueDateEnd?: string | null;
@@ -50,7 +47,6 @@ export const tasksApi = {
         status: q.status,
         energy: q.energy ?? undefined,
         search: q.search,
-        categoryId: q.categoryId,
       },
     }),
   get: (id: string) => apiFetch<Task>(`/api/tasks/${id}`),

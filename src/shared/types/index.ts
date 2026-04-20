@@ -9,28 +9,6 @@ export interface User {
   avatar?: string | null;
 }
 
-export interface Category {
-  id: string;
-  userId: string;
-  name: string;
-  color: string | null;
-  icon: string | null;
-  description: string | null;
-  isFavorite: boolean;
-  isArchived: boolean;
-  parentId: string | null;
-  position: number;
-  createdAt: string;
-  updatedAt: string;
-  children?: Category[];
-  parent?: Category | null;
-  _count?: {
-    tasks: number;
-    activeTasks: number;
-    completedTasks: number;
-  };
-}
-
 export interface Task {
   id: string;
   userId: string;
@@ -39,8 +17,6 @@ export interface Task {
   status: TaskStatus;
   priority: Priority;
   energyLevel: number;
-  categoryId?: string | null;
-  category?: Category | null;
   position: number;
   dueDateStart?: string | null;
   dueDateEnd?: string | null;
@@ -73,26 +49,4 @@ export interface StatsResponse {
   completedThisWeek: number;
   completedToday: number;
   totalTasks: number;
-}
-
-export interface ProjectStatsResponse {
-  totalProjects: number;
-  activeProjects: number;
-  archivedProjects: number;
-  favoriteProjects: number;
-  projectsWithTasks: number;
-}
-
-export interface ProjectTemplate {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-  tasks: Array<{
-    title: string;
-    description?: string;
-    priority?: Priority;
-    energyLevel?: number;
-  }>;
 }
