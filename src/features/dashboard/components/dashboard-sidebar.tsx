@@ -4,8 +4,8 @@ import { useMemo } from "react";
 import type { Task, User, StatsResponse } from "@/shared/types";
 import { useCategories, useCreateCategory } from "@/features/categories/hooks";
 import { useDashboardStore, type DashboardView } from "@/features/dashboard/store";
-import { ProjectSidebar } from "@/features/projects/components/project-sidebar";
-import { useCreateProject, useToggleProjectFavorite, useArchiveProject, useUpdateProject, useDeleteProject } from "@/features/projects/hooks";
+import { EnhancedProjectSidebar } from "@/features/projects/components/enhanced-project-sidebar";
+import { useProjects } from "@/features/projects/hooks/use-projects";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import {
@@ -36,11 +36,19 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
   const router = useRouter();
   const { data: categories = [] } = useCategories();
   const createCategory = useCreateCategory();
-  const createProject = useCreateProject();
-  const toggleFavorite = useToggleProjectFavorite();
-  const archiveProject = useArchiveProject();
-  const updateProject = useUpdateProject();
-  const deleteProject = useDeleteProject();
+  
+  // Use the enhanced projects hook
+  const {
+    projects: projectData,
+    createProject,
+    toggleFavorite,
+    archiveProject,
+    updateProject,
+    deleteProject,
+    selectProject,
+    reorderProjects,
+    selectedProjectId,
+  } = useProjects({ initialProjects: categories });
 
   const currentView = useDashboardStore((s) => s.currentView);
   const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
@@ -124,14 +132,14 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
     try {
       switch (action) {
         case "toggleFavorite":
-          await toggleFavorite.mutateAsync(projectId);
+          await toggleFavorite(projectId);
           break;
         case "archive":
-          await archiveProject.mutateAsync(projectId);
+          await archiveProject(projectId);
           break;
         case "delete":
           if (window.confirm("Are you sure you want to delete this project?")) {
-            await deleteProject.mutateAsync(projectId);
+            await deleteProject(projectId);
             if (currentCategoryId === projectId) {
               setCategory(null);
             }
@@ -213,10 +221,13 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
         </div>
 
         <Separator className="my-4" />
-        <ProjectSidebar
-          projects={categories}
-          selectedProjectId={currentCategoryId}
-          onProjectSelect={handleProjectSelect}
+        <EnhancedProjectSidebar
+          projects={projectData}
+          selectedProjectId={selectedProjectId || currentCategoryId}
+          onProjectSelect={(projectId) => {
+            selectProject(projectId);
+            handleProjectSelect(projectId);
+          }}
           onCreateProject={handleCreateProject}
           onToggleFavorite={(id) => handleProjectAction("toggleFavorite", id)}
           onArchiveProject={(id) => handleProjectAction("archive", id)}
@@ -224,10 +235,11 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
             // TODO: Implement edit dialog
             const newName = window.prompt("Edit project name:", project.name);
             if (newName && newName.trim() && newName !== project.name) {
-              updateProject.mutateAsync({ id: project.id, data: { name: newName.trim() } });
+              updateProject(project.id, { name: newName.trim() });
             }
           }}
           onDeleteProject={(id) => handleProjectAction("delete", id)}
+          onReorderProjects={reorderProjects}
         />
       </div>
 
