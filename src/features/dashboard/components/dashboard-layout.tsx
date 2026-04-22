@@ -27,6 +27,7 @@ import { InboxView } from "./inbox-view";
 import { WeekView } from "./week-view";
 import { CalendarView } from "./calendar-view";
 import { DayView } from "./day-view";
+import { ArchiveView } from "./archive-view";
 import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
 import { EditTaskDialog } from "@/features/tasks/components/edit-task-dialog";
 
@@ -107,6 +108,15 @@ export function DashboardLayout() {
       toast.success("Task archived");
     } catch (err) {
       reportError(err, "Failed to archive");
+    }
+  };
+
+  const handleRestoreTask = async (taskId: string) => {
+    try {
+      await updateTask.mutateAsync({ id: taskId, input: { status: "active" } });
+      toast.success("Задача восстановлена");
+    } catch (err) {
+      reportError(err, "Failed to restore");
     }
   };
 
@@ -415,6 +425,14 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+            />
+          )}
+
+          {currentView === "archive" && (
+            <ArchiveView
+              stats={stats}
+              onRestore={handleRestoreTask}
+              onDelete={handleDeleteTask}
             />
           )}
         </div>

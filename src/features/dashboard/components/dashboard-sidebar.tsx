@@ -15,6 +15,7 @@ import {
   Brain,
   BarChart3,
   X,
+  Archive,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
@@ -77,6 +78,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
     { id: "inbox", label: "Inbox", icon: <Inbox className="h-4 w-4" />, badge: counts.inboxCount },
     { id: "week", label: "This Week", icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
     { id: "calendar", label: "Calendar", icon: <BarChart3 className="h-4 w-4" /> },
+    { id: "archive", label: "Архив", icon: <Archive className="h-4 w-4" /> },
   ];
 
   const handleNavClick = (view: DashboardView) => {
