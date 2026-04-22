@@ -5,7 +5,7 @@ import { handleUnknownError, ok, withAuth } from "@/server/api";
 
 const createTaskSchema = z.object({
   title: z.string().min(1, "Название обязательно").max(200),
-  description: z.string().max(2000).optional(),
+  description: z.string().max(2000).nullish(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   energyLevel: z.number().int().min(1).max(5).default(3),
   dueDateStart: z.string().datetime().nullish(),
