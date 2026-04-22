@@ -37,7 +37,7 @@ function reportError(err: unknown, fallback: string) {
 
 export function DashboardLayout() {
   const router = useRouter();
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading: isAuthLoading, isError: isAuthError } = useCurrentUser();
   const logout = useLogout();
 
   const currentView = useDashboardStore((s) => s.currentView);
@@ -62,13 +62,20 @@ export function DashboardLayout() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Wait for auth to finish loading before deciding to redirect
   useEffect(() => {
-    if (!user) router.push("/");
-  }, [user, router]);
+    if (!isAuthLoading && (isAuthError || !user)) router.push("/");
+  }, [user, isAuthLoading, isAuthError, router]);
+
+  useEffect(() => {
+    if (tasksQuery.isError) {
+      toast.error("Не удалось загрузить задачи. Обновите страницу.");
+    }
+  }, [tasksQuery.isError]);
 
   const tasks = tasksQuery.data?.items ?? [];
   const stats = statsQuery.data ?? null;
-  const isLoading = tasksQuery.isLoading;
+  const isLoading = isAuthLoading || tasksQuery.isLoading;
 
   const handleLogout = async () => {
     try {
@@ -270,7 +277,8 @@ export function DashboardLayout() {
     setCreateDialogOpen(true);
   };
 
-  if (isLoading) {
+  // Show spinner while auth or data is loading, and while redirecting on auth failure
+  if (isLoading || isAuthError || !user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />

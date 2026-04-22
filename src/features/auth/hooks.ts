@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "./api";
+import { ApiError } from "@/shared/lib/fetcher";
 
 export const authKeys = {
   me: ["auth", "me"] as const,
@@ -10,7 +11,11 @@ export function useCurrentUser() {
     queryKey: authKeys.me,
     queryFn: authApi.me,
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    // Don't retry on 401 (invalid token), but retry once on server/network errors
+    retry: (failureCount, error) => {
+      if (error instanceof ApiError && error.status === 401) return false;
+      return failureCount < 1;
+    },
   });
 }
 
