@@ -2,17 +2,10 @@ import { db } from "@/server/db";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
+import { getJwtSecret } from "@/server/jwt-secret";
 
 const AUTH_COOKIE = "auth-token";
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
-
-function getSecretKey(): Uint8Array {
-  const secret = process.env.JWT_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error("JWT_SECRET env var is missing or too short (need 32+ chars)");
-  }
-  return new TextEncoder().encode(secret);
-}
 
 export interface JWTPayload extends Record<string, unknown> {
   userId: string;
@@ -25,12 +18,12 @@ export async function createToken(payload: JWTPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(getSecretKey());
+    .sign(getJwtSecret());
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecretKey());
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as JWTPayload;
   } catch {
     return null;

@@ -8,6 +8,7 @@ export const authApi = {
   register: (input: { email: string; username: string; password: string }) =>
     apiFetch<User>("/api/auth/register", { method: "POST", body: input }),
   logout: () => apiFetch<null>("/api/auth/logout", { method: "POST" }),
+  deleteAccount: () => apiFetch<null>("/api/auth/account", { method: "DELETE" }),
   updateProfile: (input: { name?: string | null; avatar?: string | null }) =>
     apiFetch<User>("/api/auth/profile", { method: "PATCH", body: input }),
 };

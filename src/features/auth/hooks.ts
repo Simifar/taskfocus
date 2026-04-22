@@ -44,6 +44,16 @@ export function useLogout() {
   });
 }
 
+export function useDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: authApi.deleteAccount,
+    onSuccess: () => {
+      qc.clear();
+    },
+  });
+}
+
 export function useUpdateProfile() {
   const qc = useQueryClient();
   return useMutation({

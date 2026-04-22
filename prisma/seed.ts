@@ -19,19 +19,6 @@ async function main() {
   });
 
   await db.task.deleteMany({ where: { userId: user.id } });
-  await db.category.deleteMany({ where: { userId: user.id } });
-
-  const [work, personal, learning] = await Promise.all([
-    db.category.create({
-      data: { userId: user.id, name: "Работа", color: "#0ea5e9", icon: "briefcase" },
-    }),
-    db.category.create({
-      data: { userId: user.id, name: "Личное", color: "#f59e0b", icon: "home" },
-    }),
-    db.category.create({
-      data: { userId: user.id, name: "Обучение", color: "#10b981", icon: "book-open" },
-    }),
-  ]);
 
   const today = new Date();
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -40,7 +27,6 @@ async function main() {
   const parent = await db.task.create({
     data: {
       userId: user.id,
-      categoryId: work.id,
       title: "Закончить черновик диплома",
       description: "Финализировать раздел про архитектуру и реализацию",
       priority: "high",
@@ -76,7 +62,6 @@ async function main() {
     data: [
       {
         userId: user.id,
-        categoryId: personal.id,
         title: "Купить продукты",
         priority: "low",
         energyLevel: 1,
@@ -86,7 +71,6 @@ async function main() {
       },
       {
         userId: user.id,
-        categoryId: learning.id,
         title: "Прочитать главу про React Server Components",
         priority: "medium",
         energyLevel: 3,

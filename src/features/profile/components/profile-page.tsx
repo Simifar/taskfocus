@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCurrentUser, useLogout, useUpdateProfile } from "@/features/auth/hooks";
+import { useCurrentUser, useLogout, useUpdateProfile, useDeleteAccount } from "@/features/auth/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui/card";
@@ -33,6 +33,7 @@ export function ProfilePage() {
   const { data: user, isLoading: isLoadingUser } = useCurrentUser();
   const updateProfile = useUpdateProfile();
   const logout = useLogout();
+  const deleteAccount = useDeleteAccount();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [formData, setFormData] = useState({ name: "", avatar: "" });
@@ -69,7 +70,7 @@ export function ProfilePage() {
 
   const handleDeleteAccount = async () => {
     try {
-      await logout.mutateAsync();
+      await deleteAccount.mutateAsync();
       toast.success("Аккаунт удален");
       router.push("/");
     } catch {
@@ -227,10 +228,10 @@ export function ProfilePage() {
             <AlertDialogCancel>Отменить</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
-              disabled={logout.isPending}
+              disabled={deleteAccount.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {logout.isPending ? (
+              {deleteAccount.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Удаляю...
