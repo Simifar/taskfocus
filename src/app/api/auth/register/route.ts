@@ -35,14 +35,14 @@ async function handler(request: Request) {
     const token = await createToken({
       userId: user.id,
       email: user.email,
-      username: user.username,
+      username: username,
     });
     await setAuthCookie(token);
 
     return ok({
       id: user.id,
       email: user.email,
-      username: user.username,
+      username: username,
       name: user.name,
       avatar: user.avatar,
     });

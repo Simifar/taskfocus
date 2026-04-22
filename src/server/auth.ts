@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { getJwtSecret } from "@/server/jwt-secret";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/server/auth-options";
 
 const AUTH_COOKIE = "auth-token";
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
@@ -47,6 +49,16 @@ export async function clearAuthCookie() {
 }
 
 export async function getCurrentUser() {
+  // Check NextAuth session first (Google OAuth users)
+  const session = await getServerSession(authOptions);
+  if (session?.user?.id) {
+    return db.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, email: true, username: true, name: true, avatar: true },
+    });
+  }
+
+  // Fallback: custom JWT cookie (email/password users)
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE)?.value;
   if (!token) return null;
@@ -56,13 +68,7 @@ export async function getCurrentUser() {
 
   return db.user.findUnique({
     where: { id: payload.userId },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      name: true,
-      avatar: true,
-    },
+    select: { id: true, email: true, username: true, name: true, avatar: true },
   });
 }
 
