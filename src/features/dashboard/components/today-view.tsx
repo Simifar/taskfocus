@@ -174,9 +174,22 @@ export function TodayView({
                 <p className="text-sm text-muted-foreground">Активные задачи, требующие вашего внимания</p>
               </div>
             </div>
-            <Badge className="h-8 px-3 text-sm font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-              {activeTasks.length}/{maxActive} задач
-            </Badge>
+            <div className="flex items-center gap-2">
+              {completedTasks.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onShowCompletedChange(!showCompleted)}
+                  className="h-8 px-3 text-xs font-medium gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {showCompleted ? "Скрыть" : "Выполненные"} ({completedTasks.length})
+                </Button>
+              )}
+              <Badge className="h-8 px-3 text-sm font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                {activeTasks.length}/{maxActive} задач
+              </Badge>
+            </div>
           </div>
 
           <Card className="border-2 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
@@ -231,27 +244,6 @@ export function TodayView({
             </CardContent>
           </Card>
         </div>
-
-        {/* Completed Tasks Toggle */}
-        {completedTasks.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold">Выполненные задачи</p>
-                <p className="text-sm text-muted-foreground">{completedTasks.length} задача{completedTasks.length === 1 ? "" : "и"} на сегодня</p>
-              </div>
-              <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={showCompleted}
-                  onChange={(event) => onShowCompletedChange(event.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                Показать выполненные
-              </label>
-            </div>
-          </div>
-        )}
 
         {/* Completed Tasks Section */}
         {completedTasks.length > 0 && showCompleted && (

@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
 import { cn } from "@/shared/lib/utils";
 import { Calendar, Plus } from "lucide-react";
-import { format, startOfWeek, addDays, isWithinInterval, parseISO, isSameDay, startOfDay, endOfDay } from "date-fns";
+import { format, startOfWeek, addDays, endOfDay, isWithinInterval, parseISO, isSameDay } from "date-fns";
 import { ru } from "date-fns/locale";
 
 interface WeekViewProps {
@@ -42,7 +42,7 @@ export function WeekView({
 }: WeekViewProps) {
   // Получаем начало недели (понедельник)
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = addDays(weekStart, 6);
+  const weekEnd = endOfDay(addDays(weekStart, 6));
 
   // Получаем дни недели
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -102,7 +102,7 @@ export function WeekView({
           return (
             <div
               key={day.date.toISOString()}
-              className="flex flex-col h-full"
+              className="flex flex-col h-full group/col"
             >
               {/* Day Header */}
               <div 
@@ -187,7 +187,7 @@ export function WeekView({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full mt-2 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="w-full mt-2 h-6 text-xs opacity-0 group-hover/col:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCreateTask?.(day.date);

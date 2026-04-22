@@ -210,8 +210,7 @@ export function CreateTaskDialog({
                       <Calendar
                         mode="single"
                         selected={dueDateStart}
-                        onSelect={setDueDateStart}
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        onSelect={(d) => { if (d) setDueDateStart(d); }}
                         locale={ru}
                       />
                     </PopoverContent>
@@ -237,8 +236,7 @@ export function CreateTaskDialog({
                       <Calendar
                         mode="single"
                         selected={dueDateEnd}
-                        onSelect={setDueDateEnd}
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        onSelect={(d) => { if (d) setDueDateEnd(d); }}
                         locale={ru}
                       />
                     </PopoverContent>
