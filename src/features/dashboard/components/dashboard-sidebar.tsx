@@ -87,35 +87,35 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
   return (
     <div
       className={cn(
-        "w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen",
+        "w-64 shrink-0 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 flex flex-col",
         "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
         "md:relative md:z-auto md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full",
       )}
     >
-      <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-between mb-4">
-        <div
-          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition"
-          onClick={() => { router.push("/profile"); onClose?.(); }}
-        >
-          <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl">
-            <Brain className="h-6 w-6 text-white" />
+      <div className="p-4 md:p-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between gap-2">
+          <div
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition min-w-0"
+            onClick={() => { router.push("/profile"); onClose?.(); }}
+          >
+            <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shrink-0">
+              <Brain className="h-5 w-5 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-base font-bold truncate">TaskFocus</h1>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.name || user?.username || "User"}
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold truncate">TaskFocus</h1>
-            <p className="text-xs text-muted-foreground truncate">
-              {user?.name || user?.username || "User"}
-            </p>
-          </div>
-        </div>
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8 shrink-0"
+            className="md:hidden h-10 w-10 shrink-0"
             onClick={onClose}
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </Button>
         </div>
       </div>

@@ -132,23 +132,23 @@ export function TodayView({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="p-8 max-w-6xl mx-auto space-y-8">
+    <div className="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 -m-4 md:-m-8">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-5 md:space-y-8">
         {/* Header with date and add button */}
-        <div className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Calendar className="h-7 w-7 text-emerald-600" />
-              <h1 className="text-4xl font-bold">На сегодня</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <Calendar className="h-5 w-5 md:h-7 md:w-7 text-emerald-600" />
+              <h1 className="text-2xl md:text-4xl font-bold">На сегодня</h1>
             </div>
-            <p className="text-muted-foreground text-lg capitalize">{getToday()}</p>
+            <p className="text-muted-foreground text-sm md:text-lg capitalize">{getToday()}</p>
           </div>
           <Button
             onClick={onAddTask}
             disabled={isLoading}
-            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg h-12 px-6 text-base font-semibold"
+            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg h-10 px-4 text-sm font-semibold sm:h-12 sm:px-6 sm:text-base w-full sm:w-auto"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Добавить задачу
           </Button>
         </div>
@@ -164,14 +164,14 @@ export function TodayView({
 
         {/* Active Tasks Section */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-                <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 shrink-0">
+                <Zap className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 dark:text-yellow-500" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Фокус на сегодня</h2>
-                <p className="text-sm text-muted-foreground">Активные задачи, требующие вашего внимания</p>
+                <h2 className="text-lg md:text-2xl font-bold">Фокус на сегодня</h2>
+                <p className="text-xs md:text-sm text-muted-foreground">Активные задачи</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -180,14 +180,15 @@ export function TodayView({
                   variant="outline"
                   size="sm"
                   onClick={() => onShowCompletedChange(!showCompleted)}
-                  className="h-8 px-3 text-xs font-medium gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
+                  className="h-8 px-2 md:px-3 text-xs font-medium gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {showCompleted ? "Скрыть" : "Выполненные"} ({completedTasks.length})
+                  <CheckCircle2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <span className="hidden sm:inline">{showCompleted ? "Скрыть" : "Выполненные"} </span>
+                  ({completedTasks.length})
                 </Button>
               )}
-              <Badge className="h-8 px-3 text-sm font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                {activeTasks.length}/{maxActive} задач
+              <Badge className="h-8 px-2 md:px-3 text-xs md:text-sm font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                {activeTasks.length}/{maxActive}
               </Badge>
             </div>
           </div>
@@ -248,13 +249,13 @@ export function TodayView({
         {/* Completed Tasks Section */}
         {completedTasks.length > 0 && showCompleted && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 shrink-0">
+                <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-emerald-600 dark:text-emerald-500" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Завершено</h2>
-                <p className="text-sm text-muted-foreground">Отличная работа! Вы закончили {completedTasks.length} задач(и)</p>
+                <h2 className="text-lg md:text-2xl font-bold">Завершено</h2>
+                <p className="text-xs md:text-sm text-muted-foreground">Завершено {completedTasks.length} задач</p>
               </div>
             </div>
 
@@ -288,13 +289,13 @@ export function TodayView({
 
         {/* Progress Section */}
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-              <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-500" />
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 shrink-0">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-500" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Прогресс</h2>
-              <p className="text-sm text-muted-foreground">Ваше достижение за сегодня</p>
+              <h2 className="text-lg md:text-2xl font-bold">Прогресс</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">Ваше достижение за сегодня</p>
             </div>
           </div>
 

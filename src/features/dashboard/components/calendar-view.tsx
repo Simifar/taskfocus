@@ -99,13 +99,11 @@ export function CalendarView({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-indigo-500" />
-            Календарь
-          </h2>
-        </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+          <Calendar className="h-5 w-5 md:h-6 md:w-6 text-indigo-500" />
+          Календарь
+        </h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -114,7 +112,7 @@ export function CalendarView({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h3 className="text-lg font-semibold min-w-[200px] text-center">
+          <h3 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[200px] text-center capitalize">
             {format(currentMonth, "LLLL yyyy", { locale: ru })}
           </h3>
           <Button
@@ -127,96 +125,87 @@ export function CalendarView({
         </div>
       </div>
 
-      {/* Calendar Grid */}
+      {/* Calendar Grid — horizontal scroll on mobile */}
       <Card>
-        <CardContent className="p-4">
-          {/* Day headers */}
-          <div className="grid grid-cols-7 gap-2 mb-4">
-            {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
-              <div
-                key={day}
-                className="text-center font-semibold text-sm text-muted-foreground py-2"
-              >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar days */}
-          <div className="grid grid-cols-7 gap-2">
-            {finalCalendarDays.map((day) => {
-              const dateStr = format(day, "yyyy-MM-dd");
-              const dayTasks = tasksByDay.get(dateStr) || [];
-              const isCurrentMonth = isSameMonth(day, currentMonth);
-              const isToday = isSameDay(day, today);
-
-              return (
-                <div
-                  key={dateStr}
-                  onClick={() => isCurrentMonth && onSelectDay?.(day)}
-                  className={cn(
-                    "min-h-[140px] p-2 rounded-lg border transition-all flex flex-col",
-                    isCurrentMonth
-                      ? "bg-background border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                      : "bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 opacity-50",
-                    isToday && "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                  )}
-                >
-                  {/* Date number */}
-                  <p
-                    className={cn(
-                      "text-xs font-bold mb-1",
-                      isToday ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
-                    )}
+        <CardContent className="p-2 md:p-4">
+          <div className="overflow-x-auto -mx-2 md:mx-0 px-2 md:px-0">
+            <div className="min-w-[420px]">
+              {/* Day headers */}
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
+                  <div
+                    key={day}
+                    className="text-center font-semibold text-xs text-muted-foreground py-1.5"
                   >
-                    {format(day, "d")}
-                  </p>
-
-                  {/* Task count badge */}
-                  {dayTasks.length > 0 && (
-                    <Badge variant="secondary" className="text-xs mb-2 w-full justify-center">
-                      {dayTasks.length} задач
-                    </Badge>
-                  )}
-
-                  {/* Tasks preview */}
-                  <div className="space-y-1 flex-1">
-                    {dayTasks.slice(0, 3).map((task) => (
-                      <div
-                        key={task.id}
-                        className="text-xs p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors line-clamp-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit?.(task);
-                        }}
-                        title={task.title}
-                      >
-                        <span className="font-medium">{task.title}</span>
-                      </div>
-                    ))}
-                    {dayTasks.length > 3 && (
-                      <p className="text-xs text-muted-foreground">+{dayTasks.length - 3} ещё</p>
-                    )}
+                    {day}
                   </div>
+                ))}
+              </div>
 
-                  {/* Add button */}
-                  {isCurrentMonth && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full mt-1 h-7 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCreateTask?.(day);
-                      }}
+              {/* Calendar days */}
+              <div className="grid grid-cols-7 gap-1">
+                {finalCalendarDays.map((day) => {
+                  const dateStr = format(day, "yyyy-MM-dd");
+                  const dayTasks = tasksByDay.get(dateStr) || [];
+                  const isCurrentMonth = isSameMonth(day, currentMonth);
+                  const isToday = isSameDay(day, today);
+
+                  return (
+                    <div
+                      key={dateStr}
+                      onClick={() => isCurrentMonth && onSelectDay?.(day)}
+                      className={cn(
+                        "min-h-[60px] md:min-h-[120px] p-1 md:p-2 rounded-lg border transition-all flex flex-col",
+                        isCurrentMonth
+                          ? "bg-background border-gray-200 dark:border-gray-800 cursor-pointer active:bg-gray-100 dark:active:bg-gray-800"
+                          : "bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 opacity-40",
+                        isToday && "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                      )}
                     >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Добавить
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
+                      {/* Date number */}
+                      <p
+                        className={cn(
+                          "text-xs font-bold leading-none",
+                          isToday ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                        )}
+                      >
+                        {format(day, "d")}
+                      </p>
+
+                      {/* Task dots on mobile / task list on desktop */}
+                      {dayTasks.length > 0 && (
+                        <>
+                          {/* Mobile: coloured dot + count */}
+                          <div className="md:hidden mt-1 flex items-center gap-0.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="text-[10px] text-muted-foreground">{dayTasks.length}</span>
+                          </div>
+                          {/* Desktop: full task list */}
+                          <div className="hidden md:block space-y-0.5 mt-1 flex-1">
+                            {dayTasks.slice(0, 2).map((task) => (
+                              <div
+                                key={task.id}
+                                className="text-xs p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors line-clamp-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEdit?.(task);
+                                }}
+                                title={task.title}
+                              >
+                                {task.title}
+                              </div>
+                            ))}
+                            {dayTasks.length > 2 && (
+                              <p className="text-xs text-muted-foreground">+{dayTasks.length - 2} ещё</p>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -226,7 +215,7 @@ export function CalendarView({
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Всего в месяце</p>
-            <p className="text-3xl font-bold">
+            <p className="text-2xl md:text-3xl font-bold">
               {activeTasks.filter((t) => isSameMonth(parseISO(t.dueDateStart!), currentMonth)).length}
             </p>
           </CardContent>
@@ -235,7 +224,7 @@ export function CalendarView({
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Сегодня</p>
-            <p className="text-3xl font-bold">
+            <p className="text-2xl md:text-3xl font-bold">
               {activeTasks.filter((t) => isSameDay(parseISO(t.dueDateStart!), today)).length}
             </p>
           </CardContent>
@@ -244,7 +233,7 @@ export function CalendarView({
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Высокий приоритет</p>
-            <p className="text-3xl font-bold">
+            <p className="text-2xl md:text-3xl font-bold">
               {activeTasks.filter(
                 (t) =>
                   t.priority === "high" &&
@@ -257,7 +246,7 @@ export function CalendarView({
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Средняя энергия</p>
-            <p className="text-3xl font-bold">
+            <p className="text-2xl md:text-3xl font-bold">
               {activeTasks.filter((t) =>
                 isSameMonth(parseISO(t.dueDateStart!), currentMonth)
               ).length > 0

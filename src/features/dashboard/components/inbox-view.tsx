@@ -188,39 +188,36 @@ export function InboxView({
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Inbox className="h-6 w-6 text-blue-500" />
-              Входящие задачи
-              <Badge variant="secondary" className="ml-2">
+            <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 flex-wrap">
+              <Inbox className="h-5 w-5 md:h-6 md:w-6 text-blue-500 shrink-0" />
+              Входящие
+              <Badge variant="secondary">
                 {filteredTasks.length}/{inboxTasks.length}
               </Badge>
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {inboxTasks.length} задач без даты • Соберите фокус перед началом работы
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
+              {inboxTasks.length} задач без даты
             </p>
             {inboxTasks.length > 0 && (
-              <div className="mt-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Прогресс обработки:</span>
-                  <div className="flex-1 max-w-xs">
-                    <Progress value={processingProgress} className="h-2" />
-                  </div>
-                  <span>{Math.round(processingProgress)}%</span>
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="shrink-0">Прогресс:</span>
+                <div className="flex-1 max-w-xs">
+                  <Progress value={processingProgress} className="h-2" />
                 </div>
+                <span className="shrink-0">{Math.round(processingProgress)}%</span>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setViewMode(viewMode === "compact" ? "detailed" : "compact")}
-            >
-              {viewMode === "compact" ? "Детально" : "Компактно"}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 self-start"
+            onClick={() => setViewMode(viewMode === "compact" ? "detailed" : "compact")}
+          >
+            {viewMode === "compact" ? "Детально" : "Компактно"}
+          </Button>
         </div>
 
         <Card className="border-blue-200 dark:border-blue-800">

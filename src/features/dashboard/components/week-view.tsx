@@ -75,8 +75,8 @@ export function WeekView({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-purple-500" />
+          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Calendar className="h-5 w-5 md:h-6 md:w-6 text-purple-500" />
             Неделя
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -91,61 +91,61 @@ export function WeekView({
         </div>
       </div>
 
-      {/* Week Timeline */}
-      <div className="grid grid-cols-7 gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
-        {tasksByDay.map((day) => {
-          const isToday = isSameDay(day.date, today);
-          const dayName = format(day.date, "EEE", { locale: ru });
-          const dayNumber = format(day.date, "d");
-          const hasOverflow = day.tasks.length > 3;
+      {/* Week Timeline — horizontal scroll on mobile */}
+      <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+        <div className="grid grid-cols-7 gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-2 min-w-[560px]">
+          {tasksByDay.map((day) => {
+            const isToday = isSameDay(day.date, today);
+            const dayName = format(day.date, "EEE", { locale: ru });
+            const dayNumber = format(day.date, "d");
+            const hasOverflow = day.tasks.length > 3;
 
-          return (
-            <div
-              key={day.date.toISOString()}
-              className="flex flex-col h-full group/col"
-            >
-              {/* Day Header */}
-              <div 
-                className={cn(
-                  "flex flex-col items-center p-2 rounded-t-lg cursor-pointer transition-colors",
-                  isToday 
-                    ? "bg-emerald-500 text-white" 
-                    : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
-                )}
-                onClick={() => onSelectDay?.(day.date)}
+            return (
+              <div
+                key={day.date.toISOString()}
+                className="flex flex-col h-full group/col"
               >
-                <p className="text-xs font-medium">{dayName}</p>
-                <p className="text-lg font-bold">{dayNumber}</p>
-                {day.tasks.length > 0 && (
-                  <Badge 
-                    variant={isToday ? "secondary" : "outline"} 
-                    className={cn("text-xs mt-1", isToday && "bg-white/20 text-white border-white/30")}
-                  >
-                    {day.tasks.length}
-                  </Badge>
-                )}
-              </div>
+                {/* Day Header */}
+                <div
+                  className={cn(
+                    "flex flex-col items-center p-2 rounded-t-lg cursor-pointer transition-colors",
+                    isToday
+                      ? "bg-emerald-500 text-white"
+                      : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  )}
+                  onClick={() => onSelectDay?.(day.date)}
+                >
+                  <p className="text-xs font-medium">{dayName}</p>
+                  <p className="text-sm md:text-lg font-bold">{dayNumber}</p>
+                  {day.tasks.length > 0 && (
+                    <Badge
+                      variant={isToday ? "secondary" : "outline"}
+                      className={cn("text-xs mt-1", isToday && "bg-white/20 text-white border-white/30")}
+                    >
+                      {day.tasks.length}
+                    </Badge>
+                  )}
+                </div>
 
-              {/* Tasks Container */}
-              <div className={cn(
-                "flex-1 p-2 space-y-1 min-h-[200px] rounded-b-lg",
-                isToday 
-                  ? "bg-emerald-50 dark:bg-emerald-900/20" 
-                  : "bg-white dark:bg-gray-900"
-              )}>
-                {day.tasks.length > 0 ? (
-                  <>
-                    {day.tasks.slice(0, 3).map((task) => (
-                      <div
-                        key={task.id}
-                        className="group relative"
-                      >
+                {/* Tasks Container */}
+                <div
+                  className={cn(
+                    "flex-1 p-1.5 space-y-1 min-h-[140px] md:min-h-[200px] rounded-b-lg",
+                    isToday
+                      ? "bg-emerald-50 dark:bg-emerald-900/20"
+                      : "bg-white dark:bg-gray-900"
+                  )}
+                >
+                  {day.tasks.length > 0 ? (
+                    <>
+                      {day.tasks.slice(0, 3).map((task) => (
                         <div
+                          key={task.id}
                           className={cn(
-                            "p-2 rounded text-xs cursor-pointer transition-all",
-                            "hover:shadow-sm hover:scale-[1.02] border border-transparent hover:border-gray-200 dark:hover:border-gray-700",
-                            task.priority === "high" 
-                              ? "bg-red-50 dark:bg-red-900/20 border-l-2 border-l-red-500" 
+                            "p-1.5 rounded text-xs cursor-pointer transition-all border border-transparent",
+                            "active:scale-95",
+                            task.priority === "high"
+                              ? "bg-red-50 dark:bg-red-900/20 border-l-2 border-l-red-500"
                               : "bg-gray-50 dark:bg-gray-800"
                           )}
                           onClick={(e) => {
@@ -153,52 +153,47 @@ export function WeekView({
                             onEdit?.(task);
                           }}
                         >
-                          <p className="font-medium line-clamp-2 text-xs">{task.title}</p>
-                          <div className="flex items-center justify-between mt-1">
-                            <Badge variant="outline" className="text-xs h-4 px-1">
-                              E{task.energyLevel}
-                            </Badge>
-                            {task.priority === "high" && (
-                              <span className="text-red-500 text-xs">★</span>
-                            )}
-                          </div>
+                          <p className="font-medium line-clamp-2 text-xs leading-tight">{task.title}</p>
+                          {task.priority === "high" && (
+                            <span className="text-red-500 text-xs">★</span>
+                          )}
                         </div>
-                      </div>
-                    ))}
-                    {hasOverflow && (
-                      <div 
-                        className="text-xs text-muted-foreground text-center py-1 cursor-pointer hover:text-foreground"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectDay?.(day.date);
-                        }}
-                      >
-                        +{day.tasks.length - 3} ещё
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    <p className="text-xs">Нет задач</p>
-                  </div>
-                )}
-                
-                {/* Quick Add Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full mt-2 h-6 text-xs opacity-0 group-hover/col:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreateTask?.(day.date);
-                  }}
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
+                      ))}
+                      {hasOverflow && (
+                        <div
+                          className="text-xs text-muted-foreground text-center py-1 cursor-pointer hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectDay?.(day.date);
+                          }}
+                        >
+                          +{day.tasks.length - 3}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                      <p className="text-xs">—</p>
+                    </div>
+                  )}
+
+                  {/* Quick Add Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-1 h-6 text-xs opacity-0 group-hover/col:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCreateTask?.(day.date);
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Summary Stats */}

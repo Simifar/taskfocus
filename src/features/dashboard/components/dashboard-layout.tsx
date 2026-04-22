@@ -279,13 +279,12 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950">
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="flex h-screen bg-white dark:bg-gray-950 overflow-hidden">
+      {/* backdrop — always in DOM, transitions opacity so it syncs with sidebar slide */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        onClick={() => setSidebarOpen(false)}
+      />
 
       <DashboardSidebar
         user={user ?? null}

@@ -168,22 +168,20 @@ function SortableTaskItem({
           {/* Main Row */}
           <div className="flex items-start gap-3">
             {/* Drag Handle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="cursor-grab active:cursor-grabbing flex-shrink-0 mt-1"
+            <button
+              className="cursor-grab active:cursor-grabbing flex-shrink-0 mt-1 h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent touch-manipulation"
               {...attributes}
               {...listeners}
             >
               <GripVertical className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            </button>
 
             {/* Complete Button */}
             <Button
               variant="ghost"
               size="icon"
               className={cn(
-                "flex-shrink-0 mt-0.5",
+                "flex-shrink-0 h-9 w-9",
                 task.status === "completed" ? "text-emerald-600 hover:text-emerald-700" : "text-muted-foreground hover:text-emerald-600"
               )}
               onClick={() => onComplete(task)}
@@ -231,34 +229,32 @@ function SortableTaskItem({
 
             {/* Actions */}
             {task.status === "active" && (
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex items-center gap-0.5 flex-shrink-0">
                 {onAddSubtask && (
                   <Button
                     variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      onOpenSubtaskDialog?.(task);
-                    }}
+                    size="icon"
+                    onClick={() => { onOpenSubtaskDialog?.(task); }}
                     title="Добавить подзадачу"
-                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onEdit(task)}
-                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="h-9 w-9 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <Edit2 className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => onArchive(task.id)}
                   title="В архив"
-                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="h-9 w-9 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <Archive className="h-4 w-4" />
                 </Button>
@@ -266,9 +262,9 @@ function SortableTaskItem({
             )}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => onDelete(task.id)}
-              className="text-destructive/70 hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+              className="h-9 w-9 text-destructive/70 hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -317,7 +313,9 @@ export function SortableTasksList({
   }, []);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
