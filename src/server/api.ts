@@ -1,4 +1,3 @@
-// src/server/api.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentUser } from "@/server/auth";
@@ -41,11 +40,17 @@ export function handleUnknownError(label: string, error: unknown) {
   if (error instanceof ZodError) {
     return err("VALIDATION_ERROR", error.issues[0]?.message ?? "Ошибка валидации", 400);
   }
-  console.error(`${label} error:`, error);
+  // Structured log for Vercel log drain / dashboard
+  console.error(JSON.stringify({
+    level: "error",
+    label,
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+    ts: new Date().toISOString(),
+  }));
   return err("INTERNAL_ERROR", "Внутренняя ошибка сервера", 500);
 }
 
-// ✅ Обновлённые типы для совместимости с Next.js 16 App Router
 type NextContext = {
   params: Promise<Record<string, string>>;
 };
@@ -67,7 +72,12 @@ export function withAuth<Ctx extends NextContext = NextContext>(
       if (!user) return unauthorized();
       return handler(request, { ...context, user } as Ctx & { user: AuthedUser });
     } catch (error) {
-      console.error("[withAuth] unhandled error:", error);
+      console.error(JSON.stringify({
+        level: "error",
+        label: "withAuth",
+        message: error instanceof Error ? error.message : String(error),
+        ts: new Date().toISOString(),
+      }));
       return err("INTERNAL_ERROR", "Внутренняя ошибка сервера", 500);
     }
   };

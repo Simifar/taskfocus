@@ -2,35 +2,43 @@ import { db } from "@/server/db";
 import { ok, withAuth } from "@/server/api";
 
 export const GET = withAuth(async (_request, { user }) => {
-  const [activeTasks, completedTasks, archivedTasks] = await Promise.all([
-    db.task.count({ where: { userId: user.id, status: "active", parentTaskId: null } }),
-    db.task.count({ where: { userId: user.id, status: "completed", parentTaskId: null } }),
-    db.task.count({ where: { userId: user.id, status: "archived", parentTaskId: null } }),
-  ]);
-
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
-
-  const completedThisWeek = await db.task.count({
-    where: {
-      userId: user.id,
-      status: "completed",
-      completedAt: { gte: weekAgo },
-      parentTaskId: null,
-    },
-  });
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const completedToday = await db.task.count({
-    where: {
-      userId: user.id,
-      status: "completed",
-      completedAt: { gte: today },
-      parentTaskId: null,
-    },
-  });
+  // Single groupBy query replaces 3 separate count queries
+  const [countsByStatus, completedThisWeek, completedToday] = await Promise.all([
+    db.task.groupBy({
+      by: ["status"],
+      where: { userId: user.id, parentTaskId: null },
+      _count: { _all: true },
+    }),
+    db.task.count({
+      where: {
+        userId: user.id,
+        status: "completed",
+        completedAt: { gte: weekAgo },
+        parentTaskId: null,
+      },
+    }),
+    db.task.count({
+      where: {
+        userId: user.id,
+        status: "completed",
+        completedAt: { gte: today },
+        parentTaskId: null,
+      },
+    }),
+  ]);
+
+  const activeTasks =
+    countsByStatus.find((c) => c.status === "active")?._count._all ?? 0;
+  const completedTasks =
+    countsByStatus.find((c) => c.status === "completed")?._count._all ?? 0;
+  const archivedTasks =
+    countsByStatus.find((c) => c.status === "archived")?._count._all ?? 0;
 
   return ok({
     activeTasks,
