@@ -6,9 +6,16 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent } from "@/shared/ui/card";
-import { Plus, ChevronDown, ChevronRight, CheckCircle2, Circle, Edit2, Trash2, Archive, GripVertical, BatteryLow, BatteryMedium, Battery, BatteryFull } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, CheckCircle2, Circle, Edit2, Trash2, Archive, GripVertical, BatteryLow, BatteryMedium, Battery, BatteryFull, MoreVertical } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 
 interface TaskWithSubtasksProps {
   task: Task;
@@ -184,50 +191,86 @@ export function TaskWithSubtasks({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          {task.status === "active" && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsAddingSubtask(true)}
-                title="Добавить подзадачу"
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEditTask(task)}
-                className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onArchive(task.id)}
-                title="В архив"
-                className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <Archive className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(task.id)}
-            className="text-destructive/70 hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {/* Action Buttons — desktop: inline */}
+          <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
+            {task.status === "active" && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsAddingSubtask(true)}
+                  title="Добавить подзадачу"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEditTask(task)}
+                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onArchive(task.id)}
+                  title="В архив"
+                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <Archive className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(task.id)}
+              className="text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Action Buttons — mobile: dropdown */}
+          <div className="sm:hidden flex-shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {task.status === "active" && (
+                  <>
+                    <DropdownMenuItem onClick={() => setIsAddingSubtask(true)}>
+                      <Plus className="h-4 w-4" />
+                      Добавить подзадачу
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEditTask(task)}>
+                      <Edit2 className="h-4 w-4" />
+                      Редактировать
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onArchive(task.id)}>
+                      <Archive className="h-4 w-4" />
+                      В архив
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem variant="destructive" onClick={() => onDelete(task.id)}>
+                  <Trash2 className="h-4 w-4" />
+                  Удалить
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Progress Bar */}
         {totalSubtasks > 0 && (
-          <div className="space-y-1.5 pl-8">
+          <div className="space-y-1.5 pl-4 md:pl-8">
             <div className="flex justify-between text-xs font-medium">
               <span className="text-muted-foreground">Прогресс подзадач</span>
               <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{Math.round(progress)}%</span>
@@ -243,12 +286,12 @@ export function TaskWithSubtasks({
 
         {/* Subtasks List */}
         {isExpanded && subtasks.length > 0 && (
-          <div className="space-y-2 pl-8 border-l-2 border-indigo-200 dark:border-indigo-800/50">
+          <div className="space-y-2 pl-4 md:pl-8 border-l-2 border-indigo-200 dark:border-indigo-800/50">
             {subtasks.map((subtask) => (
               <div
                 key={subtask.id}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                  "flex items-center gap-2 px-2 py-2 rounded-lg transition-colors",
                   subtask.status === "completed"
                     ? "bg-emerald-50 dark:bg-emerald-900/20"
                     : "bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50"
@@ -260,7 +303,7 @@ export function TaskWithSubtasks({
                   size="sm"
                   onClick={() => onToggleSubtask(subtask)}
                   className={cn(
-                    "flex-shrink-0 p-1 h-6 w-6",
+                    "flex-shrink-0 h-8 w-8",
                     subtask.status === "completed"
                       ? "text-emerald-600 hover:text-emerald-700"
                       : "text-muted-foreground hover:text-emerald-600"
@@ -276,36 +319,58 @@ export function TaskWithSubtasks({
                 {/* Subtask Title */}
                 <span
                   className={cn(
-                    "flex-1 text-sm font-medium",
+                    "flex-1 text-sm font-medium min-w-0 truncate",
                     subtask.status === "completed" && "line-through text-muted-foreground"
                   )}
                 >
                   {subtask.title}
                 </span>
 
-                {/* Energy Badge */}
-                <Badge variant="outline" className="text-xs font-semibold bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                {/* Energy Badge — hidden on mobile to save space */}
+                <Badge variant="outline" className="hidden sm:inline-flex text-xs font-semibold bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 flex-shrink-0">
                   E{subtask.energyLevel}
                 </Badge>
 
-                {/* Actions */}
-                <div className="flex items-center gap-0.5">
+                {/* Actions — desktop: inline */}
+                <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onEditSubtask(subtask)}
-                    className="p-1 h-6 w-6 text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700"
                   >
-                    <Edit2 className="h-3 w-3" />
+                    <Edit2 className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onDeleteSubtask(subtask.id)}
-                    className="p-1 h-6 w-6 text-red-500/70 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="h-8 w-8 p-0 text-red-500/70 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
+                </div>
+
+                {/* Actions — mobile: dropdown */}
+                <div className="sm:hidden flex-shrink-0">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onEditSubtask(subtask)}>
+                        <Edit2 className="h-4 w-4" />
+                        Редактировать
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem variant="destructive" onClick={() => onDeleteSubtask(subtask.id)}>
+                        <Trash2 className="h-4 w-4" />
+                        Удалить
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))}
@@ -314,14 +379,14 @@ export function TaskWithSubtasks({
 
         {/* Empty state for subtasks */}
         {isExpanded && subtasks.length === 0 && (
-          <div className="pl-8 py-6 text-center text-muted-foreground text-sm">
+          <div className="pl-4 md:pl-8 py-6 text-center text-muted-foreground text-sm">
             Нет подзадач. Нажмите кнопку выше, чтобы добавить первую.
           </div>
         )}
 
         {/* Add Subtask Input */}
         {isAddingSubtask && (
-          <div className="pl-8 space-y-2">
+          <div className="pl-4 md:pl-8 space-y-2">
             <div className="flex gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
               <Input
                 value={newSubtaskTitle}

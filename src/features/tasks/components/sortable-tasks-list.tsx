@@ -35,11 +35,19 @@ import {
   BatteryLow,
   BatteryFull,
   Plus,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { TaskWithSubtasks } from "./task-with-subtasks";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 
 // Wrapper component to make TaskWithSubtasks draggable
 function SortableTaskWithSubtasks({
@@ -227,47 +235,85 @@ function SortableTaskItem({
               </div>
             </div>
 
-            {/* Actions */}
-            {task.status === "active" && (
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                {onAddSubtask && (
+            {/* Actions — desktop: inline buttons */}
+            <div className="hidden sm:flex items-center gap-0.5 flex-shrink-0">
+              {task.status === "active" && (
+                <>
+                  {onAddSubtask && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => { onOpenSubtaskDialog?.(task); }}
+                      title="Добавить подзадачу"
+                      className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => { onOpenSubtaskDialog?.(task); }}
-                    title="Добавить подзадачу"
-                    className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    onClick={() => onEdit(task)}
+                    className="h-9 w-9 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Edit2 className="h-4 w-4" />
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onEdit(task)}
-                  className="h-9 w-9 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onArchive(task.id)}
-                  title="В архив"
-                  className="h-9 w-9 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <Archive className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(task.id)}
-              className="h-9 w-9 text-destructive/70 hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onArchive(task.id)}
+                    title="В архив"
+                    className="h-9 w-9 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(task.id)}
+                className="h-9 w-9 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Actions — mobile: dropdown */}
+            <div className="sm:hidden flex-shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {task.status === "active" && (
+                    <>
+                      {onAddSubtask && (
+                        <DropdownMenuItem onClick={() => onOpenSubtaskDialog?.(task)}>
+                          <Plus className="h-4 w-4" />
+                          Добавить подзадачу
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => onEdit(task)}>
+                        <Edit2 className="h-4 w-4" />
+                        Редактировать
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onArchive(task.id)}>
+                        <Archive className="h-4 w-4" />
+                        В архив
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem variant="destructive" onClick={() => onDelete(task.id)}>
+                    <Trash2 className="h-4 w-4" />
+                    Удалить
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </CardContent>
       </Card>
