@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addDays } from "date-fns";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Menu, Brain } from "lucide-react";
 
 import type { Task } from "@/shared/types";
 import { ApiError } from "@/shared/lib/fetcher";
+import { Button } from "@/shared/ui/button";
 import { useCurrentUser, useLogout } from "@/features/auth/hooks";
 import { useStats } from "@/features/stats/hooks";
 import {
@@ -59,6 +60,7 @@ export function DashboardLayout() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!user) router.push("/");
@@ -278,15 +280,41 @@ export function DashboardLayout() {
 
   return (
     <div className="flex h-screen bg-white dark:bg-gray-950">
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <DashboardSidebar
         user={user ?? null}
         stats={stats}
         tasks={tasks}
         onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-auto p-6 md:p-8">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className="md:hidden flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+              <Brain className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-bold text-base">TaskFocus</span>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 md:p-8">
           {currentView === "today" && (
             <TodayView
               tasks={tasks}

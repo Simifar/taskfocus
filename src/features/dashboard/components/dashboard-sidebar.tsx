@@ -14,6 +14,7 @@ import {
   LogOut,
   Brain,
   BarChart3,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
@@ -23,9 +24,11 @@ interface DashboardSidebarProps {
   stats: StatsResponse | null;
   tasks: Task[];
   onLogout: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSidebarProps) {
+export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false, onClose }: DashboardSidebarProps) {
   const router = useRouter();
 
   const currentView = useDashboardStore((s) => s.currentView);
@@ -76,12 +79,25 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
     { id: "calendar", label: "Calendar", icon: <BarChart3 className="h-4 w-4" /> },
   ];
 
+  const handleNavClick = (view: DashboardView) => {
+    setView(view);
+    onClose?.();
+  };
+
   return (
-    <div className="w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen">
+    <div
+      className={cn(
+        "w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen",
+        "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
+        "md:relative md:z-auto md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+      )}
+    >
       <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between mb-4">
         <div
-          className="flex items-center gap-3 mb-4 cursor-pointer hover:opacity-80 transition"
-          onClick={() => router.push("/profile")}
+          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition"
+          onClick={() => { router.push("/profile"); onClose?.(); }}
         >
           <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl">
             <Brain className="h-6 w-6 text-white" />
@@ -92,6 +108,15 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
               {user?.name || user?.username || "User"}
             </p>
           </div>
+        </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-8 w-8 shrink-0"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -105,7 +130,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
                 "w-full justify-between",
                 currentView === item.id && "bg-emerald-600 hover:bg-emerald-700 text-white",
               )}
-              onClick={() => setView(item.id)}
+              onClick={() => handleNavClick(item.id)}
             >
               <div className="flex items-center gap-2">
                 {item.icon}
@@ -124,7 +149,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
           <Button
             variant="outline"
             className="w-full justify-start gap-2"
-            onClick={() => setView("today")}
+            onClick={() => handleNavClick("today")}
           >
             <Zap className="h-4 w-4 text-yellow-500" />
             <span>Energy Focus</span>
