@@ -62,11 +62,14 @@ export function withAuth<Ctx extends NextContext = NextContext>(
     request: NextRequest,
     context: Ctx
   ): Promise<Response> => {
-    const user = await getCurrentUser();
-    if (!user) return unauthorized();
-    
-    // ✅ Пробрасываем оригинальный context (включая params) + добавляем user
-    return handler(request, { ...context, user } as Ctx & { user: AuthedUser });
+    try {
+      const user = await getCurrentUser();
+      if (!user) return unauthorized();
+      return handler(request, { ...context, user } as Ctx & { user: AuthedUser });
+    } catch (error) {
+      console.error("[withAuth] unhandled error:", error);
+      return err("INTERNAL_ERROR", "Внутренняя ошибка сервера", 500);
+    }
   };
 }
 
