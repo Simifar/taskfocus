@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentUser } from "@/server/auth";
 import { checkRateLimit, getClientIp } from "@/server/rate-limit";
+import { logger } from "@/server/logger";
 
 export type AuthedUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 
@@ -40,14 +41,10 @@ export function handleUnknownError(label: string, error: unknown) {
   if (error instanceof ZodError) {
     return err("VALIDATION_ERROR", error.issues[0]?.message ?? "Ошибка валидации", 400);
   }
-  // Structured log for Vercel log drain / dashboard
-  console.error(JSON.stringify({
-    level: "error",
-    label,
+  logger.error(label, {
     message: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,
-    ts: new Date().toISOString(),
-  }));
+  });
   return err("INTERNAL_ERROR", "Внутренняя ошибка сервера", 500);
 }
 
@@ -60,6 +57,8 @@ type AuthedHandler<Ctx extends NextContext> = (
   ctx: Ctx & { user: AuthedUser },
 ) => Promise<Response> | Response;
 
+const SLOW_REQUEST_MS = 3_000;
+
 export function withAuth<Ctx extends NextContext = NextContext>(
   handler: AuthedHandler<Ctx>
 ) {
@@ -67,17 +66,39 @@ export function withAuth<Ctx extends NextContext = NextContext>(
     request: NextRequest,
     context: Ctx
   ): Promise<Response> => {
+    const start = Date.now();
+    const path = new URL(request.url).pathname;
+
     try {
       const user = await getCurrentUser();
-      if (!user) return unauthorized();
-      return handler(request, { ...context, user } as Ctx & { user: AuthedUser });
+
+      if (!user) {
+        logger.warn("withAuth", {
+          event: "unauthorized",
+          method: request.method,
+          path,
+        });
+        return unauthorized();
+      }
+
+      const response = await handler(request, { ...context, user } as Ctx & { user: AuthedUser });
+
+      const duration = Date.now() - start;
+      if (duration > SLOW_REQUEST_MS) {
+        logger.warn("slow_request", {
+          method: request.method,
+          path,
+          durationMs: duration,
+        });
+      }
+
+      return response;
     } catch (error) {
-      console.error(JSON.stringify({
-        level: "error",
-        label: "withAuth",
+      logger.error("withAuth", {
+        method: request.method,
+        path,
         message: error instanceof Error ? error.message : String(error),
-        ts: new Date().toISOString(),
-      }));
+      });
       return err("INTERNAL_ERROR", "Внутренняя ошибка сервера", 500);
     }
   };

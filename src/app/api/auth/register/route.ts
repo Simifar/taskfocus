@@ -2,6 +2,7 @@ import { z } from "zod";
 import { db } from "@/server/db";
 import { hashPassword, createToken, setAuthCookie } from "@/server/auth";
 import { err, getClientIp, handleUnknownError, ok, withRateLimit } from "@/server/api";
+import { logger } from "@/server/logger";
 
 const registerSchema = z.object({
   email: z.string().email("Неверный формат email"),
@@ -38,6 +39,8 @@ async function handler(request: Request) {
       username: username,
     });
     await setAuthCookie(token);
+
+    logger.info("auth:register", { event: "success", userId: user.id });
 
     return ok({
       id: user.id,
