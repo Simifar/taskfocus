@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCurrentUser, useLogout, useUpdateProfile, useDeleteAccount, useChangePassword } from "@/features/auth/hooks";
+import { useCurrentUser, useLogout, useUpdateProfile, useDeleteAccount } from "@/features/auth/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui/card";
@@ -17,7 +17,6 @@ import {
   Loader2,
   Trash2,
   AlertTriangle,
-  Shield,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -35,16 +34,10 @@ export function ProfilePage() {
   const updateProfile = useUpdateProfile();
   const logout = useLogout();
   const deleteAccount = useDeleteAccount();
-  const changePassword = useChangePassword();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [formData, setFormData] = useState({ name: "", avatar: "" });
   const [originalData, setOriginalData] = useState({ name: "", avatar: "" });
-  const [passwordData, setPasswordData] = useState({ 
-    currentPassword: "", 
-    newPassword: "", 
-    confirmPassword: "" 
-  });
 
   useEffect(() => {
     if (user) {
@@ -85,30 +78,7 @@ export function ProfilePage() {
     }
   };
 
-  const handleChangePassword = async () => {
-    if (passwordData.newPassword.length < 8) {
-      toast.error("Новый пароль должен содержать минимум 8 символов");
-      return;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Пароли не совпадают");
-      return;
-    }
-
-    try {
-      await changePassword.mutateAsync({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      });
-      toast.success("Пароль успешно изменён");
-      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Ошибка изменения пароля";
-      toast.error(message);
-    }
-  };
-
+  
   if (isLoadingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -225,90 +195,6 @@ export function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-
-        {user.hasPassword && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Безопасность
-              </CardTitle>
-              <CardDescription>Управление паролем</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="current-password" className="mb-2">
-                  Текущий пароль
-                </Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  placeholder="Введите текущий пароль"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="new-password" className="mb-2">
-                  Новый пароль
-                </Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  placeholder="Минимум 8 символов"
-                />
-                {passwordData.newPassword && passwordData.newPassword.length < 8 && (
-                  <p className="text-xs text-red-600 mt-1">
-                    Пароль должен содержать минимум 8 символов
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="confirm-password" className="mb-2">
-                  Подтвердите новый пароль
-                </Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  placeholder="Повторите новый пароль"
-                />
-                {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
-                  <p className="text-xs text-red-600 mt-1">
-                    Пароли не совпадают
-                  </p>
-                )}
-              </div>
-
-              <Button
-                onClick={handleChangePassword}
-                disabled={
-                  !passwordData.currentPassword ||
-                  !passwordData.newPassword ||
-                  !passwordData.confirmPassword ||
-                  passwordData.newPassword.length < 8 ||
-                  passwordData.newPassword !== passwordData.confirmPassword ||
-                  changePassword.isPending
-                }
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                {changePassword.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Изменение...
-                  </>
-                ) : (
-                  "Изменить пароль"
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
 
         <Card className="border-red-200 dark:border-red-800">
           <CardHeader>

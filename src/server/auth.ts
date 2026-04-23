@@ -54,15 +54,12 @@ export async function getCurrentUser() {
   if (session?.user?.id) {
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, email: true, username: true, name: true, avatar: true, passwordHash: true },
+      select: { id: true, email: true, username: true, name: true, avatar: true },
     });
     
     if (!user) return null;
     
-    return {
-      ...user,
-      hasPassword: !!user.passwordHash,
-    };
+    return user;
   }
 
   // Fallback: custom JWT cookie (email/password users)
@@ -75,15 +72,12 @@ export async function getCurrentUser() {
 
   const user = await db.user.findUnique({
     where: { id: payload.userId },
-    select: { id: true, email: true, username: true, name: true, avatar: true, passwordHash: true },
+    select: { id: true, email: true, username: true, name: true, avatar: true },
   });
   
   if (!user) return null;
   
-  return {
-    ...user,
-    hasPassword: !!user.passwordHash,
-  };
+  return user;
 }
 
 export async function hashPassword(password: string): Promise<string> {

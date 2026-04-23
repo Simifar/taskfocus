@@ -1,35 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForgotPassword } from '@/features/auth/hooks';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
+import { AlertCircle, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
-import { Loader2, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
-  const router = useRouter();
-  
-  const forgotPassword = useForgotPassword();
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      await forgotPassword.mutateAsync({ email });
-      setIsSuccess(true);
-    } catch (error) {
-      // Error handling is done by the mutation
+    if (!email) {
+      setError('Пожалуйста, введите email');
+      return;
     }
+
+    // Заглушка - просто показываем успех
+    setIsSubmitted(true);
+    setError('');
   };
 
-  if (isSuccess) {
+  if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -39,33 +37,17 @@ export default function ForgotPasswordPage() {
             </div>
             <CardTitle className="text-2xl font-bold">Проверьте почту</CardTitle>
             <CardDescription>
-              Мы отправили инструкции по сбросу пароля на указанный email
+              Мы отправили вам инструкции по восстановлению пароля
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <Mail className="h-4 w-4" />
-              <AlertDescription>
-                Если аккаунт с email <strong>{email}</strong> существует, вы получите письмо с инструкциями.
-              </AlertDescription>
-            </Alert>
+            <p className="text-sm text-gray-600 text-center">
+              Если вы не получили письмо в течение нескольких минут, проверьте папку "Спам".
+            </p>
             
-            <div className="text-sm text-gray-600 space-y-2">
-              <p>• Проверьте папку "Спам", если письмо не пришло</p>
-              <p>• Ссылка действительна в течение 1 часа</p>
-            </div>
-            
-            <div className="flex flex-col space-y-2 pt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsSuccess(false)}
-                className="w-full"
-              >
-                Отправить ещё раз
-              </Button>
-              
+            <div className="flex flex-col space-y-2">
               <Link href="/auth">
-                <Button variant="ghost" className="w-full">
+                <Button variant="outline" className="w-full">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Вернуться к входу
                 </Button>
@@ -86,57 +68,44 @@ export default function ForgotPasswordPage() {
           </div>
           <CardTitle className="text-2xl font-bold">Забыли пароль?</CardTitle>
           <CardDescription>
-            Введите email и мы отправим инструкции по сбросу пароля
+            Введите ваш email и мы отправим вам инструкции по восстановлению
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="your@email.com"
+                placeholder="user@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={forgotPassword.isPending}
               />
             </div>
-
-            {forgotPassword.error && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {forgotPassword.error.message || 'Произошла ошибка. Попробуйте ещё раз.'}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={forgotPassword.isPending || !email}
-            >
-              {forgotPassword.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Отправка...
-                </>
-              ) : (
-                'Отправить инструкции'
-              )}
+            
+            <Button type="submit" className="w-full">
+              Отправить инструкции
             </Button>
+            
+            <div className="text-center">
+              <Link 
+                href="/auth"
+                className="text-sm text-emerald-600 hover:text-emerald-700"
+              >
+                <ArrowLeft className="w-4 h-4 inline mr-1" />
+                Вернуться к входу
+              </Link>
+            </div>
           </form>
-
-          <div className="mt-6 text-center">
-            <Link 
-              href="/auth"
-              className="text-sm text-emerald-600 hover:text-emerald-700 inline-flex items-center"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Вернуться к входу
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>

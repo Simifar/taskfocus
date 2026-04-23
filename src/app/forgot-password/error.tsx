@@ -26,7 +26,7 @@ export default function Error({
           </div>
           <CardTitle className="text-2xl font-bold">Что-то пошло не так</CardTitle>
           <CardDescription>
-            Произошла ошибка при загрузке страницы сброса пароля
+            Произошла ошибка при загрузке страницы восстановления пароля
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

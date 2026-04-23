@@ -7,7 +7,6 @@ export interface User {
   username: string;
   name?: string | null;
   avatar?: string | null;
-  hasPassword: boolean;
 }
 
 export interface Task {
