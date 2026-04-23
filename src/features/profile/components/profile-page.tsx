@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/sha
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Separator } from "@/shared/ui/separator";
+import { Avatar } from "@/shared/ui/avatar";
 import { toast } from "sonner";
 import {
   User as UserIcon,
@@ -157,17 +158,15 @@ export function ProfilePage() {
                 placeholder="https://example.com/avatar.jpg"
                 type="url"
               />
-              {formData.avatar && (
-                <div className="mt-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={formData.avatar}
-                    alt="Avatar preview"
-                    className="h-16 w-16 rounded-full object-cover"
-                    onError={() => toast.error("Не удается загрузить изображение")}
-                  />
-                </div>
-              )}
+              <div className="mt-3">
+                <p className="text-sm text-muted-foreground mb-2">Предпросмотр:</p>
+                <Avatar
+                  src={formData.avatar}
+                  name={formData.name || user.username}
+                  email={user.email}
+                  size="xl"
+                />
+              </div>
             </div>
 
             <Separator />

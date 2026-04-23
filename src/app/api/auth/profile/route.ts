@@ -1,10 +1,19 @@
 import { z } from "zod";
 import { db } from "@/server/db";
 import { handleUnknownError, ok, withAuth } from "@/server/api";
+import { isValidImageUrl } from "@/shared/lib/avatar-utils";
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   avatar: z.string().url().or(z.literal("")).optional(),
+}).refine((data) => {
+  if (data.avatar && data.avatar !== "") {
+    return isValidImageUrl(data.avatar);
+  }
+  return true;
+}, {
+  message: "Неверный URL изображения. Разрешены только HTTP/HTTPS URL с изображениями.",
+  path: ["avatar"],
 });
 
 export const PATCH = withAuth(async (request, { user }) => {
