@@ -52,10 +52,17 @@ export async function getCurrentUser() {
   // Check NextAuth session first (Google OAuth users)
   const session = await getServerSession(authOptions);
   if (session?.user?.id) {
-    return db.user.findUnique({
+    const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, email: true, username: true, name: true, avatar: true },
+      select: { id: true, email: true, username: true, name: true, avatar: true, passwordHash: true },
     });
+    
+    if (!user) return null;
+    
+    return {
+      ...user,
+      hasPassword: !!user.passwordHash,
+    };
   }
 
   // Fallback: custom JWT cookie (email/password users)
@@ -66,10 +73,17 @@ export async function getCurrentUser() {
   const payload = await verifyToken(token);
   if (!payload) return null;
 
-  return db.user.findUnique({
+  const user = await db.user.findUnique({
     where: { id: payload.userId },
-    select: { id: true, email: true, username: true, name: true, avatar: true },
+    select: { id: true, email: true, username: true, name: true, avatar: true, passwordHash: true },
   });
+  
+  if (!user) return null;
+  
+  return {
+    ...user,
+    hasPassword: !!user.passwordHash,
+  };
 }
 
 export async function hashPassword(password: string): Promise<string> {

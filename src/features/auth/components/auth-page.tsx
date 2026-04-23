@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { AlertCircle, Brain, CheckCircle, Loader2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
+import Link from "next/link";
 
 function describe(error: unknown, fallback: string) {
   if (error instanceof ApiError) return error.message;
@@ -217,11 +218,19 @@ export function AuthPage() {
                       />
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex flex-col space-y-2">
                     <Button className="w-full" type="submit" disabled={isLoading}>
                       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Войти
                     </Button>
+                    <div className="text-center">
+                      <Link 
+                        href="/forgot-password"
+                        className="text-sm text-emerald-600 hover:text-emerald-700"
+                      >
+                        Забыли пароль?
+                      </Link>
+                    </div>
                   </CardFooter>
                 </form>
               </Card>
