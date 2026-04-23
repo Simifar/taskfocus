@@ -41,6 +41,21 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Typography System - Visual Hierarchy */
+  --font-size-display: clamp(3rem, 8vw, 6rem);
+  --font-size-headline: clamp(1.5rem, 5vw, 3rem);
+  --font-size-title: clamp(1.25rem, 4vw, 2rem);
+  --font-size-subtitle: clamp(1.125rem, 3vw, 1.5rem);
+  --font-size-body-large: clamp(1rem, 2.5vw, 1.125rem);
+  --font-size-body: clamp(0.875rem, 2vw, 1rem);
+  --font-size-body-small: clamp(0.75rem, 1.5vw, 0.875rem);
+  --font-size-caption: clamp(0.625rem, 1.25vw, 0.75rem);
+  --font-size-label: clamp(0.75rem, 1.5vw, 0.875rem);
+  
+  /* Enhanced contrast */
+  --text-muted-foreground: rgb(var(--foreground) / 0.7);
+  --text-muted: rgb(var(--foreground) / 0.6);
 }
 
 :root {
@@ -76,6 +91,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  /* Semantic colors */
+  --success: oklch(0.546 0.2 142.2);
+  --warning: oklch(0.65 0.15 58.3);
+  --error: oklch(0.577 0.245 27.325);
+  --info: oklch(0.538 0.2 258.4);
 }
 
 .dark {
@@ -112,111 +133,154 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+/* Typography utilities */
+.text-display {
+  font-size: var(--font-size-display);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.025em;
 }
 
-@layer utilities {
-  /* Typography System - Visual Hierarchy */
-  .text-display {
-    @apply text-4xl md:text-6xl font-bold leading-tight tracking-tight;
-  }
-  
-  .text-headline {
-    @apply text-2xl md:text-3xl font-bold leading-tight;
-  }
-  
-  .text-title {
-    @apply text-xl md:text-2xl font-semibold leading-tight;
-  }
-  
-  .text-subtitle {
-    @apply text-lg md:text-xl font-medium leading-snug;
-  }
-  
-  .text-body {
-    @apply text-base leading-relaxed;
-  }
-  
-  .text-body-large {
-    @apply text-lg leading-relaxed;
-  }
-  
-  .text-body-small {
-    @apply text-sm leading-relaxed;
-  }
-  
-  .text-caption {
-    @apply text-xs font-medium leading-relaxed text-muted-foreground;
-  }
-  
-  .text-label {
-    @apply text-sm font-medium leading-none;
-  }
-  
-  /* Enhanced contrast for better readability */
-  .text-muted-foreground {
-    @apply text-foreground/70;
-  }
-  
-  .text-muted {
-    @apply text-foreground/60;
-  }
-  
-  /* Semantic text utilities */
-  .text-success {
-    @apply text-emerald-600 dark:text-emerald-400;
-  }
-  
-  .text-warning {
-    @apply text-yellow-600 dark:text-yellow-400;
-  }
-  
-  .text-error {
-    @apply text-red-600 dark:text-red-400;
-  }
-  
-  .text-info {
-    @apply text-blue-600 dark:text-blue-400;
-  }
-  
-  /* Improved heading hierarchy */
-  h1 {
-    @apply text-display text-foreground;
-  }
-  
-  h2 {
-    @apply text-headline text-foreground;
-  }
-  
-  h3 {
-    @apply text-title text-foreground;
-  }
-  
-  h4 {
-    @apply text-subtitle text-foreground;
-  }
-  
-  h5, h6 {
-    @apply text-body font-semibold text-foreground;
-  }
-  
-  /* Better paragraph spacing */
-  p {
-    @apply text-body mb-4 last:mb-0;
-  }
-  
-  /* Improved list styling */
-  ul, ol {
-    @apply text-body mb-4 pl-6;
-  }
-  
-  li {
-    @apply mb-2 last:mb-0;
-  }
+.text-headline {
+  font-size: var(--font-size-headline);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.text-title {
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.text-subtitle {
+  font-size: var(--font-size-subtitle);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.text-body-large {
+  font-size: var(--font-size-body-large);
+  line-height: 1.75;
+}
+
+.text-body {
+  font-size: var(--font-size-body);
+  line-height: 1.75;
+}
+
+.text-body-small {
+  font-size: var(--font-size-body-small);
+  line-height: 1.75;
+}
+
+.text-caption {
+  font-size: var(--font-size-caption);
+  font-weight: 500;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+
+.text-label {
+  font-size: var(--font-size-label);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.text-muted-foreground {
+  color: var(--text-muted-foreground);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-error {
+  color: var(--error);
+}
+
+.text-info {
+  color: var(--info);
+}
+
+/* Base styles */
+* {
+  border-color: var(--border);
+  outline-color: rgb(var(--ring) / 0.5);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Improved heading hierarchy */
+h1 {
+  font-size: var(--font-size-display);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+}
+
+h2 {
+  font-size: var(--font-size-headline);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--foreground);
+}
+
+h3 {
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--foreground);
+}
+
+h4 {
+  font-size: var(--font-size-subtitle);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--foreground);
+}
+
+h5, h6 {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* Better paragraph spacing */
+p {
+  font-size: var(--font-size-body);
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* Improved list styling */
+ul, ol {
+  font-size: var(--font-size-body);
+  line-height: 1.75;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+li:last-child {
+  margin-bottom: 0;
 }
