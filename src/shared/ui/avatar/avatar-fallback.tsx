@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/shared/lib/utils";
-import { getInitials, getAvatarColor } from "../lib/avatar-utils";
+import { getInitials, getAvatarColor } from "@/shared/lib/avatar-utils";
 
 interface AvatarFallbackProps {
   name?: string;
