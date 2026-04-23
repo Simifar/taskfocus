@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/sha
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Separator } from "@/shared/ui/separator";
-import { Avatar } from "@/shared/ui/avatar";
+import { Avatar, AvatarUpload } from "@/shared/ui/avatar";
 import { toast } from "sonner";
 import {
   User as UserIcon,
@@ -39,17 +39,19 @@ export function ProfilePage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [formData, setFormData] = useState({ name: "", avatar: "" });
   const [originalData, setOriginalData] = useState({ name: "", avatar: "" });
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       const next = { name: user.name ?? "", avatar: user.avatar ?? "" };
       setFormData(next);
       setOriginalData(next);
+      setCurrentAvatar(user.avatar || null);
     }
   }, [user]);
 
   const hasChanges =
-    formData.name !== originalData.name || formData.avatar !== originalData.avatar;
+    formData.name !== originalData.name || currentAvatar !== originalData.avatar;
 
   const handleSaveProfile = async () => {
     if (!hasChanges) {
@@ -59,7 +61,7 @@ export function ProfilePage() {
     try {
       const updated = await updateProfile.mutateAsync({
         name: formData.name,
-        avatar: formData.avatar,
+        avatar: currentAvatar,
       });
       setOriginalData({ name: updated.name ?? "", avatar: updated.avatar ?? "" });
       toast.success("Профиль обновлен");
@@ -147,27 +149,12 @@ export function ProfilePage() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="avatar" className="mb-2">
-                Аватар (URL)
-              </Label>
-              <Input
-                id="avatar"
-                value={formData.avatar}
-                onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-                placeholder="https://example.com/avatar.jpg"
-                type="url"
-              />
-              <div className="mt-3">
-                <p className="text-sm text-muted-foreground mb-2">Предпросмотр:</p>
-                <Avatar
-                  src={formData.avatar}
-                  name={formData.name || user.username}
-                  email={user.email}
-                  size="xl"
-                />
-              </div>
-            </div>
+            <AvatarUpload
+              currentAvatar={currentAvatar}
+              name={formData.name || user.username}
+              email={user.email}
+              onAvatarChange={setCurrentAvatar}
+            />
 
             <Separator />
 
