@@ -5,6 +5,8 @@ import {
   countActiveTasksForToday,
   isScheduledForToday,
   MAX_ACTIVE_TASKS_PER_DAY,
+  MIN_ENERGY_LEVEL,
+  MAX_ENERGY_LEVEL,
 } from "@/server/task-scheduling";
 import type { TaskStatus } from "@/shared/types";
 
@@ -12,7 +14,7 @@ const updateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).nullish(),
   priority: z.enum(["low", "medium", "high"]).optional(),
-  energyLevel: z.number().int().min(1).max(5).optional(),
+  energyLevel: z.number().int().min(MIN_ENERGY_LEVEL).max(MAX_ENERGY_LEVEL).optional(),
   status: z.enum(["active", "completed", "archived"]).optional(),
   dueDateStart: z.string().datetime().nullish(),
   dueDateEnd: z.string().datetime().nullish(),

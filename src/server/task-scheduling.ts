@@ -4,6 +4,11 @@ import type { TaskStatus } from "@/shared/types";
 
 export const MAX_ACTIVE_TASKS_PER_DAY = 5;
 
+export const MIN_ENERGY_LEVEL = 1;
+export const MAX_ENERGY_LEVEL = 5;
+export const DEFAULT_ENERGY_LEVEL = 3;
+export const DEFAULT_SUBTASK_ENERGY_LEVEL = 2;
+
 type TaskScheduleInput = {
   dueDateStart: Date | null;
   dueDateEnd: Date | null;

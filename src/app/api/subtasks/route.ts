@@ -1,11 +1,16 @@
 import { z } from "zod";
 import { db } from "@/server/db";
 import { handleUnknownError, notFound, ok, withAuth } from "@/server/api";
+import {
+  MIN_ENERGY_LEVEL,
+  MAX_ENERGY_LEVEL,
+  DEFAULT_SUBTASK_ENERGY_LEVEL,
+} from "@/server/task-scheduling";
 
 const createSubtaskSchema = z.object({
   parentId: z.string().min(1, "ID родительской задачи обязателен"),
   title: z.string().min(1, "Название обязательно").max(200),
-  energyLevel: z.number().int().min(1).max(5).optional().default(2),
+  energyLevel: z.number().int().min(MIN_ENERGY_LEVEL).max(MAX_ENERGY_LEVEL).optional().default(DEFAULT_SUBTASK_ENERGY_LEVEL),
 });
 
 export const POST = withAuth(async (request, { user }) => {

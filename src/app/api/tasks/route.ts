@@ -7,13 +7,16 @@ import {
   countActiveTasksForToday,
   isScheduledForToday,
   MAX_ACTIVE_TASKS_PER_DAY,
+  MIN_ENERGY_LEVEL,
+  MAX_ENERGY_LEVEL,
+  DEFAULT_ENERGY_LEVEL,
 } from "@/server/task-scheduling";
 
 const createTaskSchema = z.object({
   title: z.string().min(1, "Название обязательно").max(200),
   description: z.string().max(2000).nullish(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
-  energyLevel: z.number().int().min(1).max(5).default(3),
+  energyLevel: z.number().int().min(MIN_ENERGY_LEVEL).max(MAX_ENERGY_LEVEL).default(DEFAULT_ENERGY_LEVEL),
   dueDateStart: z.string().datetime().nullish(),
   dueDateEnd: z.string().datetime().nullish(),
   parentTaskId: z.string().nullish(),
@@ -37,7 +40,7 @@ export const GET = withAuth(async (request, { user }) => {
 
   if (energy) {
     const n = Number.parseInt(energy, 10);
-    if (Number.isInteger(n) && n >= 1 && n <= 5) where.energyLevel = n;
+    if (Number.isInteger(n) && n >= MIN_ENERGY_LEVEL && n <= MAX_ENERGY_LEVEL) where.energyLevel = n;
   }
 
   if (search) {
