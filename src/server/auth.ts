@@ -54,7 +54,7 @@ export async function getCurrentUser() {
   if (session?.user?.id) {
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, email: true, username: true, name: true, avatar: true },
+      select: { id: true, email: true, username: true, name: true },
     });
     
     if (!user) return null;
@@ -72,7 +72,7 @@ export async function getCurrentUser() {
 
   const user = await db.user.findUnique({
     where: { id: payload.userId },
-    select: { id: true, email: true, username: true, name: true, avatar: true },
+    select: { id: true, email: true, username: true, name: true },
   });
   
   if (!user) return null;

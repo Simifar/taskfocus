@@ -35,7 +35,6 @@ async function handler(request: Request) {
       email: user.email,
       username: user.username,
       name: user.name,
-      avatar: user.avatar,
     });
   } catch (error) {
     return handleUnknownError("login", error);

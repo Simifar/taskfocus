@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/sha
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Separator } from "@/shared/ui/separator";
-import { Avatar, AvatarUpload } from "@/shared/ui/avatar";
 import { toast } from "sonner";
 import {
   User as UserIcon,
@@ -37,21 +36,18 @@ export function ProfilePage() {
   const deleteAccount = useDeleteAccount();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [formData, setFormData] = useState({ name: "", avatar: "" });
-  const [originalData, setOriginalData] = useState({ name: "", avatar: "" });
-  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: "" });
+  const [originalData, setOriginalData] = useState({ name: "" });
 
   useEffect(() => {
     if (user) {
-      const next = { name: user.name ?? "", avatar: user.avatar ?? "" };
+      const next = { name: user.name ?? "" };
       setFormData(next);
       setOriginalData(next);
-      setCurrentAvatar(user.avatar || null);
     }
   }, [user]);
 
-  const hasChanges =
-    formData.name !== originalData.name || currentAvatar !== originalData.avatar;
+  const hasChanges = formData.name !== originalData.name;
 
   const handleSaveProfile = async () => {
     if (!hasChanges) {
@@ -61,9 +57,8 @@ export function ProfilePage() {
     try {
       const updated = await updateProfile.mutateAsync({
         name: formData.name,
-        avatar: currentAvatar,
       });
-      setOriginalData({ name: updated.name ?? "", avatar: updated.avatar ?? "" });
+      setOriginalData({ name: updated.name ?? "" });
       toast.success("Профиль обновлен");
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Ошибка соединения";
@@ -148,13 +143,6 @@ export function ProfilePage() {
                 placeholder="Введите ваше имя"
               />
             </div>
-
-            <AvatarUpload
-              currentAvatar={currentAvatar}
-              name={formData.name || user.username}
-              email={user.email}
-              onAvatarChange={setCurrentAvatar}
-            />
 
             <Separator />
 

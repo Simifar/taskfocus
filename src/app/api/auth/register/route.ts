@@ -47,7 +47,6 @@ async function handler(request: Request) {
       email: user.email,
       username: username,
       name: user.name,
-      avatar: user.avatar,
     });
   } catch (error) {
     return handleUnknownError("register", error);

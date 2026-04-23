@@ -6,7 +6,6 @@ export interface User {
   email: string;
   username: string;
   name?: string | null;
-  avatar?: string | null;
 }
 
 export interface Task {
