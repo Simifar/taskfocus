@@ -1,12 +1,13 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
+import type { TaskStatus } from "@/shared/types";
 
 export const MAX_ACTIVE_TASKS_PER_DAY = 5;
 
 type TaskScheduleInput = {
   dueDateStart: Date | null;
   dueDateEnd: Date | null;
-  status: "active" | "completed" | "archived";
+  status: TaskStatus;
   parentTaskId: string | null;
 };
 

@@ -6,6 +6,7 @@ import {
   isScheduledForToday,
   MAX_ACTIVE_TASKS_PER_DAY,
 } from "@/server/task-scheduling";
+import type { TaskStatus } from "@/shared/types";
 
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -18,9 +19,6 @@ const updateTaskSchema = z.object({
 });
 
 type RouteCtx = { params: Promise<{ id: string }> };
-type TaskStatus = z.infer<typeof updateTaskSchema>["status"] extends infer T
-  ? Exclude<T, undefined>
-  : never;
 
 async function ownedTask(id: string, userId: string) {
   return db.task.findFirst({

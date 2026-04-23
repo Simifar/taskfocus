@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
+import type { TaskStatus } from "@/shared/types";
 import { err, handleUnknownError, ok, withAuth } from "@/server/api";
 import {
   countActiveTasksForToday,
@@ -29,8 +30,9 @@ export const GET = withAuth(async (request, { user }) => {
     parentTaskId: null,
   };
 
-  if (status && ["active", "completed", "archived"].includes(status)) {
-    where.status = status;
+  const VALID_STATUSES: TaskStatus[] = ["active", "completed", "archived"];
+  if (status && VALID_STATUSES.includes(status as TaskStatus)) {
+    where.status = status as TaskStatus;
   }
 
   if (energy) {

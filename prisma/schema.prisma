@@ -53,13 +53,25 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+enum TaskStatus {
+  active
+  completed
+  archived
+}
+
+enum Priority {
+  low
+  medium
+  high
+}
+
 model Task {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   userId       String
   title        String
   description  String?
-  status       String    @default("active")
-  priority     String    @default("medium")
+  status       TaskStatus @default(active)
+  priority     Priority   @default(medium)
   energyLevel  Int       @default(3)
   position     Int       @default(0)
   dueDateStart DateTime?

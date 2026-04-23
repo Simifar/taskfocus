@@ -1,8 +1,7 @@
 import { apiFetch } from "@/shared/lib/fetcher";
-import type { Task, TasksListResponse } from "@/shared/types";
+import type { Task, TasksListResponse, TaskStatus, Priority } from "@/shared/types";
 
-export type TaskStatus = "active" | "completed" | "archived";
-export type Priority = "low" | "medium" | "high";
+export type { TaskStatus, Priority };
 
 export interface TasksQuery {
   status?: TaskStatus;
