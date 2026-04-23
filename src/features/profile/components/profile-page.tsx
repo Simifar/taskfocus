@@ -97,8 +97,8 @@ export function ProfilePage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Профиль</h1>
-            <p className="text-muted-foreground">Управление данными аккаунта</p>
+            <h1 className="text-headline">Профиль</h1>
+            <p className="text-body text-muted-foreground">Управление данными аккаунта</p>
           </div>
         </div>
 
@@ -117,7 +117,7 @@ export function ProfilePage() {
                 Email
               </Label>
               <Input value={user.email} disabled className="bg-muted" />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-caption text-muted-foreground mt-1">
                 Email не может быть изменен
               </p>
             </div>
@@ -125,7 +125,7 @@ export function ProfilePage() {
             <div>
               <Label className="mb-2">Username</Label>
               <Input value={user.username} disabled className="bg-muted" />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-caption text-muted-foreground mt-1">
                 Имя пользователя не может быть изменено
               </p>
             </div>

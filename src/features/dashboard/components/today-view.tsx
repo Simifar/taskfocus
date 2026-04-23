@@ -137,11 +137,11 @@ export function TodayView({
         {/* Header with date and add button */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Calendar className="h-5 w-5 md:h-7 md:w-7 text-emerald-600" />
-              <h1 className="text-2xl md:text-4xl font-bold">На сегодня</h1>
+            <div className="flex items-center gap-3 mb-2">
+              <Calendar className="h-6 w-6 md:h-8 md:w-8 text-emerald-600" />
+              <h1 className="text-headline">На сегодня</h1>
             </div>
-            <p className="text-muted-foreground text-sm md:text-lg capitalize">{getToday()}</p>
+            <p className="text-body-large text-muted-foreground capitalize">{getToday()}</p>
           </div>
           <Button
             onClick={onAddTask}
@@ -170,8 +170,8 @@ export function TodayView({
                 <Zap className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 dark:text-yellow-500" />
               </div>
               <div>
-                <h2 className="text-lg md:text-2xl font-bold">Фокус на сегодня</h2>
-                <p className="text-xs md:text-sm text-muted-foreground">Активные задачи</p>
+                <h2 className="text-title">Фокус на сегодня</h2>
+                <p className="text-caption">Активные задачи</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -254,8 +254,8 @@ export function TodayView({
                 <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-emerald-600 dark:text-emerald-500" />
               </div>
               <div>
-                <h2 className="text-lg md:text-2xl font-bold">Завершено</h2>
-                <p className="text-xs md:text-sm text-muted-foreground">Завершено {completedTasks.length} задач</p>
+                <h2 className="text-title">Завершено</h2>
+                <p className="text-caption">Завершено {completedTasks.length} задач</p>
               </div>
             </div>
 
@@ -294,8 +294,8 @@ export function TodayView({
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-500" />
             </div>
             <div>
-              <h2 className="text-lg md:text-2xl font-bold">Прогресс</h2>
-              <p className="text-xs md:text-sm text-muted-foreground">Ваше достижение за сегодня</p>
+              <h2 className="text-title">Прогресс</h2>
+              <p className="text-caption">Ваше достижение за сегодня</p>
             </div>
           </div>
 

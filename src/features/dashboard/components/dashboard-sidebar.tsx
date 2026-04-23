@@ -105,8 +105,8 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
               <Brain className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base font-bold truncate">TaskFocus</h1>
-              <p className="text-xs text-muted-foreground truncate">
+              <h1 className="text-subtitle truncate">TaskFocus</h1>
+              <p className="text-caption truncate">
                 {user?.name || user?.username || "User"}
               </p>
             </div>
@@ -147,7 +147,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
 
         <Separator className="my-4" />
         <div className="mb-6">
-          <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">QUICK FOCUS</p>
+          <p className="text-caption text-muted-foreground mb-2 px-2">QUICK FOCUS</p>
           <Button
             variant="outline"
             className="w-full justify-start gap-2"

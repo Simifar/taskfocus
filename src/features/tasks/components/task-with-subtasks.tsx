@@ -162,7 +162,7 @@ export function TaskWithSubtasks({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
               <h4 className={cn(
-                "font-semibold text-base leading-tight",
+                "text-body-large font-semibold leading-tight",
                 task.status === "completed" && "line-through text-muted-foreground"
               )}>
                 {task.title}
@@ -174,7 +174,7 @@ export function TaskWithSubtasks({
               )}
             </div>
             {task.description && (
-              <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">{task.description}</p>
+              <p className="text-body-small text-muted-foreground mt-1.5 line-clamp-2">{task.description}</p>
             )}
             {/* Badges */}
             <div className="flex flex-wrap gap-2.5 mt-3">
@@ -272,9 +272,9 @@ export function TaskWithSubtasks({
         {/* Progress Bar */}
         {totalSubtasks > 0 && (
           <div className="space-y-1.5 pl-4 md:pl-8">
-            <div className="flex justify-between text-xs font-medium">
-              <span className="text-muted-foreground">Прогресс подзадач</span>
-              <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{Math.round(progress)}%</span>
+            <div className="flex justify-between">
+              <span className="text-caption text-muted-foreground">Прогресс подзадач</span>
+              <span className="text-caption text-indigo-600 dark:text-indigo-400 font-semibold">{Math.round(progress)}%</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
               <div
@@ -320,7 +320,7 @@ export function TaskWithSubtasks({
                 {/* Subtask Title */}
                 <span
                   className={cn(
-                    "flex-1 text-sm font-medium min-w-0 truncate",
+                    "flex-1 text-body-small font-medium min-w-0 truncate",
                     subtask.status === "completed" && "line-through text-muted-foreground"
                   )}
                 >

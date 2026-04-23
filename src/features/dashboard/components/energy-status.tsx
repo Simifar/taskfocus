@@ -92,8 +92,8 @@ export function EnergyStatus({
     return (
       <Card className="mb-6 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
         <CardHeader className="pb-6">
-          <CardTitle className="text-2xl">Как вы себя чувствуете?</CardTitle>
-          <p className="text-sm text-muted-foreground mt-2">
+          <CardTitle className="text-headline">Как вы себя чувствуете?</CardTitle>
+          <p className="text-body text-muted-foreground mt-2">
             Выберите уровень энергии, чтобы сфокусироваться на подходящих задачах
           </p>
         </CardHeader>
@@ -142,13 +142,13 @@ export function EnergyStatus({
       <CardHeader className="pb-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <CardTitle className="flex items-center gap-3 text-2xl mb-2">
+            <CardTitle className="flex items-center gap-3 text-title mb-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 dark:bg-slate-900/50">
                 {getEnergyIcon(currentEnergy)}
               </div>
               <span>Ваша энергия</span>
             </CardTitle>
-            <p className="text-lg font-semibold text-muted-foreground">
+            <p className="text-subtitle text-muted-foreground">
               {currentOption?.title} ({currentEnergy}/5)
             </p>
           </div>

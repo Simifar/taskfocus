@@ -100,10 +100,10 @@ export function AuthPage() {
             <div className="p-3 bg-white/20 rounded-xl">
               <Brain className="h-10 w-10" />
             </div>
-            <h1 className="text-4xl font-bold">TaskFocus</h1>
+            <h1 className="text-display">TaskFocus</h1>
           </div>
 
-          <h2 className="text-2xl lg:text-3xl font-semibold mb-6">
+          <h2 className="text-headline mb-6">
             Интеллектуальный менеджер задач для людей с СДВГ
           </h2>
 
@@ -113,8 +113,8 @@ export function AuthPage() {
                 <CheckCircle className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Фокус на главном</p>
-                <p className="text-white/80 text-sm">Структурируйте задачи так, как удобно вам</p>
+                <p className="text-body-large font-medium">Фокус на главном</p>
+                <p className="text-body-small text-white/80">Структурируйте задачи так, как удобно вам</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -122,8 +122,8 @@ export function AuthPage() {
                 <Zap className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Учёт уровня энергии</p>
-                <p className="text-white/80 text-sm">Выбирайте задачи по своим силам прямо сейчас</p>
+                <p className="text-body-large font-medium">Учёт уровня энергии</p>
+                <p className="text-body-small text-white/80">Выбирайте задачи по своим силам прямо сейчас</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -131,13 +131,13 @@ export function AuthPage() {
                 <Brain className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Мягкие дедлайны</p>
-                <p className="text-white/80 text-sm">Диапазон дат вместо точного срока — меньше стресса</p>
+                <p className="text-body-large font-medium">Мягкие дедлайны</p>
+                <p className="text-body-small text-white/80">Диапазон дат вместо точного срока — меньше стресса</p>
               </div>
             </div>
           </div>
 
-          <p className="text-white/70 text-sm">
+          <p className="text-body-small text-white/70">
             Разработано с учётом нейробиологических особенностей внимания
           </p>
         </div>
