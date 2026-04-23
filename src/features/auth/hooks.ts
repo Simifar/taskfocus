@@ -23,8 +23,13 @@ export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: authApi.login,
-    onSuccess: (user) => {
-      qc.setQueryData(authKeys.me, user);
+    onSuccess: async () => {
+      await qc.fetchQuery({
+        queryKey: authKeys.me,
+        queryFn: authApi.me,
+        staleTime: 0,
+        retry: false,
+      });
     },
   });
 }
@@ -33,8 +38,13 @@ export function useRegister() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: authApi.register,
-    onSuccess: (user) => {
-      qc.setQueryData(authKeys.me, user);
+    onSuccess: async () => {
+      await qc.fetchQuery({
+        queryKey: authKeys.me,
+        queryFn: authApi.me,
+        staleTime: 0,
+        retry: false,
+      });
     },
   });
 }
