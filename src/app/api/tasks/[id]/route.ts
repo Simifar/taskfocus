@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { db } from "@/server/db";
-import { handleUnknownError, notFound, ok, withAuth } from "@/server/api";
+import { err, handleUnknownError, notFound, ok, withAuth } from "@/server/api";
+import {
+  countActiveTasksForToday,
+  isScheduledForToday,
+  MAX_ACTIVE_TASKS_PER_DAY,
+} from "@/server/task-scheduling";
 
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -13,9 +18,22 @@ const updateTaskSchema = z.object({
 });
 
 type RouteCtx = { params: Promise<{ id: string }> };
+type TaskStatus = z.infer<typeof updateTaskSchema>["status"] extends infer T
+  ? Exclude<T, undefined>
+  : never;
 
 async function ownedTask(id: string, userId: string) {
-  return db.task.findFirst({ where: { id, userId }, select: { id: true, userId: true } });
+  return db.task.findFirst({
+    where: { id, userId },
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      dueDateStart: true,
+      dueDateEnd: true,
+      parentTaskId: true,
+    },
+  });
 }
 
 export const GET = withAuth<RouteCtx>(async (_req, { params, user }) => {
@@ -32,12 +50,49 @@ export const GET = withAuth<RouteCtx>(async (_req, { params, user }) => {
 
 export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
   const { id } = await params;
+
   try {
     const existing = await ownedTask(id, user.id);
     if (!existing) return notFound("Задача не найдена");
 
     const body = await request.json();
     const parsed = updateTaskSchema.parse(body);
+
+    const nextDueDateStart =
+      parsed.dueDateStart !== undefined
+        ? parsed.dueDateStart
+          ? new Date(parsed.dueDateStart)
+          : null
+        : existing.dueDateStart;
+    const nextDueDateEnd =
+      parsed.dueDateEnd !== undefined
+        ? parsed.dueDateEnd
+          ? new Date(parsed.dueDateEnd)
+          : null
+        : existing.dueDateEnd;
+    const nextStatus: TaskStatus = (parsed.status ?? existing.status) as TaskStatus;
+
+    if (nextDueDateStart && nextDueDateEnd && nextDueDateStart > nextDueDateEnd) {
+      return err("VALIDATION_ERROR", "Дата окончания не может быть раньше даты начала", 400);
+    }
+
+    if (
+      isScheduledForToday({
+        dueDateStart: nextDueDateStart,
+        dueDateEnd: nextDueDateEnd,
+        status: nextStatus,
+        parentTaskId: existing.parentTaskId,
+      })
+    ) {
+      const todayActiveCount = await countActiveTasksForToday(user.id, existing.id);
+      if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
+        return err(
+          "TODAY_LIMIT_REACHED",
+          `На сегодня уже запланировано ${MAX_ACTIVE_TASKS_PER_DAY} активных задач`,
+          400,
+        );
+      }
+    }
 
     const data: Record<string, unknown> = {};
     if (parsed.title !== undefined) data.title = parsed.title;
@@ -48,12 +103,8 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
       data.status = parsed.status;
       data.completedAt = parsed.status === "completed" ? new Date() : null;
     }
-    if (parsed.dueDateStart !== undefined) {
-      data.dueDateStart = parsed.dueDateStart ? new Date(parsed.dueDateStart) : null;
-    }
-    if (parsed.dueDateEnd !== undefined) {
-      data.dueDateEnd = parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null;
-    }
+    if (parsed.dueDateStart !== undefined) data.dueDateStart = nextDueDateStart;
+    if (parsed.dueDateEnd !== undefined) data.dueDateEnd = nextDueDateEnd;
 
     const task = await db.task.update({
       where: { id },

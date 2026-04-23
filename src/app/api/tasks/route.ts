@@ -1,7 +1,12 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
-import { handleUnknownError, ok, withAuth } from "@/server/api";
+import { err, handleUnknownError, ok, withAuth } from "@/server/api";
+import {
+  countActiveTasksForToday,
+  isScheduledForToday,
+  MAX_ACTIVE_TASKS_PER_DAY,
+} from "@/server/task-scheduling";
 
 const createTaskSchema = z.object({
   title: z.string().min(1, "Название обязательно").max(200),
@@ -64,6 +69,30 @@ export const POST = withAuth(async (request, { user }) => {
   try {
     const body = await request.json();
     const parsed = createTaskSchema.parse(body);
+    const dueDateStart = parsed.dueDateStart ? new Date(parsed.dueDateStart) : null;
+    const dueDateEnd = parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null;
+
+    if (dueDateStart && dueDateEnd && dueDateStart > dueDateEnd) {
+      return err("VALIDATION_ERROR", "Дата окончания не может быть раньше даты начала", 400);
+    }
+
+    if (
+      isScheduledForToday({
+        dueDateStart,
+        dueDateEnd,
+        status: "active",
+        parentTaskId: parsed.parentTaskId ?? null,
+      })
+    ) {
+      const todayActiveCount = await countActiveTasksForToday(user.id);
+      if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
+        return err(
+          "TODAY_LIMIT_REACHED",
+          `На сегодня уже запланировано ${MAX_ACTIVE_TASKS_PER_DAY} активных задач`,
+          400,
+        );
+      }
+    }
 
     const maxPosition = await db.task.aggregate({
       where: { userId: user.id, parentTaskId: parsed.parentTaskId ?? null },
@@ -77,8 +106,8 @@ export const POST = withAuth(async (request, { user }) => {
         description: parsed.description,
         priority: parsed.priority,
         energyLevel: parsed.energyLevel,
-        dueDateStart: parsed.dueDateStart ? new Date(parsed.dueDateStart) : null,
-        dueDateEnd: parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null,
+        dueDateStart,
+        dueDateEnd,
         parentTaskId: parsed.parentTaskId ?? null,
         position: (maxPosition._max.position ?? -1) + 1,
       },

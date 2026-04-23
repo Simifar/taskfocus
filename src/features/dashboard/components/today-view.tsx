@@ -145,7 +145,7 @@ export function TodayView({
           </div>
           <Button
             onClick={onAddTask}
-            disabled={isLoading}
+            disabled={isLoading || !canAddMore}
             className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg h-10 px-4 text-sm font-semibold sm:h-12 sm:px-6 sm:text-base w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 mr-2" />
