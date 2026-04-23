@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import { Task } from "@/shared/types";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -29,8 +30,8 @@ interface TaskWithSubtasksProps {
   onArchive: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   // Drag & Drop
-  attributes?: any;
-  listeners?: any;
+  attributes?: DraggableAttributes;
+  listeners?: DraggableSyntheticListeners;
   isDragging?: boolean;
 }
 
