@@ -1,48 +1,75 @@
 # TaskFocus
 
-Task manager designed for ADHD users: energy-based prioritisation (1–5), soft deadlines (date ranges), and a hard cap of 5 active tasks per day to avoid overload.
+Task manager for ADHD-oriented planning: energy-based prioritization (`1-5`), soft deadlines as date ranges, subtasks, and a limit of `5` active tasks per day.
 
-Built with Next.js 16, TypeScript, Prisma, PostgreSQL, TanStack Query and shadcn/ui.
+Built with Next.js 16, React 19, TypeScript, Prisma, PostgreSQL/Neon, TanStack Query, Zustand, and shadcn/ui.
 
-## Getting started
+## Local setup
 
 ```bash
-bun install
-cp .env.example .env        # fill in DATABASE_URL and JWT_SECRET
-bun run db:migrate          # apply migrations
-bun run db:seed              # (optional) seed demo data
-bun run dev
+npm install
+cp .env.example .env
+npx prisma generate
+npx prisma db push
+npm run dev
 ```
 
-Open http://localhost:3000.
+Open `http://localhost:3000`.
 
-## Environment
+## Required environment variables
 
-| Variable      | Example                                                      |
-|---------------|--------------------------------------------------------------|
-| `DATABASE_URL`| `postgresql://user:pass@host/db?sslmode=require`             |
-| `JWT_SECRET`  | Any 32+ char random string                                   |
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | PostgreSQL / Neon connection string |
+| `JWT_SECRET` | Secret for custom email/password auth cookie |
+| `NEXTAUTH_SECRET` | Secret for NextAuth / Google OAuth sessions |
+| `NEXTAUTH_URL` | App base URL, locally `http://localhost:3000` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client id |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 
-For production, use Neon (recommended) or Vercel Postgres — both are serverless Postgres and integrate with Vercel in one click.
+## Google OAuth setup
+
+Create an OAuth Client ID in Google Cloud Console and add these redirect URIs:
+
+- Local: `http://localhost:3000/api/auth/callback/google`
+- Production: `https://YOUR_DOMAIN/api/auth/callback/google`
+
+For local development:
+
+- set `NEXTAUTH_URL=http://localhost:3000`
+- use the local redirect URI above
+
+For Vercel production:
+
+- set `NEXTAUTH_URL=https://YOUR_DOMAIN`
+- add the production redirect URI in Google Cloud Console
+- make sure the same domain is used in Vercel and Google OAuth settings
 
 ## Scripts
 
-| Script              | Description                          |
-|---------------------|--------------------------------------|
-| `bun run dev`       | Next.js dev server on port 3000      |
-| `bun run build`     | Production build                     |
-| `bun run start`     | Serve the build                      |
-| `bun run lint`      | ESLint                               |
-| `bun run db:generate`| Prisma client                       |
-| `bun run db:migrate`| Apply migrations (dev)               |
-| `bun run db:push`   | Push schema without a migration      |
-| `bun run db:seed`   | Seed demo data                       |
-| `bun run db:reset`  | Drop & recreate the schema           |
+| Script | Description |
+|---|---|
+| `npm run dev` | Start local dev server |
+| `npm run build` | Production build |
+| `npm run start` | Run production server |
+| `npm run lint` | ESLint |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:push` | Push schema to database |
+| `npm run db:migrate` | Run Prisma dev migrations |
+| `npm run db:reset` | Reset database |
+| `npm run db:seed` | Seed demo data |
+
+## Deployment notes
+
+- Production target: `Vercel + Neon`
+- Prisma datasource uses PostgreSQL
+- `NEXTAUTH_URL` must match the real deployed domain
+- if Google login fails after account selection, first check redirect URIs and `NEXTAUTH_URL`
 
 ## Documentation
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system design.
+- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
-## License
+## Status
 
-Diploma thesis project.
+This is a diploma thesis project under active refinement.
