@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent } from "@/shared/ui/card";
-import { Plus, ChevronDown, ChevronRight, CheckCircle2, Circle, Edit2, Trash2, Archive, GripVertical, BatteryLow, BatteryMedium, Battery, BatteryFull, MoreVertical } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, CheckCircle2, Circle, Edit2, Trash2, Archive, GripVertical, BatteryLow, BatteryMedium, Battery, BatteryFull, MoreVertical, X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
 import {
@@ -144,25 +144,20 @@ export function TaskWithSubtasks({
             )}
           </Button>
 
-          {/* Expand/Collapse Toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex-shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-5 w-5" />
-            ) : (
-              <ChevronRight className="h-5 w-5" />
-            )}
-          </Button>
-
           {/* Task Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              className="flex items-center gap-2 flex-wrap w-full text-left group/title"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              )}
               <h4 className={cn(
-                "text-body-large font-semibold leading-tight",
+                "text-body-large font-semibold leading-tight group-hover/title:text-brand transition-colors",
                 task.status === "completed" && "line-through text-muted-foreground"
               )}>
                 {task.title}
@@ -172,7 +167,7 @@ export function TaskWithSubtasks({
                   {completedSubtasks}/{totalSubtasks} подзадач
                 </Badge>
               )}
-            </div>
+            </button>
             {task.description && (
               <p className="text-body-small text-muted-foreground mt-1.5 line-clamp-2">{task.description}</p>
             )}
@@ -192,50 +187,8 @@ export function TaskWithSubtasks({
             </div>
           </div>
 
-          {/* Action Buttons — desktop: inline */}
-          <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
-            {task.status === "active" && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAddingSubtask(true)}
-                  title="Добавить подзадачу"
-                  className="text-brand hover:text-brand/80 hover:bg-brand/10"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEditTask(task)}
-                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onArchive(task.id)}
-                  title="В архив"
-                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <Archive className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(task.id)}
-              className="text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Action Buttons — mobile: dropdown */}
-          <div className="sm:hidden flex-shrink-0">
+          {/* Actions */}
+          <div className="flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -332,28 +285,8 @@ export function TaskWithSubtasks({
                   E{subtask.energyLevel}
                 </Badge>
 
-                {/* Actions — desktop: inline */}
-                <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEditSubtask(subtask)}
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDeleteSubtask(subtask.id)}
-                    className="h-8 w-8 p-0 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-
-                {/* Actions — mobile: dropdown */}
-                <div className="sm:hidden flex-shrink-0">
+                {/* Actions */}
+                <div className="flex-shrink-0">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -413,7 +346,7 @@ export function TaskWithSubtasks({
                 }}
                 className="text-muted-foreground"
               >
-                ✕
+                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>

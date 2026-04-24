@@ -235,52 +235,8 @@ function SortableTaskItem({
               </div>
             </div>
 
-            {/* Actions — desktop: inline buttons */}
-            <div className="hidden sm:flex items-center gap-0.5 flex-shrink-0">
-              {task.status === "active" && (
-                <>
-                  {onAddSubtask && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => { onOpenSubtaskDialog?.(task); }}
-                      title="Добавить подзадачу"
-                      className="h-9 w-9 text-brand hover:text-brand/80 hover:bg-brand/10"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit(task)}
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onArchive(task.id)}
-                    title="В архив"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
-                  >
-                    <Archive className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(task.id)}
-                className="h-9 w-9 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Actions — mobile: dropdown */}
-            <div className="sm:hidden flex-shrink-0">
+            {/* Actions */}
+            <div className="flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-9 w-9">
