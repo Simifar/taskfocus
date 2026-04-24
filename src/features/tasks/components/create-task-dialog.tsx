@@ -156,7 +156,7 @@ export function CreateTaskDialog({
                     className={cn(
                       "flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-1",
                       energyLevel === level
-                        ? "bg-emerald-600 text-white shadow-md"
+                        ? "bg-brand text-brand-foreground shadow-md ring-2 ring-brand/30"
                         : getEnergyColor(level),
                     )}
                   >

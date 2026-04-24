@@ -165,12 +165,12 @@ function SortableTaskItem({
   return (
     <div ref={setNodeRef} style={style}>
       <Card className={cn(
-        "transition-all hover:shadow-md border-l-4 border-l-slate-300 dark:border-l-slate-600",
+        "transition-all hover:shadow-md border-l-4 border-l-border",
         task.priority === "high" && "border-l-red-500",
         task.priority === "medium" && "border-l-yellow-500",
         task.priority === "low" && "border-l-green-500",
-        task.status === "completed" && "opacity-60 bg-slate-50 dark:bg-slate-900/50",
-        isSortableDragging && "shadow-lg ring-2 ring-blue-400"
+        task.status === "completed" && "opacity-60 bg-muted/40",
+        isSortableDragging && "shadow-lg ring-2 ring-brand/50"
       )}>
         <CardContent className="p-4">
           {/* Main Row */}
@@ -190,7 +190,7 @@ function SortableTaskItem({
               size="icon"
               className={cn(
                 "flex-shrink-0 h-9 w-9",
-                task.status === "completed" ? "text-emerald-600 hover:text-emerald-700" : "text-muted-foreground hover:text-emerald-600"
+                task.status === "completed" ? "text-brand hover:text-brand/80" : "text-muted-foreground hover:text-brand"
               )}
               onClick={() => onComplete(task)}
             >
@@ -228,7 +228,7 @@ function SortableTaskItem({
                     : "✓ Низкий"}
                 </Badge>
                 {task.subtasks && task.subtasks.length > 0 && (
-                  <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 text-xs font-semibold gap-1">
+                  <Badge variant="secondary" className="bg-brand/15 text-brand text-xs font-semibold gap-1">
                     📋 {task.subtasks.filter(s => s.status === "completed").length}/{task.subtasks.length}
                   </Badge>
                 )}
@@ -245,7 +245,7 @@ function SortableTaskItem({
                       size="icon"
                       onClick={() => { onOpenSubtaskDialog?.(task); }}
                       title="Добавить подзадачу"
-                      className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      className="h-9 w-9 text-brand hover:text-brand/80 hover:bg-brand/10"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -254,7 +254,7 @@ function SortableTaskItem({
                     variant="ghost"
                     size="icon"
                     onClick={() => onEdit(task)}
-                    className="h-9 w-9 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
@@ -263,7 +263,7 @@ function SortableTaskItem({
                     size="icon"
                     onClick={() => onArchive(task.id)}
                     title="В архив"
-                    className="h-9 w-9 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
                   >
                     <Archive className="h-4 w-4" />
                   </Button>

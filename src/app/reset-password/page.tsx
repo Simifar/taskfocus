@@ -52,11 +52,11 @@ function ResetPasswordContent() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-6 h-6 text-emerald-600" />
+            <div className="mx-auto w-12 h-12 bg-brand/10 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-6 h-6 text-brand" />
             </div>
             <CardTitle className="text-2xl font-bold">Пароль изменён!</CardTitle>
             <CardDescription>
@@ -83,7 +83,7 @@ function ResetPasswordContent() {
 
   if (tokenError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
@@ -120,11 +120,11 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-            <Lock className="w-6 h-6 text-emerald-600" />
+          <div className="mx-auto w-12 h-12 bg-brand/10 rounded-full flex items-center justify-center mb-4">
+            <Lock className="w-6 h-6 text-brand" />
           </div>
           <CardTitle className="text-2xl font-bold">Сброс пароля</CardTitle>
           <CardDescription>
@@ -181,7 +181,7 @@ function ResetPasswordContent() {
             <div className="text-center">
               <Link 
                 href="/auth"
-                className="text-sm text-emerald-600 hover:text-emerald-700"
+                className="text-sm text-brand hover:text-brand/80"
               >
                 <ArrowLeft className="w-4 h-4 inline mr-1" />
                 Вернуться к входу
@@ -197,8 +197,8 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
       </div>
     }>
       <ResetPasswordContent />

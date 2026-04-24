@@ -101,7 +101,7 @@ export function CalendarView({
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-          <Calendar className="h-5 w-5 md:h-6 md:w-6 text-indigo-500" />
+          <Calendar className="h-5 w-5 md:h-6 md:w-6 text-brand" />
           Календарь
         </h2>
         <div className="flex items-center gap-2">
@@ -157,16 +157,16 @@ export function CalendarView({
                       className={cn(
                         "min-h-[60px] md:min-h-[120px] p-1 md:p-2 rounded-lg border transition-all flex flex-col",
                         isCurrentMonth
-                          ? "bg-background border-gray-200 dark:border-gray-800 cursor-pointer active:bg-gray-100 dark:active:bg-gray-800"
-                          : "bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 opacity-40",
-                        isToday && "ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                          ? "bg-background border-border cursor-pointer hover:bg-muted/30"
+                          : "bg-muted/20 border-border opacity-40",
+                        isToday && "ring-2 ring-brand bg-brand/5"
                       )}
                     >
                       {/* Date number */}
                       <p
                         className={cn(
                           "text-xs font-bold leading-none",
-                          isToday ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                          isToday ? "text-brand" : "text-foreground"
                         )}
                       >
                         {format(day, "d")}
@@ -177,7 +177,7 @@ export function CalendarView({
                         <>
                           {/* Mobile: coloured dot + count */}
                           <div className="md:hidden mt-1 flex items-center gap-0.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" />
                             <span className="text-[10px] text-muted-foreground">{dayTasks.length}</span>
                           </div>
                           {/* Desktop: full task list */}
@@ -185,7 +185,7 @@ export function CalendarView({
                             {dayTasks.slice(0, 2).map((task) => (
                               <div
                                 key={task.id}
-                                className="text-xs p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors line-clamp-1"
+                                className="text-xs p-1 bg-card rounded border border-border cursor-pointer hover:bg-muted transition-colors line-clamp-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onEdit?.(task);

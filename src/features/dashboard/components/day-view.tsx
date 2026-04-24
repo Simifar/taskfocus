@@ -76,7 +76,7 @@ export function DayView({
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-blue-500" />
+            <Calendar className="h-6 w-6 text-brand" />
             {dayName}
           </h2>
         </div>
@@ -128,9 +128,9 @@ export function DayView({
                   {completedTasks.length}/{dayTasks.length} ({completionRate}%)
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className="bg-emerald-500 h-2 rounded-full transition-all"
+                  className="bg-brand h-2 rounded-full transition-all"
                   style={{ width: `${completionRate}%` }}
                 />
               </div>

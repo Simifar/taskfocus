@@ -94,7 +94,7 @@ export function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      <div className="lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 p-8 lg:p-16 flex flex-col justify-center text-white">
+      <div className="lg:w-1/2 bg-brand p-8 lg:p-16 flex flex-col justify-center text-brand-foreground">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-3 bg-white/20 rounded-xl">
@@ -114,7 +114,7 @@ export function AuthPage() {
               </div>
               <div>
                 <p className="text-body-large font-medium">Фокус на главном</p>
-                <p className="text-body-small text-white/80">Структурируйте задачи так, как удобно вам</p>
+                <p className="text-body-small text-brand-foreground/80">Структурируйте задачи так, как удобно вам</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -123,7 +123,7 @@ export function AuthPage() {
               </div>
               <div>
                 <p className="text-body-large font-medium">Учёт уровня энергии</p>
-                <p className="text-body-small text-white/80">Выбирайте задачи по своим силам прямо сейчас</p>
+                <p className="text-body-small text-brand-foreground/80">Выбирайте задачи по своим силам прямо сейчас</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -132,18 +132,18 @@ export function AuthPage() {
               </div>
               <div>
                 <p className="text-body-large font-medium">Мягкие дедлайны</p>
-                <p className="text-body-small text-white/80">Диапазон дат вместо точного срока — меньше стресса</p>
+                <p className="text-body-small text-brand-foreground/80">Диапазон дат вместо точного срока — меньше стресса</p>
               </div>
             </div>
           </div>
 
-          <p className="text-body-small text-white/70">
+          <p className="text-body-small text-brand-foreground/70">
             Разработано с учётом нейробиологических особенностей внимания
           </p>
         </div>
       </div>
 
-      <div className="lg:w-1/2 p-8 lg:p-16 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="lg:w-1/2 p-8 lg:p-16 flex items-center justify-center bg-background">
         <div className="w-full max-w-md">
           {/* Google OAuth */}
           <Button
@@ -170,7 +170,7 @@ export function AuthPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-gray-50 dark:bg-gray-900 px-2 text-muted-foreground">или</span>
+              <span className="bg-background px-2 text-muted-foreground">или</span>
             </div>
           </div>
 

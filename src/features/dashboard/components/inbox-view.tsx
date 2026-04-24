@@ -165,7 +165,7 @@ export function InboxView({
 
   const getEnergyIcon = (level: number) => {
     if (level >= 4) return <Zap className="h-3 w-3 text-orange-500" />;
-    if (level >= 3) return <Clock className="h-3 w-3 text-blue-500" />;
+    if (level >= 3) return <Clock className="h-3 w-3 text-muted-foreground" />;
     return <Circle className="h-3 w-3 text-gray-400" />;
   };
 
@@ -191,7 +191,7 @@ export function InboxView({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 flex-wrap">
-              <Inbox className="h-5 w-5 md:h-6 md:w-6 text-blue-500 shrink-0" />
+              <Inbox className="h-5 w-5 md:h-6 md:w-6 text-brand shrink-0" />
               Входящие
               <Badge variant="secondary">
                 {filteredTasks.length}/{inboxTasks.length}
@@ -220,7 +220,7 @@ export function InboxView({
           </Button>
         </div>
 
-        <Card className="border-blue-200 dark:border-blue-800">
+        <Card className="border-brand/30">
           <CardContent className="p-4">
             <div className="flex gap-3">
               <div className="flex-1">
@@ -237,7 +237,7 @@ export function InboxView({
               </div>
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 shrink-0"
+                className="bg-brand hover:bg-brand/90 shrink-0"
                 onClick={handleQuickAdd}
                 disabled={createTask.isPending || !quickAddTitle.trim()}
               >
@@ -260,7 +260,7 @@ export function InboxView({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Поиск в входящих..."
-              className="bg-white/80 dark:bg-gray-900/60"
+              className=""
             />
           </div>
           <div className="flex gap-2">
@@ -329,7 +329,7 @@ export function InboxView({
                   onCheckedChange={() => setFilterEnergy("3")}
                 >
                   <div className="flex items-center gap-2">
-                    <Clock className="h-3 w-3 text-blue-500" />
+                    <Clock className="h-3 w-3 text-muted-foreground" />
                     Средняя (3+)
                   </div>
                 </DropdownMenuCheckboxItem>
@@ -439,7 +439,7 @@ export function InboxView({
                 key={task.id} 
                 className={cn(
                   "hover:shadow-md transition-all duration-200",
-                  selectedTasks.has(task.id) && "ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-950/20",
+                  selectedTasks.has(task.id) && "ring-2 ring-brand/60 bg-brand/5",
                   viewMode === "compact" && "p-3"
                 )}
               >
@@ -565,10 +565,10 @@ export function InboxView({
             ))}
           </div>
         ) : (
-          <Card className="border-dashed border-blue-200 dark:border-blue-800">
+          <Card className="border-dashed">
             <CardContent className="p-12 text-center">
-              <div className="mx-auto w-24 h-24 bg-blue-50 dark:bg-blue-950/50 rounded-full flex items-center justify-center mb-6">
-                <Inbox className="h-10 w-10 text-blue-500" />
+              <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
+                <Inbox className="h-10 w-10 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
                 {searchQuery ? "Ничего не найдено" : "Входящие пусты"}
@@ -579,7 +579,7 @@ export function InboxView({
                   : "Отлично! Все задачи распределены по времени. Теперь вы можете сосредоточиться на выполнении или добавить новые идеи для будущих задач."}
               </p>
               {!searchQuery && (
-                <Button onClick={onAddTask} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={onAddTask} className="bg-brand hover:bg-brand/90">
                   <Plus className="h-4 w-4 mr-2" />
                   Добавить задачу
                 </Button>

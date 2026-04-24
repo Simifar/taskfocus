@@ -80,7 +80,7 @@ export function ProfilePage() {
   if (isLoadingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
   }
@@ -90,7 +90,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -150,7 +150,7 @@ export function ProfilePage() {
               <Button
                 onClick={handleSaveProfile}
                 disabled={!hasChanges || updateProfile.isPending}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-brand hover:bg-brand/90"
               >
                 {updateProfile.isPending ? (
                   <>

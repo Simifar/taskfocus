@@ -291,13 +291,13 @@ export function DashboardLayout() {
   if (isLoading || isAuthError || !user) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* backdrop — always in DOM, transitions opacity so it syncs with sidebar slide */}
       <div
         className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
@@ -314,7 +314,7 @@ export function DashboardLayout() {
       />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="md:hidden flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
+        <div className="md:hidden flex items-center gap-3 p-4 border-b border-border shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -324,8 +324,8 @@ export function DashboardLayout() {
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
-              <Brain className="h-4 w-4 text-white" />
+            <div className="p-1.5 bg-brand rounded-lg">
+              <Brain className="h-4 w-4 text-brand-foreground" />
             </div>
             <span className="font-bold text-base">TaskFocus</span>
           </div>

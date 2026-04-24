@@ -10,9 +10,9 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-emerald-600 mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin text-brand mx-auto mb-4" />
           <p className="text-muted-foreground">Загрузка...</p>
         </div>
       </div>

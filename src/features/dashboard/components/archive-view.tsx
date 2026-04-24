@@ -32,8 +32,8 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl">
-          <Archive className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+        <div className="p-2 bg-muted rounded-xl">
+          <Archive className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Архив</h1>
@@ -50,8 +50,8 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
         </div>
       ) : rootTasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
-            <Archive className="h-8 w-8 text-slate-400" />
+          <div className="p-4 bg-muted rounded-full mb-4">
+            <Archive className="h-8 w-8 text-muted-foreground" />
           </div>
           <p className="text-lg font-medium text-muted-foreground">Архив пуст</p>
           <p className="text-sm text-muted-foreground mt-1">
@@ -67,7 +67,7 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
               : null;
 
             return (
-              <Card key={task.id} className="border-l-4 border-l-slate-300 dark:border-l-slate-600 opacity-80 hover:opacity-100 transition-opacity">
+              <Card key={task.id} className="border-l-4 border-l-border opacity-80 hover:opacity-100 transition-opacity">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
@@ -96,7 +96,7 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                        className="h-8 w-8 text-brand hover:text-brand/80 hover:bg-brand/10"
                         title="Восстановить"
                         onClick={() => onRestore(task.id)}
                       >
@@ -105,7 +105,7 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                         title="Удалить навсегда"
                         onClick={() => onDelete(task.id)}
                       >

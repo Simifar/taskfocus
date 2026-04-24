@@ -89,19 +89,19 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
   return (
     <div
       className={cn(
-        "w-64 shrink-0 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 flex flex-col",
+        "w-64 shrink-0 bg-sidebar border-r border-border flex flex-col",
         "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
         "md:relative md:z-auto md:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full",
       )}
     >
-      <div className="p-4 md:p-6 border-b border-gray-200 dark:border-gray-800">
+      <div className="p-4 md:p-6 border-b border-border">
         <div className="flex items-center justify-between gap-2">
           <div
             className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition min-w-0"
             onClick={() => { router.push("/profile"); onClose?.(); }}
           >
-            <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shrink-0">
+            <div className="p-2 bg-brand rounded-xl shrink-0">
               <Brain className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
@@ -130,7 +130,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
               variant={currentView === item.id ? "default" : "ghost"}
               className={cn(
                 "w-full justify-between",
-                currentView === item.id && "bg-emerald-600 hover:bg-emerald-700 text-white",
+                currentView === item.id && "bg-brand hover:bg-brand/90 text-brand-foreground",
               )}
               onClick={() => handleNavClick(item.id)}
             >
@@ -159,7 +159,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
         </div>
       </div>
 
-      <div className="border-t border-gray-200 dark:border-gray-800 p-3 space-y-2">
+      <div className="border-t border-border p-3 space-y-2">
         <Button
           variant="ghost"
           className="w-full justify-start text-sm gap-2"
@@ -178,7 +178,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
         </Button>
       </div>
 
-      <div className="border-t border-gray-200 dark:border-gray-800 p-3">
+      <div className="border-t border-border p-3">
         <div className="text-xs space-y-1">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Active:</span>

@@ -90,7 +90,7 @@ export function EnergyStatus({
 }: EnergyStatusProps) {
   if (currentEnergy === null) {
     return (
-      <Card className="mb-6 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+      <Card className="mb-6 border-brand/30 bg-brand/5">
         <CardHeader className="pb-6">
           <CardTitle className="text-headline">Как вы себя чувствуете?</CardTitle>
           <p className="text-body text-muted-foreground mt-2">

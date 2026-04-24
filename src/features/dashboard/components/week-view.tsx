@@ -110,8 +110,8 @@ export function WeekView({
                   className={cn(
                     "flex flex-col items-center p-2 rounded-t-lg cursor-pointer transition-colors",
                     isToday
-                      ? "bg-emerald-500 text-white"
-                      : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      ? "bg-brand text-brand-foreground"
+                      : "bg-card hover:bg-muted"
                   )}
                   onClick={() => onSelectDay?.(day.date)}
                 >
@@ -132,8 +132,8 @@ export function WeekView({
                   className={cn(
                     "flex-1 p-1.5 space-y-1 min-h-[140px] md:min-h-[200px] rounded-b-lg",
                     isToday
-                      ? "bg-emerald-50 dark:bg-emerald-900/20"
-                      : "bg-white dark:bg-gray-900"
+                      ? "bg-brand/5"
+                      : "bg-card"
                   )}
                 >
                   {day.tasks.length > 0 ? (

@@ -109,9 +109,9 @@ export function TaskWithSubtasks({
 
   return (
     <Card className={cn(
-      "transition-all border-l-4 border-l-indigo-500 shadow-sm hover:shadow-md",
-      task.status === "completed" && "opacity-60 bg-slate-50 dark:bg-slate-900/50",
-      isDragging && "shadow-lg ring-2 ring-blue-400"
+      "transition-all border-l-4 border-l-brand shadow-sm hover:shadow-md",
+      task.status === "completed" && "opacity-60 bg-muted/40",
+      isDragging && "shadow-lg ring-2 ring-brand/50"
     )}>
       <CardContent className="p-4 space-y-3">
         {/* Main Task Header */}
@@ -133,7 +133,7 @@ export function TaskWithSubtasks({
             size="icon"
             className={cn(
               "flex-shrink-0 mt-0.5",
-              task.status === "completed" ? "text-emerald-600 hover:text-emerald-700" : "text-muted-foreground hover:text-emerald-600"
+              task.status === "completed" ? "text-brand hover:text-brand/80" : "text-muted-foreground hover:text-brand"
             )}
             onClick={() => onComplete(task)}
           >
@@ -149,7 +149,7 @@ export function TaskWithSubtasks({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex-shrink-0 mt-0.5 text-muted-foreground hover:text-slate-900 dark:hover:text-slate-100"
+            className="flex-shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
           >
             {isExpanded ? (
               <ChevronDown className="h-5 w-5" />
@@ -168,7 +168,7 @@ export function TaskWithSubtasks({
                 {task.title}
               </h4>
               {totalSubtasks > 0 && (
-                <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 text-xs font-semibold">
+                <Badge className="bg-brand/15 text-brand dark:bg-brand/20 text-xs font-semibold">
                   {completedSubtasks}/{totalSubtasks} подзадач
                 </Badge>
               )}
@@ -201,7 +201,7 @@ export function TaskWithSubtasks({
                   size="sm"
                   onClick={() => setIsAddingSubtask(true)}
                   title="Добавить подзадачу"
-                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  className="text-brand hover:text-brand/80 hover:bg-brand/10"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -209,7 +209,7 @@ export function TaskWithSubtasks({
                   variant="ghost"
                   size="sm"
                   onClick={() => onEditTask(task)}
-                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -218,7 +218,7 @@ export function TaskWithSubtasks({
                   size="sm"
                   onClick={() => onArchive(task.id)}
                   title="В архив"
-                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <Archive className="h-4 w-4" />
                 </Button>
@@ -274,11 +274,11 @@ export function TaskWithSubtasks({
           <div className="space-y-1.5 pl-4 md:pl-8">
             <div className="flex justify-between">
               <span className="text-caption text-muted-foreground">Прогресс подзадач</span>
-              <span className="text-caption text-indigo-600 dark:text-indigo-400 font-semibold">{Math.round(progress)}%</span>
+              <span className="text-caption text-brand font-semibold">{Math.round(progress)}%</span>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+            <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
               <div
-                className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2.5 rounded-full transition-all"
+                className="bg-brand h-2.5 rounded-full transition-all"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -287,15 +287,15 @@ export function TaskWithSubtasks({
 
         {/* Subtasks List */}
         {isExpanded && subtasks.length > 0 && (
-          <div className="space-y-2 pl-4 md:pl-8 border-l-2 border-indigo-200 dark:border-indigo-800/50">
+          <div className="space-y-2 pl-4 md:pl-8 border-l-2 border-brand/25">
             {subtasks.map((subtask) => (
               <div
                 key={subtask.id}
                 className={cn(
                   "flex items-center gap-2 px-2 py-2 rounded-lg transition-colors",
                   subtask.status === "completed"
-                    ? "bg-emerald-50 dark:bg-emerald-900/20"
-                    : "bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                    ? "bg-brand/5"
+                    : "bg-muted/30 hover:bg-muted/60"
                 )}
               >
                 {/* Checkbox */}
@@ -306,8 +306,8 @@ export function TaskWithSubtasks({
                   className={cn(
                     "flex-shrink-0 h-8 w-8",
                     subtask.status === "completed"
-                      ? "text-emerald-600 hover:text-emerald-700"
-                      : "text-muted-foreground hover:text-emerald-600"
+                      ? "text-brand hover:text-brand/80"
+                      : "text-muted-foreground hover:text-brand"
                   )}
                 >
                   {subtask.status === "completed" ? (
@@ -328,7 +328,7 @@ export function TaskWithSubtasks({
                 </span>
 
                 {/* Energy Badge — hidden on mobile to save space */}
-                <Badge variant="outline" className="hidden sm:inline-flex text-xs font-semibold bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 flex-shrink-0">
+                <Badge variant="outline" className="hidden sm:inline-flex text-xs font-semibold text-muted-foreground flex-shrink-0">
                   E{subtask.energyLevel}
                 </Badge>
 
@@ -338,7 +338,7 @@ export function TaskWithSubtasks({
                     variant="ghost"
                     size="sm"
                     onClick={() => onEditSubtask(subtask)}
-                    className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
                   >
                     <Edit2 className="h-3.5 w-3.5" />
                   </Button>
@@ -346,7 +346,7 @@ export function TaskWithSubtasks({
                     variant="ghost"
                     size="sm"
                     onClick={() => onDeleteSubtask(subtask.id)}
-                    className="h-8 w-8 p-0 text-red-500/70 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="h-8 w-8 p-0 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -388,7 +388,7 @@ export function TaskWithSubtasks({
         {/* Add Subtask Input */}
         {isAddingSubtask && (
           <div className="pl-4 md:pl-8 space-y-2">
-            <div className="flex gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
+            <div className="flex gap-2 p-3 rounded-lg bg-brand/5 border border-brand/20">
               <Input
                 value={newSubtaskTitle}
                 onChange={(e) => setNewSubtaskTitle(e.target.value)}
@@ -400,7 +400,7 @@ export function TaskWithSubtasks({
               <Button 
                 size="sm" 
                 onClick={handleAddSubtask}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-brand hover:bg-brand/90 text-brand-foreground"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -411,7 +411,7 @@ export function TaskWithSubtasks({
                   setIsAddingSubtask(false);
                   setNewSubtaskTitle("");
                 }}
-                className="text-slate-500"
+                className="text-muted-foreground"
               >
                 ✕
               </Button>
