@@ -62,6 +62,7 @@ export function DashboardLayout() {
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dayReturnView, setDayReturnView] = useState<"today" | "week" | "calendar">("today");
 
   // Wait for auth to finish loading before deciding to redirect
   useEffect(() => {
@@ -259,11 +260,16 @@ export function DashboardLayout() {
   };
 
   const handleSelectDay = (date: Date) => {
+    if (currentView === "week" || currentView === "calendar") {
+      setDayReturnView(currentView);
+    } else {
+      setDayReturnView("today");
+    }
     setView("day", date);
   };
 
   const handleBackFromDay = () => {
-    setView("today");
+    setView(dayReturnView);
   };
 
   const handleReorder = async (reordered: Task[]) => {

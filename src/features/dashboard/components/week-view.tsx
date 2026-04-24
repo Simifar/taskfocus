@@ -6,7 +6,16 @@ import { Badge } from "@/shared/ui/badge";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
 import { cn } from "@/shared/lib/utils";
 import { CalendarDays, Plus, CheckCircle2 } from "lucide-react";
-import { format, startOfWeek, addDays, endOfDay, isWithinInterval, parseISO, isSameDay } from "date-fns";
+import {
+  format,
+  startOfWeek,
+  addDays,
+  endOfDay,
+  isWithinInterval,
+  parseISO,
+  isSameDay,
+  isPast,
+} from "date-fns";
 import { ru } from "date-fns/locale";
 
 interface WeekViewProps {
@@ -18,7 +27,6 @@ interface WeekViewProps {
   onDelete?: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
   onSelectDay?: (date: Date) => void;
-  // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
@@ -27,7 +35,6 @@ interface WeekViewProps {
 
 export function WeekView({
   tasks,
-  stats,
   onEdit,
   onComplete,
   onArchive,
@@ -53,23 +60,15 @@ export function WeekView({
 
   const tasksByDay = weekDays.map((day) => ({
     date: day,
-    tasks: weekTasks.filter((task) => {
-      const taskDate = parseISO(task.dueDateStart!);
-      return isSameDay(taskDate, day);
-    }),
+    tasks: weekTasks.filter((task) => isSameDay(parseISO(task.dueDateStart!), day)),
   }));
 
   const totalTasks = weekTasks.length;
-  const completedThisWeek = tasks.filter((t) => {
-    if (t.status !== "completed" || !t.dueDateStart) return false;
-    const d = parseISO(t.dueDateStart);
-    return isWithinInterval(d, { start: weekStart, end: weekEnd });
-  }).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-1">
       {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between pb-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <CalendarDays className="h-5 w-5 md:h-6 md:w-6 text-brand" />
@@ -79,69 +78,88 @@ export function WeekView({
             {format(weekStart, "d MMM", { locale: ru })} — {format(weekEnd, "d MMM yyyy", { locale: ru })}
           </p>
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-brand inline-block" />
-            <span className="text-muted-foreground">Активных: <span className="font-semibold text-foreground">{totalTasks}</span></span>
-          </div>
-          {completedThisWeek > 0 && (
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-brand" />
-              <span className="text-muted-foreground">Выполнено: <span className="font-semibold text-foreground">{completedThisWeek}</span></span>
-            </div>
-          )}
-        </div>
+        {totalTasks > 0 && (
+          <Badge variant="secondary" className="self-start sm:self-auto text-sm px-3 py-1">
+            {totalTasks} задач
+          </Badge>
+        )}
       </div>
 
-      {/* Day-by-day list */}
-      <div className="space-y-4">
-        {tasksByDay.map(({ date, tasks: dayTasks }) => {
-          const isToday = isSameDay(date, today);
-          const isPast = date < today && !isToday;
-          const dayName = format(date, "EEEE", { locale: ru });
-          const dayDate = format(date, "d MMMM", { locale: ru });
+      {/* Day rows */}
+      {tasksByDay.map(({ date, tasks: dayTasks }) => {
+        const isToday = isSameDay(date, today);
+        const isDayPast = isPast(endOfDay(date)) && !isToday;
+        const isEmpty = dayTasks.length === 0;
+        const dayLabel = format(date, "EEE", { locale: ru });
+        const dayNum = format(date, "d");
+        const monthLabel = format(date, "MMM", { locale: ru });
 
-          return (
-            <div key={date.toISOString()} className={cn(
-              "rounded-xl border transition-colors",
-              isToday ? "border-brand/40 bg-brand/3" : "border-border bg-card",
-              isPast && dayTasks.length === 0 && "opacity-50"
-            )}>
-              {/* Day header */}
-              <div
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 cursor-pointer",
-                  isToday ? "border-b border-brand/20" : dayTasks.length > 0 ? "border-b border-border" : ""
-                )}
-                onClick={() => onSelectDay?.(date)}
-              >
-                <div className={cn(
-                  "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
-                  isToday
-                    ? "bg-brand text-brand-foreground"
-                    : isPast
-                    ? "bg-muted text-muted-foreground"
-                    : "bg-muted/60 text-foreground"
+        return (
+          <div
+            key={date.toISOString()}
+            className={cn(
+              "relative rounded-xl overflow-hidden",
+              isToday
+                ? "ring-2 ring-brand shadow-sm shadow-brand/10"
+                : "border border-border",
+              isDayPast && isEmpty && "opacity-40",
+            )}
+          >
+            {/* Day header strip */}
+            <div
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 cursor-pointer select-none",
+                isToday ? "bg-brand text-brand-foreground" : "bg-muted/40 hover:bg-muted/70 transition-colors",
+              )}
+              onClick={() => onSelectDay?.(date)}
+            >
+              {/* Date circle */}
+              <div className={cn(
+                "w-9 h-9 rounded-full flex flex-col items-center justify-center shrink-0 leading-none",
+                isToday ? "bg-white/20" : "bg-background border border-border",
+              )}>
+                <span className={cn(
+                  "text-sm font-bold",
+                  isToday ? "text-brand-foreground" : "text-foreground",
                 )}>
-                  {format(date, "d")}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={cn(
+                  {dayNum}
+                </span>
+              </div>
+
+              {/* Day name + month */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={cn(
                     "font-semibold capitalize text-sm",
-                    isToday && "text-brand"
+                    isToday ? "text-brand-foreground" : "text-foreground",
                   )}>
-                    {dayName}
-                    {isToday && <span className="ml-2 text-xs font-normal text-brand/70">— сегодня</span>}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{dayDate}</p>
+                    {dayLabel}
+                  </span>
+                  <span className={cn(
+                    "text-xs",
+                    isToday ? "text-brand-foreground/70" : "text-muted-foreground",
+                  )}>
+                    {monthLabel}
+                  </span>
+                  {isToday && (
+                    <span className="text-xs font-medium bg-white/20 px-1.5 py-0.5 rounded-full">
+                      сегодня
+                    </span>
+                  )}
                 </div>
+              </div>
+
+              {/* Task count + add button */}
+              <div className="flex items-center gap-2 shrink-0">
                 {dayTasks.length > 0 && (
                   <Badge
-                    variant="secondary"
                     className={cn(
-                      "text-xs font-semibold shrink-0",
-                      isToday && "bg-brand/15 text-brand"
+                      "text-xs font-semibold",
+                      isToday
+                        ? "bg-white/20 text-brand-foreground border-transparent"
+                        : "bg-background text-foreground border-border",
                     )}
+                    variant="outline"
                   >
                     {dayTasks.length}
                   </Badge>
@@ -149,44 +167,49 @@ export function WeekView({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-brand"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreateTask?.(date);
-                  }}
+                  className={cn(
+                    "h-7 w-7",
+                    isToday
+                      ? "text-brand-foreground/70 hover:bg-white/20 hover:text-brand-foreground"
+                      : "text-muted-foreground hover:text-brand hover:bg-brand/10",
+                  )}
+                  onClick={(e) => { e.stopPropagation(); onCreateTask?.(date); }}
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </Button>
               </div>
-
-              {/* Tasks */}
-              {dayTasks.length > 0 && (
-                <div className="p-3">
-                  <SortableTasksList
-                    tasks={dayTasks}
-                    onEdit={onEdit || (() => {})}
-                    onComplete={onComplete || (() => {})}
-                    onArchive={onArchive || (() => {})}
-                    onDelete={onDelete || (() => {})}
-                    onReorder={() => {}}
-                    onToggleSubtask={onToggleSubtask}
-                    onAddSubtask={onAddSubtask}
-                    onEditSubtask={onEditSubtask}
-                    onDeleteSubtask={onDeleteSubtask}
-                  />
-                </div>
-              )}
-
-              {/* Empty day */}
-              {dayTasks.length === 0 && (
-                <div className="px-4 py-3 text-sm text-muted-foreground">
-                  Нет задач
-                </div>
-              )}
             </div>
-          );
-        })}
-      </div>
+
+            {/* Tasks area */}
+            {dayTasks.length > 0 ? (
+              <div className="p-3 bg-background space-y-0">
+                <SortableTasksList
+                  tasks={dayTasks}
+                  onEdit={onEdit || (() => {})}
+                  onComplete={onComplete || (() => {})}
+                  onArchive={onArchive || (() => {})}
+                  onDelete={onDelete || (() => {})}
+                  onReorder={() => {}}
+                  onToggleSubtask={onToggleSubtask}
+                  onAddSubtask={onAddSubtask}
+                  onEditSubtask={onEditSubtask}
+                  onDeleteSubtask={onDeleteSubtask}
+                />
+              </div>
+            ) : (
+              <div
+                className="px-4 py-3 bg-background flex items-center gap-2 cursor-pointer group"
+                onClick={() => onCreateTask?.(date)}
+              >
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground/40" />
+                <span className="text-sm text-muted-foreground/60">
+                  {isDayPast ? "Нет задач" : "Нет задач — нажмите, чтобы добавить"}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
