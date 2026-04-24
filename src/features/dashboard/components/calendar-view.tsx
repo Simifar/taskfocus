@@ -1,22 +1,34 @@
-import { useState } from "react";
-import { Task, StatsResponse } from "@/shared/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+"use client";
+
+import { useMemo, useState } from "react";
+import type { Task, StatsResponse } from "@/shared/types";
+import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/lib/utils";
-import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+} from "lucide-react";
+import {
+  addDays,
   addMonths,
+  eachDayOfInterval,
+  endOfWeek,
+  format,
+  isSameDay,
+  isSameMonth,
+  startOfWeek,
   subMonths,
-  parseISO,
 } from "date-fns";
 import { ru } from "date-fns/locale";
+import {
+  getMonthRange,
+  isTaskScheduledForDay,
+  isTaskScheduledForMonth,
+} from "@/features/dashboard/lib/task-date-filters";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -33,247 +45,267 @@ interface CalendarViewProps {
   onDeleteSubtask?: (subtaskId: string) => void;
 }
 
+const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
+function getPriorityDot(priority: Task["priority"]) {
+  if (priority === "high") return "bg-red-500";
+  if (priority === "medium") return "bg-amber-500";
+  return "bg-emerald-500";
+}
+
+function getPriorityLabel(priority: Task["priority"]) {
+  if (priority === "high") return "Высокий";
+  if (priority === "medium") return "Средний";
+  return "Низкий";
+}
+
 export function CalendarView({
   tasks,
-  stats,
   onEdit,
-  onComplete,
-  onArchive,
-  onDelete,
   onCreateTask,
   onSelectDay,
-  onToggleSubtask,
-  onAddSubtask,
-  onEditSubtask,
-  onDeleteSubtask,
 }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-
-  // Получаем все дни за месяц + доп дни из предыдущего месяца
-  const daysInCalendar = eachDayOfInterval({
-    start: monthStart,
-    end: monthEnd,
-  });
-
-  // Получаем нужное количество дней из предыдущего месяца для сетки 7х6
-  const startDate = monthStart;
-  let weekStart = startDate;
-  while (weekStart.getDay() !== 1) {
-    weekStart = new Date(weekStart);
-    weekStart.setDate(weekStart.getDate() - 1);
-  }
-
-  // Всё дни в сетке
-  const calendarDays = eachDayOfInterval({
-    start: weekStart,
-    end: new Date(monthEnd),
-  });
-
-  // Добавляем дни следующего месяца до конца недели
-  const additionalDays: Date[] = [];
-  let lastDay = calendarDays[calendarDays.length - 1];
-  while (lastDay.getDay() !== 0) {
-    lastDay = new Date(lastDay.getTime() + 24 * 60 * 60 * 1000);
-    additionalDays.push(lastDay);
-  }
-  const finalCalendarDays = [...calendarDays, ...additionalDays];
-
-  // Фильтруем активные задачи
-  const activeTasks = tasks.filter((t) => t.status === "active" && t.dueDateStart);
-
-  // Группируем задачи по дням
-  const tasksByDay = new Map<string, Task[]>();
-  activeTasks.forEach((task) => {
-    const dateStr = format(parseISO(task.dueDateStart!), "yyyy-MM-dd");
-    if (!tasksByDay.has(dateStr)) {
-      tasksByDay.set(dateStr, []);
-    }
-    tasksByDay.get(dateStr)!.push(task);
-  });
-
   const today = new Date();
 
+  const { start: monthStart, end: monthEnd } = getMonthRange(currentMonth);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  const monthTasks = useMemo(
+    () =>
+      tasks.filter(
+        (task) => task.status === "active" && isTaskScheduledForMonth(task, currentMonth),
+      ),
+    [tasks, currentMonth],
+  );
+
+  const tasksByDay = useMemo(() => {
+    const byDay = new Map<string, Task[]>();
+
+    for (const day of calendarDays) {
+      const dateKey = format(day, "yyyy-MM-dd");
+      byDay.set(
+        dateKey,
+        monthTasks.filter((task) => isTaskScheduledForDay(task, day)),
+      );
+    }
+
+    return byDay;
+  }, [calendarDays, monthTasks]);
+
+  const busyDays = calendarDays.filter((day) => {
+    if (!isSameMonth(day, currentMonth)) return false;
+    return (tasksByDay.get(format(day, "yyyy-MM-dd")) ?? []).length > 0;
+  }).length;
+  const highPriorityCount = monthTasks.filter((task) => task.priority === "high").length;
+  const averageEnergy =
+    monthTasks.length > 0
+      ? Math.round(monthTasks.reduce((sum, task) => sum + task.energyLevel, 0) / monthTasks.length)
+      : 0;
+  const todayTasks = monthTasks.filter((task) => isTaskScheduledForDay(task, today)).length;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-          <Calendar className="h-5 w-5 md:h-6 md:w-6 text-brand" />
-          Календарь
-        </h2>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h3 className="text-sm md:text-lg font-semibold min-w-[120px] md:min-w-[200px] text-center capitalize">
-            {format(currentMonth, "LLLL yyyy", { locale: ru })}
-          </h3>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+    <div className="space-y-5">
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-sky-500/12 via-background to-brand/10 p-5 md:p-6">
+        <div className="absolute -left-16 -top-20 h-48 w-48 rounded-full bg-sky-400/15 blur-3xl" />
+        <div className="absolute -bottom-24 right-0 h-52 w-52 rounded-full bg-brand/15 blur-3xl" />
+
+        <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
+              <Calendar className="h-3.5 w-3.5 text-brand" />
+              Месячный обзор
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight capitalize md:text-3xl">
+                {format(currentMonth, "LLLL yyyy", { locale: ru })}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Планируйте мягко: задачи с диапазоном отображаются во всех подходящих днях.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-background/70"
+              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-background/70"
+              onClick={() => setCurrentMonth(new Date())}
+            >
+              Сегодня
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-background/70"
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Calendar Grid — horizontal scroll on mobile */}
-      <Card>
-        <CardContent className="p-2 md:p-4">
-          <div className="overflow-x-auto -mx-2 md:mx-0 px-2 md:px-0">
-            <div className="min-w-[420px]">
-              {/* Day headers */}
-              <div className="grid grid-cols-7 gap-1 mb-1">
-                {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
-                  <div
-                    key={day}
-                    className="text-center font-semibold text-xs text-muted-foreground py-1.5"
-                  >
-                    {day}
-                  </div>
-                ))}
-              </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">Задач в месяце</p>
+            <p className="mt-1 text-3xl font-bold">{monthTasks.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">Занятых дней</p>
+            <p className="mt-1 text-3xl font-bold">{busyDays}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">Высокий приоритет</p>
+            <p className="mt-1 text-3xl font-bold">{highPriorityCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">Средняя энергия</p>
+            <p className="mt-1 text-3xl font-bold">{averageEnergy}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-              {/* Calendar days */}
-              <div className="grid grid-cols-7 gap-1">
-                {finalCalendarDays.map((day) => {
-                  const dateStr = format(day, "yyyy-MM-dd");
-                  const dayTasks = tasksByDay.get(dateStr) || [];
-                  const isCurrentMonth = isSameMonth(day, currentMonth);
-                  const isToday = isSameDay(day, today);
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <div className="border-b bg-muted/30 px-3 py-2">
+            <div className="grid grid-cols-7 gap-1">
+              {WEEKDAY_LABELS.map((day) => (
+                <div key={day} className="py-2 text-center text-xs font-semibold text-muted-foreground">
+                  {day}
+                </div>
+              ))}
+            </div>
+          </div>
 
-                  return (
-                    <div
-                      key={dateStr}
-                      onClick={() => isCurrentMonth && onSelectDay?.(day)}
+          <div className="grid grid-cols-7 gap-px bg-border">
+            {calendarDays.map((day) => {
+              const dateKey = format(day, "yyyy-MM-dd");
+              const dayTasks = tasksByDay.get(dateKey) ?? [];
+              const isCurrentMonth = isSameMonth(day, currentMonth);
+              const isToday = isSameDay(day, today);
+
+              return (
+                <div
+                  key={dateKey}
+                  className={cn(
+                    "group min-h-[112px] bg-background p-2 transition-colors md:min-h-[154px] md:p-3",
+                    isCurrentMonth ? "hover:bg-muted/30" : "bg-muted/20 text-muted-foreground",
+                    isToday && "bg-brand/5 ring-2 ring-inset ring-brand/40",
+                  )}
+                >
+                  <div className="mb-2 flex items-center justify-between gap-1">
+                    <button
+                      type="button"
                       className={cn(
-                        "min-h-[60px] md:min-h-[120px] p-1 md:p-2 rounded-lg border transition-all flex flex-col",
-                        isCurrentMonth
-                          ? "bg-background border-border cursor-pointer hover:bg-muted/30"
-                          : "bg-muted/20 border-border opacity-40",
-                        isToday && "ring-2 ring-brand bg-brand/5"
+                        "flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold transition-colors",
+                        isToday
+                          ? "bg-brand text-brand-foreground"
+                          : "hover:bg-muted",
                       )}
+                      onClick={() => onSelectDay?.(day)}
                     >
-                      {/* Date number */}
-                      <p
-                        className={cn(
-                          "text-xs font-bold leading-none",
-                          isToday ? "text-brand" : "text-foreground"
-                        )}
-                      >
-                        {format(day, "d")}
-                      </p>
+                      {format(day, "d")}
+                    </button>
 
-                      {/* Task dots on mobile / task list on desktop */}
-                      {dayTasks.length > 0 && (
-                        <>
-                          {/* Mobile: coloured dot + count */}
-                          <div className="md:hidden mt-1 flex items-center gap-0.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" />
-                            <span className="text-[10px] text-muted-foreground">{dayTasks.length}</span>
-                          </div>
-                          {/* Desktop: full task list */}
-                          <div className="hidden md:block space-y-0.5 mt-1 flex-1">
-                            {dayTasks.slice(0, 2).map((task) => (
-                              <div
-                                key={task.id}
-                                className="text-xs p-1 bg-card rounded border border-border cursor-pointer hover:bg-muted transition-colors line-clamp-1"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onEdit?.(task);
-                                }}
-                                title={task.title}
-                              >
-                                {task.title}
-                              </div>
-                            ))}
-                            {dayTasks.length > 2 && (
-                              <p className="text-xs text-muted-foreground">+{dayTasks.length - 2} ещё</p>
-                            )}
-                          </div>
-                        </>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100"
+                      onClick={() => onCreateTask?.(day)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+
+                  {dayTasks.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {dayTasks.slice(0, 3).map((task) => (
+                        <button
+                          type="button"
+                          key={task.id}
+                          className="flex w-full items-start gap-1.5 rounded-lg border border-border bg-card/80 px-2 py-1.5 text-left text-xs shadow-sm transition-colors hover:border-brand/50 hover:bg-background"
+                          onClick={() => onEdit?.(task)}
+                          title={task.title}
+                        >
+                          <span className={cn("mt-1 h-1.5 w-1.5 shrink-0 rounded-full", getPriorityDot(task.priority))} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-medium">{task.title}</span>
+                            <span className="hidden text-[10px] text-muted-foreground md:block">
+                              {getPriorityLabel(task.priority)} · энергия {task.energyLevel}
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+
+                      {dayTasks.length > 3 && (
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-brand hover:underline"
+                          onClick={() => onSelectDay?.(day)}
+                        >
+                          +{dayTasks.length - 3} еще
+                        </button>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="hidden h-[72px] w-full rounded-xl border border-dashed border-transparent text-xs text-muted-foreground/70 transition-colors hover:border-brand/40 hover:bg-brand/5 hover:text-brand md:block"
+                      onClick={() => onCreateTask?.(day)}
+                    >
+                      Добавить
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {/* Month Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Всего в месяце</p>
-            <p className="text-2xl md:text-3xl font-bold">
-              {activeTasks.filter((t) => isSameMonth(parseISO(t.dueDateStart!), currentMonth)).length}
-            </p>
+      {todayTasks > 0 && (
+        <Card className="border-brand/20 bg-brand/5">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">На сегодня в календаре: {todayTasks}</p>
+              <p className="text-sm text-muted-foreground">
+                Можно перейти в день, чтобы посмотреть детали и подзадачи.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => onSelectDay?.(today)}>
+              Открыть сегодня
+            </Button>
           </CardContent>
         </Card>
+      )}
 
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Сегодня</p>
-            <p className="text-2xl md:text-3xl font-bold">
-              {activeTasks.filter((t) => isSameDay(parseISO(t.dueDateStart!), today)).length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Высокий приоритет</p>
-            <p className="text-2xl md:text-3xl font-bold">
-              {activeTasks.filter(
-                (t) =>
-                  t.priority === "high" &&
-                  isSameMonth(parseISO(t.dueDateStart!), currentMonth)
-              ).length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Средняя энергия</p>
-            <p className="text-2xl md:text-3xl font-bold">
-              {activeTasks.filter((t) =>
-                isSameMonth(parseISO(t.dueDateStart!), currentMonth)
-              ).length > 0
-                ? Math.round(
-                    activeTasks
-                      .filter((t) => isSameMonth(parseISO(t.dueDateStart!), currentMonth))
-                      .reduce((sum, t) => sum + t.energyLevel, 0) /
-                      activeTasks.filter((t) =>
-                        isSameMonth(parseISO(t.dueDateStart!), currentMonth)
-                      ).length
-                  )
-                : 0}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Empty State */}
-      {activeTasks.filter((t) => isSameMonth(parseISO(t.dueDateStart!), currentMonth)).length === 0 && (
+      {monthTasks.length === 0 && (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
             <p className="text-lg font-medium text-muted-foreground">
               На этот месяц нет задач
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Добавьте задачи, чтобы они отображались в календаре
+            <p className="mt-1 text-sm text-muted-foreground">
+              Нажмите на любой день календаря, чтобы запланировать задачу.
             </p>
           </CardContent>
         </Card>

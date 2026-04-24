@@ -1,4 +1,4 @@
-import { addDays, endOfDay, isWithinInterval, startOfDay, startOfWeek } from "date-fns";
+import { addDays, endOfDay, endOfMonth, isWithinInterval, startOfDay, startOfMonth, startOfWeek } from "date-fns";
 
 import type { Task } from "@/shared/types";
 
@@ -7,6 +7,13 @@ export function getCurrentWeekRange() {
   const end = endOfDay(addDays(start, 6));
 
   return { start, end };
+}
+
+export function getMonthRange(date: Date) {
+  return {
+    start: startOfMonth(date),
+    end: endOfDay(endOfMonth(date)),
+  };
 }
 
 function getTaskDateRange(task: Task) {
@@ -38,4 +45,13 @@ export function isTaskScheduledForCurrentWeek(task: Task) {
   const weekRange = getCurrentWeekRange();
 
   return taskRange.start <= weekRange.end && taskRange.end >= weekRange.start;
+}
+
+export function isTaskScheduledForMonth(task: Task, month: Date) {
+  const taskRange = getTaskDateRange(task);
+  if (!taskRange) return false;
+
+  const monthRange = getMonthRange(month);
+
+  return taskRange.start <= monthRange.end && taskRange.end >= monthRange.start;
 }
