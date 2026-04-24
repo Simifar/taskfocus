@@ -17,12 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
-import { useLocale } from "next-intl";
-import { 
-  useDashboardTranslations, 
-  useCommonTranslations,
-  useMotivationQuotes 
-} from "@/shared/lib/i18n";
+import { ru } from "date-fns/locale";
 
 interface TodayViewProps {
   tasks: Task[];
@@ -45,19 +40,24 @@ interface TodayViewProps {
   isLoading?: boolean;
 }
 
-function getToday(locale: string) {
+const MOTIVATIONAL_QUOTES = [
+  "Каждый маленький шаг имеет значение! 🎯",
+  "У тебя всё получится! 💪",
+  "Одна задача за раз 🎯",
+  "Прогресс важнее совершенства 📈",
+  "Ты отлично справляешься! ✨",
+  "Разбей на более мелкие части 🧩",
+  "Сконцентрируйся на главном 🎯",
+  "Ты ближе, чем думаешь 🚀",
+];
+
+function getToday() {
   const today = new Date();
-  let dateLocale;
-  if (locale === 'ru') {
-    dateLocale = require('date-fns/locale/ru');
-  } else {
-    dateLocale = require('date-fns/locale/en-US');
-  }
-  return format(today, "EEEE, MMMM d", { locale: dateLocale });
+  return format(today, "EEEE, MMMM d", { locale: ru });
 }
 
-function getMotivationalQuote(quotes: string[]) {
-  return quotes[Math.floor(Math.random() * quotes.length)];
+function getMotivationalQuote() {
+  return MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
 }
 
 export function TodayView({
@@ -79,10 +79,6 @@ export function TodayView({
   onDeleteSubtask,
   isLoading = false,
 }: TodayViewProps) {
-  const locale = useLocale();
-  const t = useDashboardTranslations();
-  const tCommon = useCommonTranslations();
-  const motivationalQuotes = useMotivationQuotes() as string[];
   // Filter tasks for today
   const todayTasks = tasks.filter((task) => {
     if (task.status !== "active" && task.status !== "completed") return false;
@@ -143,9 +139,9 @@ export function TodayView({
           <div>
             <div className="flex items-center gap-3 mb-2">
               <Calendar className="h-6 w-6 md:h-8 md:w-8 text-brand" />
-              <h1 className="text-headline">{t('today.title')}</h1>
+              <h1 className="text-headline">На сегодня</h1>
             </div>
-            <p className="text-body-large text-muted-foreground capitalize">{getToday(locale)}</p>
+            <p className="text-body-large text-muted-foreground capitalize">{getToday()}</p>
           </div>
           <Button
             onClick={onAddTask}
@@ -153,7 +149,7 @@ export function TodayView({
             className="bg-brand hover:bg-brand/90 text-brand-foreground shadow-md hover:shadow-lg transition-all duration-200 rounded-lg h-10 px-4 text-sm font-semibold sm:h-12 sm:px-6 sm:text-base w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 mr-2" />
-            {tCommon('add')} {t('today.title').toLowerCase()}
+            Добавить задачу
           </Button>
         </div>
 
@@ -327,7 +323,7 @@ export function TodayView({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Sparkles className="h-5 w-5 flex-shrink-0" />
                     <p className="text-sm font-medium italic">
-                      {getMotivationalQuote(motivationalQuotes)}
+                      {getMotivationalQuote()}
                     </p>
                   </div>
                 </div>
