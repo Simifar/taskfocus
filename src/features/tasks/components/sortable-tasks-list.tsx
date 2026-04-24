@@ -204,7 +204,7 @@ function SortableTaskItem({
             {/* Task Content */}
             <div className="flex-1 min-w-0">
               <h3 className={cn(
-                "font-semibold text-base leading-tight",
+                "text-body-large font-semibold leading-tight",
                 task.status === "completed" && "line-through text-muted-foreground"
               )}>
                 {task.title}

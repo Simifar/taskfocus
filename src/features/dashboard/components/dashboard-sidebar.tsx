@@ -78,7 +78,6 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
     { id: "inbox", label: "Входящие", icon: <Inbox className="h-4 w-4" />, badge: counts.inboxCount },
     { id: "week", label: "Эта неделя", icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
     { id: "calendar", label: "Календарь", icon: <CalendarRange className="h-4 w-4" /> },
-    { id: "archive", label: "Архив", icon: <Archive className="h-4 w-4" /> },
   ];
 
   const handleNavClick = (view: DashboardView) => {
@@ -159,11 +158,22 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
         </div>
       </div>
 
-      <div className="border-t border-border p-3 space-y-2">
+      <div className="border-t border-border p-3 space-y-1">
+        <Button
+          variant={currentView === "archive" ? "secondary" : "ghost"}
+          className="w-full justify-start text-sm gap-2"
+          onClick={() => handleNavClick("archive")}
+        >
+          <Archive className="h-4 w-4" />
+          <span>Архив</span>
+          {stats?.archivedTasks != null && stats.archivedTasks > 0 && (
+            <span className="ml-auto text-xs text-muted-foreground">{stats.archivedTasks}</span>
+          )}
+        </Button>
         <Button
           variant="ghost"
           className="w-full justify-start text-sm gap-2"
-          onClick={() => router.push("/profile")}
+          onClick={() => { router.push("/profile"); onClose?.(); }}
         >
           <Settings className="h-4 w-4" />
           <span>Профиль</span>

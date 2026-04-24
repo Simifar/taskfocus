@@ -100,10 +100,10 @@ export function AuthPage() {
             <div className="p-3 bg-white/20 rounded-xl">
               <Brain className="h-10 w-10" />
             </div>
-            <h1 className="text-display">TaskFocus</h1>
+            <h1 className="text-2xl font-bold tracking-tight">TaskFocus</h1>
           </div>
 
-          <h2 className="text-headline mb-6">
+          <h2 className="text-lg font-medium leading-snug mb-6">
             Интеллектуальный менеджер задач для людей с СДВГ
           </h2>
 
