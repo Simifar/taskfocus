@@ -3,6 +3,10 @@
 import { useMemo } from "react";
 import type { Task, User, StatsResponse } from "@/shared/types";
 import { useDashboardStore, type DashboardView } from "@/features/dashboard/store";
+import {
+  isTaskScheduledForCurrentWeek,
+  isTaskScheduledForDay,
+} from "@/features/dashboard/lib/task-date-filters";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import {
@@ -38,8 +42,6 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
   const counts = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(today);
-    weekEnd.setDate(weekEnd.getDate() + 7);
 
     let inboxCount = 0;
     let todayCount = 0;
@@ -48,21 +50,18 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
     for (const t of tasks) {
       if (t.status !== "active") continue;
 
-      if (!t.dueDateStart) {
+      if (!t.dueDateStart && !t.dueDateEnd) {
         inboxCount += 1;
         continue;
       }
 
-      const start = new Date(t.dueDateStart);
-      start.setHours(0, 0, 0, 0);
-      const end = t.dueDateEnd ? new Date(t.dueDateEnd) : null;
-      if (end) end.setHours(0, 0, 0, 0);
-
-      if (end ? start <= today && today <= end : start.getTime() === today.getTime()) {
+      if (isTaskScheduledForDay(t, today)) {
         todayCount += 1;
       }
 
-      if (start <= weekEnd) weekCount += 1;
+      if (isTaskScheduledForCurrentWeek(t)) {
+        weekCount += 1;
+      }
     }
 
     return { inboxCount, todayCount, weekCount };
