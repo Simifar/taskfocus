@@ -1,75 +1,86 @@
 # TaskFocus
 
-Task manager for ADHD-oriented planning: energy-based prioritization (`1-5`), soft deadlines as date ranges, subtasks, and a limit of `5` active tasks per day.
+TaskFocus - дипломный full-stack проект: веб-приложение для планирования задач с учетом когнитивной нагрузки пользователя. Приложение помогает ограничивать фокус, выбирать задачи по уровню энергии и работать с мягкими дедлайнами вместо жестких дат.
 
-Built with Next.js 16, React 19, TypeScript, Prisma, PostgreSQL/Neon, TanStack Query, Zustand, and shadcn/ui.
+## Идея проекта
 
-## Local setup
+Обычные таск-менеджеры часто показывают пользователю длинный список задач и усиливают перегрузку. TaskFocus предлагает более щадящую модель:
+
+- не больше `5` активных задач на сегодня;
+- уровень энергии задачи от `1` до `5`;
+- мягкий дедлайн как диапазон дат;
+- входящие задачи без даты;
+- подзадачи для декомпозиции крупных дел;
+- календарь, неделя, день, архив и статистика;
+- русскоязычный интерфейс без i18n-слоя.
+
+## Стек
+
+| Слой | Технологии |
+|---|---|
+| Frontend | Next.js 16 App Router, React 19, TypeScript |
+| UI | Tailwind CSS v4, shadcn/ui, Radix UI, lucide-react |
+| Server state | TanStack Query |
+| UI state | Zustand |
+| Backend | Next.js Route Handlers |
+| Database | PostgreSQL / Neon |
+| ORM | Prisma |
+| Auth | Custom JWT auth + NextAuth Google OAuth |
+
+## Основные возможности
+
+- Регистрация и вход по email/password.
+- Вход через Google OAuth.
+- Создание, редактирование, выполнение, архивирование и удаление задач.
+- Подзадачи с отдельным статусом выполнения.
+- Приоритеты `low | medium | high`.
+- Уровни энергии `1..5`.
+- Мягкие дедлайны `dueDateStart` / `dueDateEnd`.
+- Ограничение количества активных задач на сегодня.
+- Представления: сегодня, входящие, неделя, календарь, день, архив.
+- Профиль пользователя и статистика.
+
+## Быстрый запуск
 
 ```bash
 npm install
 cp .env.example .env
-npx prisma generate
-npx prisma db push
+npm run db:generate
+npm run db:push
+npm run db:seed
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+После запуска приложение доступно по адресу `http://localhost:3000`.
 
-## Required environment variables
+Демо-пользователь после `npm run db:seed`:
 
-| Variable | Purpose |
+```text
+email: demo@taskfocus.app
+password: demo1234
+```
+
+## Скрипты
+
+| Команда | Назначение |
 |---|---|
-| `DATABASE_URL` | PostgreSQL / Neon connection string |
-| `JWT_SECRET` | Secret for custom email/password auth cookie |
-| `NEXTAUTH_SECRET` | Secret for NextAuth / Google OAuth sessions |
-| `NEXTAUTH_URL` | App base URL, locally `http://localhost:3000` |
-| `GOOGLE_CLIENT_ID` | Google OAuth client id |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `npm run dev` | Запуск dev-сервера |
+| `npm run build` | Production-сборка |
+| `npm run start` | Запуск production-сервера |
+| `npm run lint` | Проверка ESLint |
+| `npm run db:generate` | Генерация Prisma Client |
+| `npm run db:push` | Синхронизация схемы с БД |
+| `npm run db:migrate` | Dev-миграции Prisma |
+| `npm run db:reset` | Сброс БД |
+| `npm run db:seed` | Демо-данные |
 
-## Google OAuth setup
+## Документация
 
-Create an OAuth Client ID in Google Cloud Console and add these redirect URIs:
+- [Локальная настройка](docs/SETUP.md)
+- [Архитектура](docs/ARCHITECTURE.md)
+- [Контекст дипломной работы](docs/THESIS.md)
+- [План GitHub Releases](docs/RELEASES.md)
 
-- Local: `http://localhost:3000/api/auth/callback/google`
-- Production: `https://YOUR_DOMAIN/api/auth/callback/google`
+## Статус
 
-For local development:
-
-- set `NEXTAUTH_URL=http://localhost:3000`
-- use the local redirect URI above
-
-For Vercel production:
-
-- set `NEXTAUTH_URL=https://YOUR_DOMAIN`
-- add the production redirect URI in Google Cloud Console
-- make sure the same domain is used in Vercel and Google OAuth settings
-
-## Scripts
-
-| Script | Description |
-|---|---|
-| `npm run dev` | Start local dev server |
-| `npm run build` | Production build |
-| `npm run start` | Run production server |
-| `npm run lint` | ESLint |
-| `npm run db:generate` | Generate Prisma client |
-| `npm run db:push` | Push schema to database |
-| `npm run db:migrate` | Run Prisma dev migrations |
-| `npm run db:reset` | Reset database |
-| `npm run db:seed` | Seed demo data |
-
-## Deployment notes
-
-- Production target: `Vercel + Neon`
-- Prisma datasource uses PostgreSQL
-- `NEXTAUTH_URL` must match the real deployed domain
-- if Google login fails after account selection, first check redirect URIs and `NEXTAUTH_URL`
-
-## Documentation
-
-- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-
-## Status
-
-This is a diploma thesis project under active refinement.
+Проект находится в стадии активной доработки в рамках дипломной работы.

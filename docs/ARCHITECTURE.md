@@ -1,116 +1,197 @@
-# TaskFocus Architecture
+# Архитектура TaskFocus
 
-Living document. Keep it aligned with the actual codebase.
+Документ описывает фактическую архитектуру проекта. Если код меняется, этот файл нужно обновлять вместе с ним.
 
-## Goals
+## Архитектурная цель
 
-- ADHD-oriented task manager with energy levels `1-5`
-- soft deadlines as date ranges instead of a single hard due date
-- at most `5` active tasks planned for one day
-- simple deployment on `Vercel + Neon`
-- codebase that is small enough for a single diploma project author to maintain
+TaskFocus проектируется как небольшое full-stack приложение, которое один разработчик может поддерживать в рамках дипломной работы. Поэтому архитектура выбрана прагматично: feature-based структура, Next.js Route Handlers как backend, Prisma как слой доступа к БД и client-heavy dashboard для высокой интерактивности.
 
-## Stack
+## Высокоуровневая схема
 
-| Layer | Choice | Notes |
+```text
+Browser
+  |
+  | React UI + TanStack Query
+  v
+Next.js App Router
+  |
+  | /api/* Route Handlers
+  v
+Server helpers
+  |
+  | Prisma Client
+  v
+PostgreSQL / Neon
+```
+
+## Структура каталогов
+
+```text
+src/
+  app/             Next.js маршруты, layout, error boundaries, API route handlers
+  features/        функциональные модули приложения
+  server/          server-only логика: auth, db, api envelope, rate limit
+  shared/          общие UI-компоненты, типы и утилиты
+  types/           глобальные TypeScript-расширения
+prisma/            Prisma schema, seed, SQL/migrations
+docs/              проектная и дипломная документация
+```
+
+## Feature-модули
+
+| Модуль | Ответственность |
+|---|---|
+| `features/auth` | Клиентские API и hooks для входа, регистрации, logout, профиля |
+| `features/tasks` | Клиентские API, hooks и UI-компоненты задач |
+| `features/dashboard` | Основной интерфейс планирования, views, Zustand store |
+| `features/profile` | Страница профиля |
+| `features/stats` | Получение статистики |
+
+Такой подход ближе к feature-based architecture: код группируется по пользовательским возможностям, а не только по техническому типу файла.
+
+## App Router модель
+
+Приложение использует Next.js App Router, но основной dashboard работает как интерактивное client-heavy приложение:
+
+- `src/app/layout.tsx` остается серверным layout;
+- `src/app/page.tsx` является client component, потому что выбирает между auth page и dashboard по текущему пользователю;
+- dashboard получает данные через TanStack Query и `/api/*`;
+- API route handlers выполняют серверную валидацию, авторизацию и работу с БД.
+
+Это осознанный компромисс: для таск-менеджера важны быстрые локальные реакции, optimistic updates, drag and drop и состояние фильтров. В будущем часть первичной загрузки можно перенести в Server Components, но это не является блокером для текущего дипломного MVP.
+
+## Backend и API
+
+Backend реализован через Next.js Route Handlers:
+
+| Endpoint | Назначение |
+|---|---|
+| `/api/auth/login` | Вход по email/password |
+| `/api/auth/register` | Регистрация |
+| `/api/auth/logout` | Очистка custom auth cookie |
+| `/api/auth/me` | Текущий пользователь |
+| `/api/auth/profile` | Обновление профиля |
+| `/api/auth/account` | Удаление аккаунта |
+| `/api/auth/[...nextauth]` | Google OAuth через NextAuth |
+| `/api/tasks` | Список и создание задач |
+| `/api/tasks/[id]` | Получение, обновление, удаление задачи |
+| `/api/tasks/reorder` | Сохранение порядка задач |
+| `/api/subtasks` | Создание подзадачи |
+| `/api/stats` | Статистика dashboard |
+
+Все защищенные endpoints используют `withAuth(...)`. Ответы API приводятся к общему envelope-формату:
+
+```ts
+type ApiEnvelope<T> =
+  | { success: true; data: T; error: null }
+  | { success: false; data: null; error: { code: string; message: string } };
+```
+
+Клиентские запросы проходят через `apiFetch(...)`, который:
+
+- добавляет `credentials: "include"`;
+- сериализует JSON body;
+- обрабатывает envelope;
+- превращает API-ошибки в `ApiError`;
+- ограничивает время запроса.
+
+## Авторизация
+
+В проекте поддерживаются два способа входа:
+
+1. Email/password:
+   - пароль хешируется через `bcryptjs`;
+   - сервер выпускает JWT через `jose`;
+   - токен хранится в httpOnly cookie `auth-token`.
+
+2. Google OAuth:
+   - используется `next-auth`;
+   - данные OAuth-аккаунта хранятся через Prisma Adapter;
+   - session strategy: `jwt`.
+
+`getCurrentUser()` сначала проверяет NextAuth session, затем custom JWT cookie. Это позволяет поддерживать оба сценария, но увеличивает сложность logout/delete-account flow.
+
+## Модель данных
+
+Основные Prisma-модели:
+
+- `User`;
+- `Account`;
+- `VerificationToken`;
+- `Task`.
+
+Ключевые поля `Task`:
+
+| Поле | Смысл |
+|---|---|
+| `status` | `active`, `completed`, `archived` |
+| `priority` | `low`, `medium`, `high` |
+| `energyLevel` | Сложность/энергозатратность задачи от `1` до `5` |
+| `dueDateStart` | Начало мягкого дедлайна |
+| `dueDateEnd` | Конец мягкого дедлайна |
+| `parentTaskId` | Связь подзадачи с родительской задачей |
+| `position` | Ручная сортировка |
+| `completedAt` | Дата выполнения |
+
+## Бизнес-правила
+
+Основные правила вынесены в серверный код:
+
+- пользователь видит и изменяет только свои задачи;
+- подзадачи исключаются из главного списка задач;
+- дата окончания не может быть раньше даты начала;
+- активных задач, запланированных на сегодня, не может быть больше `5`;
+- при переводе задачи в `completed` заполняется `completedAt`;
+- при возврате из `completed` дата выполнения сбрасывается.
+
+## Состояние на клиенте
+
+Используются два типа состояния:
+
+| Тип | Инструмент | Примеры |
 |---|---|---|
-| Framework | Next.js 16 App Router | Full-stack app, Vercel-native |
-| UI | React 19 + Tailwind v4 + shadcn/ui | Client-heavy dashboard with reusable primitives |
-| Server state | TanStack Query | Tasks, stats, current user |
-| UI state | Zustand | Dashboard view and filters |
-| Database | PostgreSQL on Neon | Serverless Postgres for Vercel deployment |
-| ORM | Prisma | Typed schema and DB access |
-| Auth | Hybrid auth | Custom JWT for email/password + NextAuth Google OAuth |
+| Server state | TanStack Query | задачи, статистика, текущий пользователь |
+| UI state | Zustand | текущий раздел dashboard, фильтры, сортировка |
 
-## Runtime model
+TanStack Query используется для кэширования, invalidation и optimistic updates. Zustand хранит локальные настройки интерфейса и частично сохраняет их в `localStorage`.
 
-- `src/app` contains routing and route handlers
-- `src/features/*` contains feature UI, hooks, and client API calls
-- `src/server/*` contains server-only helpers for auth, db, api responses, and rate limiting
-- `src/proxy.ts` protects app entry points that require authentication
+## Безопасность
 
-## Current route surface
+В проекте реализованы:
 
-- `/` - auth page or dashboard, depending on session state
-- `/profile` - authenticated profile page
-- `/api/auth/*` - email/password auth, profile actions, NextAuth Google OAuth
-- `/api/tasks*` - task CRUD and reorder
-- `/api/subtasks` - subtask creation
-- `/api/stats` - dashboard statistics
+- httpOnly cookie для custom JWT;
+- server-side authorization в API handlers;
+- rate limiting для login/register;
+- security headers в `next.config.ts`;
+- CSP, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`;
+- Prisma-запросы с фильтрацией по `userId`.
 
-## Auth architecture
+Важно: защищенность страниц сейчас реализована клиентской проверкой текущего пользователя. API защищен серверно, поэтому данные не отдаются без авторизации. Для production-hardening можно добавить middleware/proxy-level защиту страниц.
 
-TaskFocus currently supports two auth paths:
+## Инфраструктура
 
-1. Email/password
-   - password is hashed with bcrypt
-   - app issues its own JWT signed with `JWT_SECRET`
-   - JWT is stored in `auth-token` httpOnly cookie
+Целевая схема деплоя:
 
-2. Google OAuth
-   - powered by `next-auth`
-   - session strategy is JWT
-   - Google credentials are stored in `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
-   - session secret is `NEXTAUTH_SECRET`
+- Vercel для Next.js приложения;
+- Neon PostgreSQL для БД;
+- Prisma Client как ORM;
+- переменные окружения в Vercel Project Settings.
 
-`getCurrentUser()` in `src/server/auth.ts` first checks the NextAuth session, then falls back to the custom JWT cookie.
+`src/server/db.ts` добавляет Neon-friendly параметры подключения, если они отсутствуют в `DATABASE_URL`.
 
-## Data model
+## Текущие архитектурные ограничения
 
-Current Prisma models:
+- Dashboard сосредоточивает много orchestration-логики в `dashboard-layout.tsx`.
+- Некоторые UI-компоненты крупные и требуют декомпозиции.
+- Auth flow смешивает custom JWT и NextAuth, что требует аккуратного сопровождения.
+- Нет автоматических unit/e2e тестов.
+- ESLint настроен мягко и часть правил отключена.
 
-- `User`
-- `Account`
-- `VerificationToken`
-- `Task`
+## Рекомендуемые следующие шаги
 
-Important task fields:
-
-- `status`: `active | completed | archived`
-- `priority`: `low | medium | high`
-- `energyLevel`: `1..5`
-- `dueDateStart`, `dueDateEnd`
-- `parentTaskId` for subtasks
-- `position` for manual ordering
-
-## Deployment architecture
-
-Production target:
-
-- frontend and server routes on Vercel
-- PostgreSQL on Neon
-
-Important environment variables:
-
-- `DATABASE_URL`
-- `JWT_SECRET`
-- `NEXTAUTH_SECRET`
-- `NEXTAUTH_URL`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-
-Important deployment notes:
-
-- `NEXTAUTH_URL` must match the deployed domain
-- Google OAuth callback URIs must include both local and production URLs
-- Prisma client is created as a singleton in `src/server/db.ts`
-- Neon-specific connection parameters are appended in `src/server/db.ts`
-
-## Response and state conventions
-
-- route handlers return a common envelope: `{ success, data, error }`
-- protected handlers use `withAuth(...)`
-- auth endpoints can use `withRateLimit(...)`
-- client fetches go through `apiFetch(...)`
-
-## Known infrastructure decisions
-
-- `proxy.ts` is used instead of deprecated `middleware.ts` because the app is on Next.js 16
-- Prisma CLI config is stored in `prisma.config.ts`
-- seeding runs through `tsx prisma/seed.ts` instead of Bun so local setup stays aligned with `npm`
-
-## Current technical debt
-
-- some client forms still fail ESLint because of `setState` inside effects
-- logout/delete-account flow still needs a full pass for mixed custom auth + NextAuth session cleanup
-- documentation outside this file should be treated as stale unless recently updated
+1. Вынести dashboard actions из `dashboard-layout.tsx` в отдельный hook.
+2. Разделить `inbox-view.tsx` на quick add, filters, batch toolbar, task card и empty state.
+3. Добавить unit-тесты для `task-scheduling`.
+4. Добавить e2e smoke-тесты для auth и task CRUD.
+5. Постепенно ужесточать ESLint.
+6. Рассмотреть server-side защиту страниц через middleware/proxy.
