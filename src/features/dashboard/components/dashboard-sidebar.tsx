@@ -7,13 +7,13 @@ import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import {
   Inbox,
-  Calendar,
+  CalendarCheck,
   CalendarDays,
+  CalendarRange,
   Zap,
   Settings,
   LogOut,
   Brain,
-  BarChart3,
   X,
   Archive,
 } from "lucide-react";
@@ -74,10 +74,10 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
     icon: React.ReactNode;
     badge?: number;
   }> = [
-    { id: "today", label: "Today", icon: <Calendar className="h-4 w-4" />, badge: counts.todayCount },
-    { id: "inbox", label: "Inbox", icon: <Inbox className="h-4 w-4" />, badge: counts.inboxCount },
-    { id: "week", label: "This Week", icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
-    { id: "calendar", label: "Calendar", icon: <BarChart3 className="h-4 w-4" /> },
+    { id: "today", label: "Сегодня", icon: <CalendarCheck className="h-4 w-4" />, badge: counts.todayCount },
+    { id: "inbox", label: "Входящие", icon: <Inbox className="h-4 w-4" />, badge: counts.inboxCount },
+    { id: "week", label: "Эта неделя", icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
+    { id: "calendar", label: "Календарь", icon: <CalendarRange className="h-4 w-4" /> },
     { id: "archive", label: "Архив", icon: <Archive className="h-4 w-4" /> },
   ];
 
@@ -147,14 +147,14 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
 
         <Separator className="my-4" />
         <div className="mb-6">
-          <p className="text-caption text-muted-foreground mb-2 px-2">QUICK FOCUS</p>
+          <p className="text-caption text-muted-foreground mb-2 px-2">Быстрый фокус</p>
           <Button
             variant="outline"
             className="w-full justify-start gap-2"
             onClick={() => handleNavClick("today")}
           >
             <Zap className="h-4 w-4 text-yellow-500" />
-            <span>Energy Focus</span>
+            <span>Режим энергии</span>
           </Button>
         </div>
       </div>
@@ -166,7 +166,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
           onClick={() => router.push("/profile")}
         >
           <Settings className="h-4 w-4" />
-          <span>Profile</span>
+          <span>Профиль</span>
         </Button>
         <Button
           variant="ghost"
@@ -174,22 +174,22 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
           onClick={onLogout}
         >
           <LogOut className="h-4 w-4" />
-          <span>Logout</span>
+          <span>Выйти</span>
         </Button>
       </div>
 
       <div className="border-t border-border p-3">
         <div className="text-xs space-y-1">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Active:</span>
+            <span className="text-muted-foreground">Активных:</span>
             <span className="font-semibold">{stats?.activeTasks ?? 0}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Done:</span>
+            <span className="text-muted-foreground">Выполнено:</span>
             <span className="font-semibold">{stats?.completedTasks ?? 0}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Archived:</span>
+            <span className="text-muted-foreground">В архиве:</span>
             <span className="font-semibold">{stats?.archivedTasks ?? 0}</span>
           </div>
         </div>
