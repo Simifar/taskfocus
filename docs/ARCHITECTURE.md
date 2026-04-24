@@ -43,7 +43,7 @@ docs/              проектная и дипломная документац
 |---|---|
 | `features/auth` | Клиентские API и hooks для входа, регистрации, logout, профиля |
 | `features/tasks` | Клиентские API, hooks и UI-компоненты задач |
-| `features/dashboard` | Основной интерфейс планирования, views, Zustand store |
+| `features/dashboard` | Основной интерфейс планирования, views, dashboard actions, Zustand store |
 | `features/profile` | Страница профиля |
 | `features/stats` | Получение статистики |
 
@@ -181,7 +181,7 @@ TanStack Query используется для кэширования, invalidat
 
 ## Текущие архитектурные ограничения
 
-- Dashboard сосредоточивает много orchestration-логики в `dashboard-layout.tsx`.
+- Dashboard actions вынесены в отдельный hook, но `dashboard-layout.tsx` все еще отвечает за композицию всех представлений.
 - Некоторые UI-компоненты крупные и требуют декомпозиции.
 - Auth flow смешивает custom JWT и NextAuth, что требует аккуратного сопровождения.
 - Нет автоматических unit/e2e тестов.
@@ -189,8 +189,8 @@ TanStack Query используется для кэширования, invalidat
 
 ## Рекомендуемые следующие шаги
 
-1. Вынести dashboard actions из `dashboard-layout.tsx` в отдельный hook.
-2. Разделить `inbox-view.tsx` на quick add, filters, batch toolbar, task card и empty state.
+1. Разделить `inbox-view.tsx` на quick add, filters, batch toolbar, task card и empty state.
+2. Разделить `sortable-tasks-list.tsx` на draggable wrapper, task card и subtask dialog integration.
 3. Добавить unit-тесты для `task-scheduling`.
 4. Добавить e2e smoke-тесты для auth и task CRUD.
 5. Постепенно ужесточать ESLint.
