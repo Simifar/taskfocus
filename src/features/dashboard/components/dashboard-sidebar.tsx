@@ -106,7 +106,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
             <div className="min-w-0">
               <h1 className="text-subtitle truncate">TaskFocus</h1>
               <p className="text-caption truncate">
-                {user?.name || user?.username || "User"}
+                {user?.name || user?.username || "Пользователь"}
               </p>
             </div>
           </div>

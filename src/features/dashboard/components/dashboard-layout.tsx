@@ -82,10 +82,10 @@ export function DashboardLayout() {
   const handleLogout = async () => {
     try {
       await logout.mutateAsync();
-      toast.success("Logged out");
+      toast.success("Вы вышли из аккаунта");
       router.push("/");
     } catch (err) {
-      reportError(err, "Logout failed");
+      reportError(err, "Не удалось выйти из аккаунта");
     }
   };
 
@@ -96,19 +96,19 @@ export function DashboardLayout() {
         completed: task.status !== "completed",
       });
       toast.success(
-        task.status === "completed" ? "Task moved back" : "Task completed! ✨",
+        task.status === "completed" ? "Задача снова активна" : "Задача выполнена! ✨",
       );
     } catch (err) {
-      reportError(err, "Failed to update task");
+      reportError(err, "Не удалось обновить задачу");
     }
   };
 
   const handleArchiveTask = async (taskId: string) => {
     try {
       await updateTask.mutateAsync({ id: taskId, input: { status: "archived" } });
-      toast.success("Task archived");
+      toast.success("Задача отправлена в архив");
     } catch (err) {
-      reportError(err, "Failed to archive");
+      reportError(err, "Не удалось отправить задачу в архив");
     }
   };
 
@@ -117,16 +117,16 @@ export function DashboardLayout() {
       await updateTask.mutateAsync({ id: taskId, input: { status: "active" } });
       toast.success("Задача восстановлена");
     } catch (err) {
-      reportError(err, "Failed to restore");
+      reportError(err, "Не удалось восстановить задачу");
     }
   };
 
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask.mutateAsync(taskId);
-      toast.success("Task deleted");
+      toast.success("Задача удалена");
     } catch (err) {
-      reportError(err, "Failed to delete");
+      reportError(err, "Не удалось удалить задачу");
     }
   };
 
@@ -170,28 +170,28 @@ export function DashboardLayout() {
         completed: subtask.status !== "completed",
       });
       toast.success(
-        subtask.status === "completed" ? "Subtask moved back" : "Subtask completed! ✨",
+        subtask.status === "completed" ? "Подзадача снова активна" : "Подзадача выполнена! ✨",
       );
     } catch (err) {
-      reportError(err, "Failed to update subtask");
+      reportError(err, "Не удалось обновить подзадачу");
     }
   };
 
   const handleAddSubtask = async (parentId: string, title: string) => {
     try {
       await createSubtask.mutateAsync({ parentId, title });
-      toast.success("Subtask added!");
+      toast.success("Подзадача добавлена");
     } catch (err) {
-      reportError(err, "Failed to add subtask");
+      reportError(err, "Не удалось добавить подзадачу");
     }
   };
 
   const handleDeleteSubtask = async (subtaskId: string) => {
     try {
       await deleteTask.mutateAsync(subtaskId);
-      toast.success("Subtask deleted");
+      toast.success("Подзадача удалена");
     } catch (err) {
-      reportError(err, "Failed to delete subtask");
+      reportError(err, "Не удалось удалить подзадачу");
     }
   };
 
