@@ -25,6 +25,8 @@ import {
   Filter, Star, Clock, Zap, ChevronDown, CheckCircle2, Circle, AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 interface InboxViewProps {
   tasks: Task[];
@@ -249,7 +251,7 @@ export function InboxView({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Нажмите Enter или кнопку для быстрого добавления • Detали можно отредактировать позже
+              Нажмите Enter или кнопку для быстрого добавления • Детали можно отредактировать позже
             </p>
           </CardContent>
         </Card>
@@ -492,9 +494,9 @@ export function InboxView({
                         )}
                         {viewMode === "detailed" && (
                           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                            <span>Создано: {new Date(task.createdAt).toLocaleDateString()}</span>
+                            <span>Создано: {format(new Date(task.createdAt), "d MMM yyyy", { locale: ru })}</span>
                             {task.updatedAt && task.updatedAt !== task.createdAt && (
-                              <span>Обновлено: {new Date(task.updatedAt).toLocaleDateString()}</span>
+                              <span>Обновлено: {format(new Date(task.updatedAt), "d MMM yyyy", { locale: ru })}</span>
                             )}
                           </div>
                         )}

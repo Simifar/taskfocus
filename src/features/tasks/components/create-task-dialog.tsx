@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCreateTask } from "@/features/tasks/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import {
@@ -68,17 +68,6 @@ export function CreateTaskDialog({
     if (level === 3) return "bg-yellow-100 hover:bg-yellow-200 text-yellow-900 dark:bg-yellow-900/40 dark:hover:bg-yellow-800/50 dark:text-yellow-200";
     return "bg-red-100 hover:bg-red-200 text-red-900 dark:bg-red-900/40 dark:hover:bg-red-800/50 dark:text-red-200";
   };
-
-  useEffect(() => {
-    if (!open) return;
-    if (preSelectedDate === undefined) {
-      setDueDateStart(undefined);
-      setDueDateEnd(undefined);
-    } else {
-      setDueDateStart(preSelectedDate);
-      setDueDateEnd(preSelectedDate);
-    }
-  }, [open, preSelectedDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

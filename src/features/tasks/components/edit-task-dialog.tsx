@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUpdateTask } from "@/features/tasks/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import type { Task } from "@/shared/types";
@@ -45,16 +45,6 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
   const [dueDateEnd, setDueDateEnd] = useState(
     task.dueDateEnd ? new Date(task.dueDateEnd).toISOString().split("T")[0] : "",
   );
-
-  useEffect(() => {
-    if (!open) return;
-    setTitle(task.title);
-    setDescription(task.description ?? "");
-    setPriority(task.priority);
-    setEnergyLevel(task.energyLevel);
-    setDueDateStart(task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : "");
-    setDueDateEnd(task.dueDateEnd ? new Date(task.dueDateEnd).toISOString().split("T")[0] : "");
-  }, [open, task]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

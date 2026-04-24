@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/shared/ui/button';
@@ -14,23 +14,18 @@ function ResetPasswordContent() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-  const [tokenError, setTokenError] = useState('');
   const [error, setError] = useState('');
   
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-
-  useEffect(() => {
-    if (!token) {
-      setTokenError('Отсутствует токен сброса пароля. Пожалуйста, используйте ссылку из письма.');
-    }
-  }, [token]);
+  const tokenError = token
+    ? ''
+    : 'Отсутствует токен сброса пароля. Пожалуйста, используйте ссылку из письма.';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!token) {
-      setTokenError('Отсутствует токен сброса пароля');
       return;
     }
 
@@ -47,7 +42,6 @@ function ResetPasswordContent() {
     // Заглушка - просто показываем успех
     setIsSuccess(true);
     setError('');
-    setTokenError('');
   };
 
   if (isSuccess) {

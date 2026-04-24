@@ -445,6 +445,11 @@ export function DashboardLayout() {
       </div>
 
       <CreateTaskDialog
+        key={
+          createDialogOpen
+            ? `${preSelectedDate?.toISOString() ?? "no-date"}:${currentEnergy ?? "no-energy"}`
+            : "closed"
+        }
         open={createDialogOpen}
         onOpenChange={(open) => {
           if (!open) setPreSelectedDate(undefined);

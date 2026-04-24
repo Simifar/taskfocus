@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser, useUpdateProfile, useDeleteAccount } from "@/features/auth/hooks";
 import { useStats } from "@/features/stats/hooks";
@@ -52,6 +52,81 @@ function getInitials(name?: string | null, username?: string | null, email?: str
   return "U";
 }
 
+function ProfileEditor({
+  initialName,
+  isLoadingUser,
+  updateProfile,
+}: {
+  initialName: string;
+  isLoadingUser: boolean;
+  updateProfile: ReturnType<typeof useUpdateProfile>;
+}) {
+  const [nameValue, setNameValue] = useState(initialName);
+  const [savedName, setSavedName] = useState(initialName);
+  const hasChanges = nameValue !== savedName;
+
+  const handleSave = async () => {
+    try {
+      await updateProfile.mutateAsync({ name: nameValue });
+      setSavedName(nameValue);
+      toast.success("Профиль обновлён");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Ошибка соединения");
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <UserIcon className="h-4 w-4" />
+          Редактировать профиль
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="display-name">Отображаемое имя</Label>
+          {isLoadingUser ? (
+            <SkLight className="h-10 w-full" />
+          ) : (
+            <Input
+              id="display-name"
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              placeholder="Ваше имя"
+            />
+          )}
+          <p className="text-xs text-muted-foreground">
+            Это имя отображается в приложении
+          </p>
+        </div>
+
+        {hasChanges && (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={updateProfile.isPending}
+              className="bg-brand hover:bg-brand/90"
+            >
+              {updateProfile.isPending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : "Сохранить"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setNameValue(savedName)}
+            >
+              Отменить
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ProfilePage() {
   const router = useRouter();
   const { data: user, isLoading: isLoadingUser } = useCurrentUser();
@@ -60,27 +135,6 @@ export function ProfilePage() {
   const deleteAccount = useDeleteAccount();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [nameValue, setNameValue] = useState(user?.name ?? "");
-  const [synced, setSynced] = useState(false);
-
-  useEffect(() => {
-    if (user && !synced) {
-      setNameValue(user.name ?? "");
-      setSynced(true);
-    }
-  }, [user, synced]);
-
-  const originalName = user?.name ?? "";
-  const hasChanges = synced && nameValue !== originalName;
-
-  const handleSave = async () => {
-    try {
-      await updateProfile.mutateAsync({ name: nameValue });
-      toast.success("Профиль обновлён");
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Ошибка соединения");
-    }
-  };
 
   const handleDeleteAccount = async () => {
     try {
@@ -160,54 +214,12 @@ export function ProfilePage() {
         </div>
 
         {/* Edit profile */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <UserIcon className="h-4 w-4" />
-              Редактировать профиль
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="display-name">Отображаемое имя</Label>
-              {isLoadingUser ? (
-                <SkLight className="h-10 w-full" />
-              ) : (
-                <Input
-                  id="display-name"
-                  value={nameValue}
-                  onChange={(e) => setNameValue(e.target.value)}
-                  placeholder="Ваше имя"
-                />
-              )}
-              <p className="text-xs text-muted-foreground">
-                Это имя отображается в приложении
-              </p>
-            </div>
-
-            {hasChanges && (
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={updateProfile.isPending}
-                  className="bg-brand hover:bg-brand/90"
-                >
-                  {updateProfile.isPending
-                    ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : "Сохранить"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setNameValue(originalName)}
-                >
-                  Отменить
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <ProfileEditor
+          key={user?.id ?? "loading"}
+          initialName={user?.name ?? ""}
+          isLoadingUser={isLoadingUser}
+          updateProfile={updateProfile}
+        />
 
         {/* Account info */}
         <Card>
