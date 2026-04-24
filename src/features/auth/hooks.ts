@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { authApi } from "./api";
 import { ApiError } from "@/shared/lib/fetcher";
 
@@ -42,20 +44,28 @@ export function useCurrentUser() {
 
 export function useLogin() {
   const qc = useQueryClient();
+  const router = useRouter();
+  const locale = useLocale();
+  
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: async () => {
       await syncCurrentUser(qc);
+      router.push(`/${locale}/dashboard`);
     },
   });
 }
 
 export function useRegister() {
   const qc = useQueryClient();
+  const router = useRouter();
+  const locale = useLocale();
+  
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: async () => {
       await syncCurrentUser(qc);
+      router.push(`/${locale}/dashboard`);
     },
   });
 }

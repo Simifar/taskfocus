@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useLocale } from "next-intl";
 import { useLogin, useRegister } from "@/features/auth/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import { Button } from "@/shared/ui/button";
@@ -39,6 +40,7 @@ function describeOAuthError(code: string | null): string | null {
 
 export function AuthPage() {
   const searchParams = useSearchParams();
+  const locale = useLocale();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [error, setError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -89,7 +91,7 @@ export function AuthPage() {
   const handleGoogleSignIn = async () => {
     setError(null);
     setIsGoogleLoading(true);
-    await signIn("google", { callbackUrl: "/" });
+    await signIn("google", { callbackUrl: `/${locale}` });
   };
 
   return (

@@ -33,7 +33,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/",
-    error: "/",
+    signIn: "/auth",
+    error: "/auth",
   },
 };
