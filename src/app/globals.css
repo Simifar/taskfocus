@@ -232,65 +232,65 @@ body {
   color: var(--foreground);
 }
 
-/* Improved heading hierarchy */
-h1 {
-  font-size: var(--font-size-display);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.025em;
-  color: var(--foreground);
-}
+@layer base {
+  /* Heading hierarchy — inside @layer base so Tailwind utilities can override */
+  h1 {
+    font-size: var(--font-size-display);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--foreground);
+  }
 
-h2 {
-  font-size: var(--font-size-headline);
-  font-weight: 700;
-  line-height: 1;
-  color: var(--foreground);
-}
+  h2 {
+    font-size: var(--font-size-headline);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--foreground);
+  }
 
-h3 {
-  font-size: var(--font-size-title);
-  font-weight: 600;
-  line-height: 1;
-  color: var(--foreground);
-}
+  h3 {
+    font-size: var(--font-size-title);
+    font-weight: 600;
+    line-height: 1;
+    color: var(--foreground);
+  }
 
-h4 {
-  font-size: var(--font-size-subtitle);
-  font-weight: 500;
-  line-height: 1.25;
-  color: var(--foreground);
-}
+  h4 {
+    font-size: var(--font-size-subtitle);
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--foreground);
+  }
 
-h5, h6 {
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  color: var(--foreground);
-}
+  h5, h6 {
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--foreground);
+  }
 
-/* Better paragraph spacing */
-p {
-  font-size: var(--font-size-body);
-  line-height: 1.75;
-  margin-bottom: 1rem;
-}
+  p {
+    font-size: var(--font-size-body);
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
 
-p:last-child {
-  margin-bottom: 0;
-}
+  p:last-child {
+    margin-bottom: 0;
+  }
 
-/* Improved list styling */
-ul, ol {
-  font-size: var(--font-size-body);
-  line-height: 1.75;
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
-}
+  ul, ol {
+    font-size: var(--font-size-body);
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
 
-li {
-  margin-bottom: 0.5rem;
-}
+  li {
+    margin-bottom: 0.5rem;
+  }
 
-li:last-child {
-  margin-bottom: 0;
+  li:last-child {
+    margin-bottom: 0;
+  }
 }
