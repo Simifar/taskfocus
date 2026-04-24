@@ -1,0 +1,202 @@
+{
+  "metadata": {
+    "title": "TaskFocus - Intelligent Task Manager",
+    "description": "Task manager for users with ADHD. Limit of 5 active tasks per day, energy tracking, soft deadlines.",
+    "keywords": "TaskFocus,ADHD,task manager,productivity,ADHD,task manager"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "navigation": {
+    "today": "Today",
+    "inbox": "Inbox",
+    "week": "This Week",
+    "calendar": "Calendar",
+    "archive": "Archive",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "today": {
+      "title": "Today",
+      "energyQuestion": "How are you feeling?",
+      "energyDescription": "Select your energy level to focus on appropriate tasks",
+      "activeTasks": "Focus for Today",
+      "activeTasksDescription": "Active tasks",
+      "completed": "Completed",
+      "completedDescription": "Completed {count} tasks",
+      "progress": "Progress",
+      "progressDescription": "Your achievement for today",
+      "completedTasks": "Completed tasks",
+      "noTasks": "No active tasks for today",
+      "noTasksFiltered": "No tasks for selected energy level",
+      "tryIncreaseEnergy": "Try increasing energy level or reset filter",
+      "addFirstTask": "Click the button above to create your first task",
+      "maxSlots": "{count} slots remaining",
+      "maxReached": "Maximum reached! Complete one task to add new one",
+      "showCompleted": "Completed",
+      "hideCompleted": "Hide"
+    },
+    "energy": {
+      "levels": {
+        "1": {
+          "title": "Rest",
+          "description": "Only the easiest tasks"
+        },
+        "2": {
+          "title": "Routine",
+          "description": "Good for regular tasks"
+        },
+        "3": {
+          "title": "Balanced",
+          "description": "Optimal for most tasks"
+        },
+        "4": {
+          "title": "Focus",
+          "description": "For important and complex tasks"
+        },
+        "5": {
+          "title": "Peak",
+          "description": "Maximum energy for big tasks"
+        }
+      },
+      "current": "Your Energy",
+      "reset": "Reset Filter"
+    },
+    "stats": {
+      "active": "Active",
+      "completed": "Completed",
+      "archived": "Archived"
+    }
+  },
+  "tasks": {
+    "create": {
+      "title": "New Task",
+      "taskTitle": "Task Title",
+      "taskDescription": "Task Description",
+      "energyLevel": "Energy Level",
+      "priority": "Priority",
+      "dueDate": "Due Date",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "addSubtask": "Add Subtask",
+      "create": "Create Task",
+      "creating": "Creating..."
+    },
+    "edit": {
+      "title": "Edit Task",
+      "save": "Save Changes",
+      "saving": "Saving..."
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "subtasks": {
+      "add": "Add Subtask",
+      "progress": "Subtask Progress",
+      "title": "Subtask Title"
+    },
+    "actions": {
+      "complete": "Complete",
+      "uncomplete": "Undo",
+      "archive": "Archive",
+      "restore": "Restore",
+      "delete": "Delete"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Name",
+    "username": "Username",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "loginWithGoogle": "Login with Google",
+    "registerWithGoogle": "Register with Google",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "signIn": "Sign In",
+    "signUp": "Sign Up"
+  },
+  "profile": {
+    "title": "Profile",
+    "description": "Manage account data",
+    "basicInfo": "Basic Information",
+    "accountInfo": "Information about your account",
+    "displayName": "Display Name",
+    "email": "Email",
+    "username": "Username",
+    "emailNotChangeable": "Email cannot be changed",
+    "usernameNotChangeable": "Username cannot be changed",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "dangerZone": "Danger Zone",
+    "irreversibleActions": "Irreversible Actions",
+    "deleteAccount": "Delete Account",
+    "deleteAccountWarning": "Deleting your account will delete all your data and tasks. This action cannot be undone.",
+    "deleteAccountConfirm": "Are you sure?",
+    "deleteAccountConfirmDescription": "This action will delete your account and all associated data. This cannot be undone.",
+    "deleting": "Deleting..."
+  },
+  "calendar": {
+    "weekDays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    }
+  },
+  "inbox": {
+    "viewMode": {
+      "detailed": "Detailed",
+      "compact": "Compact"
+    }
+  },
+  "motivation": [
+    "Every small step counts! 🎯",
+    "You've got this! 💪",
+    "One task at a time 🎯",
+    "Progress over perfection 📈",
+    "You're doing great! ✨",
+    "Break it into smaller pieces 🧩",
+    "Focus on what matters 🎯",
+    "You're closer than you think 🚀"
+  ]
+}

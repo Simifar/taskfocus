@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { useDashboardTranslations } from "@/shared/lib/i18n";
 
 interface EnergyStatusProps {
   currentEnergy: number | null;
@@ -18,38 +19,40 @@ interface EnergyStatusProps {
   isLoading?: boolean;
 }
 
-const ENERGY_OPTIONS = [
-  {
-    level: 1,
-    title: "Лёгкая",
-    description: "Для простых и знакомых задач",
-    color: "text-emerald-700 bg-emerald-100 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800",
-  },
-  {
-    level: 2,
-    title: "Рутина",
-    description: "Хорошо для обычных дел",
-    color: "text-lime-700 bg-lime-100 dark:bg-lime-900/20 border-lime-200 dark:border-lime-800",
-  },
-  {
-    level: 3,
-    title: "Сбалансированная",
-    description: "Оптимально для большинства задач",
-    color: "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800",
-  },
-  {
-    level: 4,
-    title: "Фокус",
-    description: "Для важных и сложных задач",
-    color: "text-orange-700 bg-orange-100 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800",
-  },
-  {
-    level: 5,
-    title: "Пиковая",
-    description: "Максимальная энергия для больших дел",
-    color: "text-red-700 bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800",
-  },
-];
+function getEnergyOptions(t: any) {
+  return [
+    {
+      level: 1,
+      title: t('energy.levels.1.title'),
+      description: t('energy.levels.1.description'),
+      color: "text-emerald-700 bg-emerald-100 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800",
+    },
+    {
+      level: 2,
+      title: t('energy.levels.2.title'),
+      description: t('energy.levels.2.description'),
+      color: "text-lime-700 bg-lime-100 dark:bg-lime-900/20 border-lime-200 dark:border-lime-800",
+    },
+    {
+      level: 3,
+      title: t('energy.levels.3.title'),
+      description: t('energy.levels.3.description'),
+      color: "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800",
+    },
+    {
+      level: 4,
+      title: t('energy.levels.4.title'),
+      description: t('energy.levels.4.description'),
+      color: "text-orange-700 bg-orange-100 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800",
+    },
+    {
+      level: 5,
+      title: t('energy.levels.5.title'),
+      description: t('energy.levels.5.description'),
+      color: "text-red-700 bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800",
+    },
+  ];
+}
 
 const ENERGY_DESCRIPTIONS = {
   1: "Лёгкие задачи, которые можно сделать даже при усталости",
@@ -88,13 +91,15 @@ export function EnergyStatus({
   onEnergyChange,
   isLoading = false,
 }: EnergyStatusProps) {
+  const t = useDashboardTranslations();
+  const ENERGY_OPTIONS = getEnergyOptions(t);
   if (currentEnergy === null) {
     return (
       <Card className="mb-6 border-brand/30 bg-brand/5">
         <CardHeader className="pb-6">
-          <CardTitle className="text-headline">Как вы себя чувствуете?</CardTitle>
+          <CardTitle className="text-headline">{t('today.energyQuestion')}</CardTitle>
           <p className="text-body text-muted-foreground mt-2">
-            Выберите уровень энергии, чтобы сфокусироваться на подходящих задачах
+            {t('today.energyDescription')}
           </p>
         </CardHeader>
         <CardContent>

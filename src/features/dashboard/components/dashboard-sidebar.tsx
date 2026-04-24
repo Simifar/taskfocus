@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
+import { useNavigationTranslations, useDashboardTranslations } from "@/shared/lib/i18n";
 
 interface DashboardSidebarProps {
   user: User | null;
@@ -31,6 +32,8 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false, onClose }: DashboardSidebarProps) {
   const router = useRouter();
+  const tNav = useNavigationTranslations();
+  const tDashboard = useDashboardTranslations();
 
   const currentView = useDashboardStore((s) => s.currentView);
   const setView = useDashboardStore((s) => s.setView);
@@ -73,12 +76,12 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
     label: string;
     icon: React.ReactNode;
     badge?: number;
-  }> = [
-    { id: "today", label: "Сегодня", icon: <CalendarCheck className="h-4 w-4" />, badge: counts.todayCount },
-    { id: "inbox", label: "Входящие", icon: <Inbox className="h-4 w-4" />, badge: counts.inboxCount },
-    { id: "week", label: "Эта неделя", icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
-    { id: "calendar", label: "Календарь", icon: <CalendarRange className="h-4 w-4" /> },
-  ];
+  }> = useMemo(() => [
+    { id: "today", label: tNav('today'), icon: <CalendarCheck className="h-4 w-4" />, badge: counts.todayCount },
+    { id: "inbox", label: tNav('inbox'), icon: <Inbox className="h-4 w-4" />, badge: counts.inboxCount },
+    { id: "week", label: tNav('week'), icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
+    { id: "calendar", label: tNav('calendar'), icon: <CalendarRange className="h-4 w-4" /> },
+  ], [tNav, counts]);
 
   const handleNavClick = (view: DashboardView) => {
     setView(view);
