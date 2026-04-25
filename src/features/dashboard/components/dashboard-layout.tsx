@@ -198,6 +198,7 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onReorder={handleReorder}
               onBatchArchive={handleBatchArchive}
               onBatchDelete={handleBatchDelete}
               onBatchAssignToToday={handleBatchAssignToToday}
@@ -219,6 +220,7 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onReorder={handleReorder}
             />
           )}
 
@@ -236,6 +238,7 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onReorder={handleReorder}
             />
           )}
 
@@ -249,6 +252,7 @@ export function DashboardLayout() {
               onAddTask={handleAddTask}
               onAssignToToday={handleAssignToToday}
               onAssignToWeek={handleAssignToWeek}
+              onReorder={handleReorder}
             />
           )}
 
@@ -267,6 +271,7 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onReorder={handleReorder}
             />
           )}
 
@@ -275,6 +280,7 @@ export function DashboardLayout() {
               stats={stats}
               onRestore={handleRestoreTask}
               onDelete={handleDeleteTask}
+              onReorder={handleReorder}
             />
           )}
         </div>

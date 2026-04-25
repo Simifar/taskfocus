@@ -19,6 +19,8 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/shared/ui/dropdown-menu";
 import { CreateSubtaskDialog } from "@/features/tasks/components/create-subtask-dialog";
+import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { cn } from "@/shared/lib/utils";
 import { 
   Plus, Inbox, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2, 
@@ -53,6 +55,7 @@ interface InboxViewProps {
   onBatchDelete?: (taskIds: string[]) => void;
   onBatchAssignToToday?: (taskIds: string[]) => void;
   onBatchAssignToWeek?: (taskIds: string[]) => void;
+  onReorder?: (tasks: Task[]) => void;
 }
 
 export function InboxView({
@@ -69,6 +72,7 @@ export function InboxView({
   onBatchDelete,
   onBatchAssignToToday,
   onBatchAssignToWeek,
+  onReorder,
 }: InboxViewProps) {
   const createTask = useCreateTask();
 
@@ -417,13 +421,16 @@ export function InboxView({
         )}
 
         {filteredTasks.length > 0 ? (
-          <div className="space-y-3">
-            {filteredTasks.map((task) => {
+          <SimpleSortableTasksList
+            tasks={filteredTasks}
+            onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
+            className="space-y-3"
+          >
+            {(task) => {
               const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
               return (
-              <Card 
-                key={task.id} 
+              <Card
                 className={cn(
                   "hover:shadow-md transition-all duration-200",
                   selectedTasks.has(task.id) && "ring-2 ring-brand/60 bg-brand/5",
@@ -544,8 +551,8 @@ export function InboxView({
                   </div>
                 </CardContent>
               </Card>
-            )})}
-          </div>
+            )}}
+          </SimpleSortableTasksList>
         ) : (
           <Card className="border-dashed">
             <CardContent className="p-12 text-center">

@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/lib/utils";
+import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import {
   Calendar,
   ChevronLeft,
@@ -44,6 +46,7 @@ interface CalendarViewProps {
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
+  onReorder?: (tasks: Task[]) => void;
 }
 
 const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -53,6 +56,7 @@ export function CalendarView({
   onEdit,
   onCreateTask,
   onSelectDay,
+  onReorder,
 }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const today = new Date();
@@ -226,13 +230,17 @@ export function CalendarView({
 
                   {dayTasks.length > 0 ? (
                     <div className="space-y-1.5">
-                      {dayTasks.slice(0, 3).map((task) => {
+                      <SimpleSortableTasksList
+                        tasks={dayTasks.slice(0, 3)}
+                        onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
+                        className="space-y-1.5"
+                      >
+                      {(task) => {
                         const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
                         return (
                         <button
                           type="button"
-                          key={task.id}
                           className="flex w-full items-start gap-1.5 rounded-lg border border-border bg-card/80 px-2 py-1.5 text-left text-xs shadow-sm transition-colors hover:border-brand/50 hover:bg-background"
                           onClick={() => onEdit?.(task)}
                           title={task.title}
@@ -245,7 +253,8 @@ export function CalendarView({
                             </span>
                           </span>
                         </button>
-                      )})}
+                      )}}
+                    </SimpleSortableTasksList>
 
                       {dayTasks.length > 3 && (
                         <button

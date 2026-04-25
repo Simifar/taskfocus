@@ -9,15 +9,18 @@ import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent } from "@/shared/ui/card";
 import { useTasks } from "@/features/tasks/hooks";
 import { cn } from "@/shared/lib/utils";
+import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface ArchiveViewProps {
   stats: StatsResponse | null;
   onRestore: (taskId: string) => void;
   onDelete: (taskId: string) => void;
+  onReorder?: (tasks: Task[]) => void;
 }
 
-export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
+export function ArchiveView({ stats, onRestore, onDelete, onReorder }: ArchiveViewProps) {
   const { data, isLoading } = useTasks({ status: "archived" });
   const archivedTasks = data?.items ?? [];
 
@@ -54,15 +57,19 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {rootTasks.map((task) => {
+        <SimpleSortableTasksList
+          tasks={rootTasks}
+          onReorder={(reordered) => onReorder?.(mergeReorderedTasks(archivedTasks, reordered))}
+          className="space-y-3"
+        >
+          {(task) => {
             const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
             const archivedDate = task.updatedAt
               ? format(new Date(task.updatedAt), "d MMM yyyy", { locale: ru })
               : null;
 
             return (
-              <Card key={task.id} className="border-l-4 border-l-border opacity-80 hover:opacity-100 transition-opacity">
+              <Card className="border-l-4 border-l-border opacity-80 hover:opacity-100 transition-opacity">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
@@ -111,8 +118,8 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
                 </CardContent>
               </Card>
             );
-          })}
-        </div>
+          }}
+        </SimpleSortableTasksList>
       )}
     </div>
   );

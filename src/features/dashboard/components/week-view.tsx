@@ -5,6 +5,8 @@ import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
+import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import {
   Archive,
   CalendarDays,
@@ -35,6 +37,7 @@ interface WeekViewProps {
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
+  onReorder?: (tasks: Task[]) => void;
 }
 
 export function WeekView({
@@ -45,6 +48,7 @@ export function WeekView({
   onDelete,
   onCreateTask,
   onSelectDay,
+  onReorder,
 }: WeekViewProps) {
   const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -158,13 +162,16 @@ export function WeekView({
                 </Button>
 
                 {dayTasks.length > 0 ? (
-                  <div className="space-y-2">
-                    {dayTasks.map((task) => {
+                  <SimpleSortableTasksList
+                    tasks={dayTasks}
+                    onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
+                    className="space-y-2"
+                  >
+                    {(task) => {
                       const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
                       return (
                       <div
-                        key={task.id}
                         className="group rounded-2xl border border-border bg-background p-3 shadow-sm transition-colors hover:border-brand/40"
                       >
                         <button
@@ -229,8 +236,8 @@ export function WeekView({
                           </Button>
                         </div>
                       </div>
-                    )})}
-                  </div>
+                    )}}
+                  </SimpleSortableTasksList>
                 ) : (
                   <button
                     type="button"

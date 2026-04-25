@@ -5,6 +5,8 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
+import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import {
   Archive,
   CalendarCheck,
@@ -30,6 +32,7 @@ interface EisenhowerMatrixViewProps {
   onAddTask?: () => void;
   onAssignToToday?: (taskId: string) => void;
   onAssignToWeek?: (taskId: string) => void;
+  onReorder?: (tasks: Task[]) => void;
 }
 
 function MatrixTaskCard({
@@ -138,6 +141,7 @@ export function EisenhowerMatrixView({
   onAddTask,
   onAssignToToday,
   onAssignToWeek,
+  onReorder,
 }: EisenhowerMatrixViewProps) {
   const activeTasks = tasks.filter((task) => task.status === "active" && !task.parentTaskId);
   const tasksByQuadrant = EISENHOWER_ORDER.reduce(
@@ -208,10 +212,13 @@ export function EisenhowerMatrixView({
               </div>
 
               {quadrantTasks.length > 0 ? (
-                <div className="space-y-2">
-                  {quadrantTasks.map((task) => (
+                <SimpleSortableTasksList
+                  tasks={quadrantTasks}
+                  onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
+                  className="space-y-2"
+                >
+                  {(task) => (
                     <MatrixTaskCard
-                      key={task.id}
                       task={task}
                       tasks={tasks}
                       onEdit={onEdit}
@@ -221,8 +228,8 @@ export function EisenhowerMatrixView({
                       onAssignToToday={onAssignToToday}
                       onAssignToWeek={onAssignToWeek}
                     />
-                  ))}
-                </div>
+                  )}
+                </SimpleSortableTasksList>
               ) : (
                 <button
                   type="button"

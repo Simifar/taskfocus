@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { ChevronLeft, Calendar, Loader2 } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -19,6 +20,7 @@ interface DayViewProps {
   onArchive?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
   onAddTask?: () => void;
+  onReorder?: (tasks: Task[]) => void;
   // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
@@ -36,6 +38,7 @@ export function DayView({
   onArchive,
   onDelete,
   onAddTask,
+  onReorder,
   onToggleSubtask,
   onAddSubtask,
   onEditSubtask,
@@ -154,7 +157,7 @@ export function DayView({
             onComplete={onComplete || (() => {})}
             onArchive={onArchive || (() => {})}
             onDelete={onDelete || (() => {})}
-            onReorder={() => {}}
+            onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
             onToggleSubtask={onToggleSubtask}
             onAddSubtask={onAddSubtask}
             onEditSubtask={onEditSubtask}
@@ -185,7 +188,7 @@ export function DayView({
             onComplete={onComplete || (() => {})}
             onArchive={onArchive || (() => {})}
             onDelete={onDelete || (() => {})}
-            onReorder={() => {}}
+            onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
             onToggleSubtask={onToggleSubtask}
             onAddSubtask={onAddSubtask}
             onEditSubtask={onEditSubtask}
