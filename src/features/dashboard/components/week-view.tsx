@@ -167,21 +167,22 @@ export function WeekView({
                     onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
                     className="space-y-2"
                   >
-                    {(task) => {
+                    {(task, dragHandle) => {
                       const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
                       return (
                       <div
                         className="group rounded-2xl border border-border bg-background p-3 shadow-sm transition-colors hover:border-brand/40"
                       >
-                        <button
-                          type="button"
-                          className="block w-full text-left"
-                          onClick={() => onEdit?.(task)}
-                        >
-                          <div className="flex items-start gap-2">
+                        <div className="flex items-start gap-2">
+                          {dragHandle}
+                          <button
+                            type="button"
+                            className="block min-w-0 flex-1 text-left"
+                            onClick={() => onEdit?.(task)}
+                          >
                             <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", quadrant.dot)} />
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0">
                               <p className="line-clamp-2 text-sm font-semibold leading-snug">
                                 {task.title}
                               </p>
@@ -194,8 +195,8 @@ export function WeekView({
                                 </Badge>
                               </div>
                             </div>
-                          </div>
-                        </button>
+                          </button>
+                        </div>
 
                         <div className="mt-3 flex items-center justify-end gap-1">
                           <Button

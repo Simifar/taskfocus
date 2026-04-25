@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { Task } from "@/shared/types";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -37,17 +38,19 @@ interface EisenhowerMatrixViewProps {
 
 function MatrixTaskCard({
   task,
+  dragHandle,
   onEdit,
   onComplete,
   onArchive,
   onDelete,
   onAssignToToday,
   onAssignToWeek,
-}: EisenhowerMatrixViewProps & { task: Task }) {
+}: EisenhowerMatrixViewProps & { task: Task; dragHandle?: ReactNode }) {
   return (
     <Card className="border-l-4 border-l-border bg-background/95 shadow-sm transition-colors hover:border-brand/40">
       <CardContent className="p-3">
         <div className="flex items-start justify-between gap-2">
+          {dragHandle}
           <button
             type="button"
             className="min-w-0 flex-1 text-left"
@@ -217,9 +220,10 @@ export function EisenhowerMatrixView({
                   onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
                   className="space-y-2"
                 >
-                  {(task) => (
+                  {(task, dragHandle) => (
                     <MatrixTaskCard
                       task={task}
+                      dragHandle={dragHandle}
                       tasks={tasks}
                       onEdit={onEdit}
                       onComplete={onComplete}

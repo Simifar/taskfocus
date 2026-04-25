@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { EnergyStatus } from "./energy-status";
 import { FocusModeDialog } from "./focus-mode-dialog";
 import {
@@ -140,16 +141,7 @@ export function TodayView({
   };
 
   const handleReorder = (reorderedActiveTasks: Task[]) => {
-    const reorderedMap = new Map(reorderedActiveTasks.map((t, i) => [t.id, i]));
-    const sorted = tasks.slice().sort((a, b) => {
-      const aIdx = reorderedMap.get(a.id);
-      const bIdx = reorderedMap.get(b.id);
-      if (aIdx !== undefined && bIdx !== undefined) return aIdx - bIdx;
-      if (aIdx !== undefined) return -1;
-      if (bIdx !== undefined) return 1;
-      return 0;
-    });
-    onReorder?.(sorted);
+    onReorder?.(mergeReorderedTasks(tasks, reorderedActiveTasks));
   };
 
   return (

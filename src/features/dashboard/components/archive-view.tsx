@@ -62,7 +62,7 @@ export function ArchiveView({ stats, onRestore, onDelete, onReorder }: ArchiveVi
           onReorder={(reordered) => onReorder?.(mergeReorderedTasks(archivedTasks, reordered))}
           className="space-y-3"
         >
-          {(task) => {
+          {(task, dragHandle) => {
             const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
             const archivedDate = task.updatedAt
               ? format(new Date(task.updatedAt), "d MMM yyyy", { locale: ru })
@@ -72,6 +72,7 @@ export function ArchiveView({ stats, onRestore, onDelete, onReorder }: ArchiveVi
               <Card className="border-l-4 border-l-border opacity-80 hover:opacity-100 transition-opacity">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
+                    {dragHandle}
                     <div className="flex-1 min-w-0">
                       <p className={cn("font-medium leading-tight", "line-through text-muted-foreground")}>
                         {task.title}

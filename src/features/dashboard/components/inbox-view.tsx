@@ -83,7 +83,7 @@ export function InboxView({
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [filterQuadrant, setFilterQuadrant] = useState<EisenhowerQuadrant | "all">("all");
   const [filterEnergy, setFilterEnergy] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("created");
+  const [sortBy, setSortBy] = useState<string>("position");
   const [viewMode, setViewMode] = useState<"compact" | "detailed">("detailed");
 
   const inboxTasks = useMemo(() => {
@@ -126,6 +126,8 @@ export function InboxView({
     // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
+        case "position":
+          return a.position - b.position;
         case "eisenhower":
           return compareByEisenhower(a, b);
         case "energy":
@@ -332,6 +334,12 @@ export function InboxView({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuCheckboxItem
+                  checked={sortBy === "position"}
+                  onCheckedChange={() => setSortBy("position")}
+                >
+                  Р СѓС‡РЅРѕР№ РїРѕСЂСЏРґРѕРє
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
                   checked={sortBy === "created"}
                   onCheckedChange={() => setSortBy("created")}
                 >
@@ -423,10 +431,13 @@ export function InboxView({
         {filteredTasks.length > 0 ? (
           <SimpleSortableTasksList
             tasks={filteredTasks}
-            onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
+            onReorder={(reordered) => {
+              setSortBy("position");
+              onReorder?.(mergeReorderedTasks(tasks, reordered));
+            }}
             className="space-y-3"
           >
-            {(task) => {
+            {(task, dragHandle) => {
               const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
               return (
@@ -443,6 +454,7 @@ export function InboxView({
                 )}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
+                      {dragHandle}
                       <Checkbox
                         checked={selectedTasks.has(task.id)}
                         onCheckedChange={() => toggleTaskSelection(task.id)}

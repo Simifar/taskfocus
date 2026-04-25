@@ -235,16 +235,20 @@ export function CalendarView({
                         onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
                         className="space-y-1.5"
                       >
-                      {(task) => {
+                      {(task, dragHandle) => {
                         const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
                         return (
-                        <button
-                          type="button"
-                          className="flex w-full items-start gap-1.5 rounded-lg border border-border bg-card/80 px-2 py-1.5 text-left text-xs shadow-sm transition-colors hover:border-brand/50 hover:bg-background"
-                          onClick={() => onEdit?.(task)}
-                          title={task.title}
+                        <div
+                          className="flex w-full items-start gap-1.5 rounded-lg border border-border bg-card/80 px-2 py-1.5 text-xs shadow-sm transition-colors hover:border-brand/50 hover:bg-background"
                         >
+                          {dragHandle}
+                          <button
+                            type="button"
+                            className="flex min-w-0 flex-1 items-start gap-1.5 text-left"
+                            onClick={() => onEdit?.(task)}
+                            title={task.title}
+                          >
                           <span className={cn("mt-1 h-1.5 w-1.5 shrink-0 rounded-full", quadrant.dot)} />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-medium">{task.title}</span>
@@ -252,7 +256,8 @@ export function CalendarView({
                               {quadrant.shortTitle} · энергия {task.energyLevel}
                             </span>
                           </span>
-                        </button>
+                          </button>
+                        </div>
                       )}}
                     </SimpleSortableTasksList>
 
