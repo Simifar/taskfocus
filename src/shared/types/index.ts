@@ -1,5 +1,5 @@
 export type TaskStatus = "active" | "completed" | "archived";
-export type Priority = "low" | "medium" | "high";
+export type EisenhowerQuadrant = "do" | "schedule" | "delegate" | "eliminate";
 
 export interface User {
   id: string;
@@ -14,7 +14,8 @@ export interface Task {
   title: string;
   description?: string | null;
   status: TaskStatus;
-  priority: Priority;
+  important: boolean;
+  urgent: boolean;
   energyLevel: number;
   position: number;
   dueDateStart?: string | null;

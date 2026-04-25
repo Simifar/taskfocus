@@ -29,6 +29,7 @@ import {
   isTaskScheduledForDay,
   isTaskScheduledForMonth,
 } from "@/features/dashboard/lib/task-date-filters";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -46,18 +47,6 @@ interface CalendarViewProps {
 }
 
 const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-
-function getPriorityDot(priority: Task["priority"]) {
-  if (priority === "high") return "bg-red-500";
-  if (priority === "medium") return "bg-amber-500";
-  return "bg-emerald-500";
-}
-
-function getPriorityLabel(priority: Task["priority"]) {
-  if (priority === "high") return "Высокий";
-  if (priority === "medium") return "Средний";
-  return "Низкий";
-}
 
 export function CalendarView({
   tasks,
@@ -99,7 +88,7 @@ export function CalendarView({
     if (!isSameMonth(day, currentMonth)) return false;
     return (tasksByDay.get(format(day, "yyyy-MM-dd")) ?? []).length > 0;
   }).length;
-  const highPriorityCount = monthTasks.filter((task) => task.priority === "high").length;
+  const urgentImportantCount = monthTasks.filter((task) => task.important && task.urgent).length;
   const averageEnergy =
     monthTasks.length > 0
       ? Math.round(monthTasks.reduce((sum, task) => sum + task.energyLevel, 0) / monthTasks.length)
@@ -171,8 +160,8 @@ export function CalendarView({
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Высокий приоритет</p>
-            <p className="mt-1 text-3xl font-bold">{highPriorityCount}</p>
+            <p className="text-sm text-muted-foreground">Сделать сейчас</p>
+            <p className="mt-1 text-3xl font-bold">{urgentImportantCount}</p>
           </CardContent>
         </Card>
         <Card>
@@ -237,7 +226,10 @@ export function CalendarView({
 
                   {dayTasks.length > 0 ? (
                     <div className="space-y-1.5">
-                      {dayTasks.slice(0, 3).map((task) => (
+                      {dayTasks.slice(0, 3).map((task) => {
+                        const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
+
+                        return (
                         <button
                           type="button"
                           key={task.id}
@@ -245,15 +237,15 @@ export function CalendarView({
                           onClick={() => onEdit?.(task)}
                           title={task.title}
                         >
-                          <span className={cn("mt-1 h-1.5 w-1.5 shrink-0 rounded-full", getPriorityDot(task.priority))} />
+                          <span className={cn("mt-1 h-1.5 w-1.5 shrink-0 rounded-full", quadrant.dot)} />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-medium">{task.title}</span>
                             <span className="hidden text-[10px] text-muted-foreground md:block">
-                              {getPriorityLabel(task.priority)} · энергия {task.energyLevel}
+                              {quadrant.shortTitle} · энергия {task.energyLevel}
                             </span>
                           </span>
                         </button>
-                      ))}
+                      )})}
 
                       {dayTasks.length > 3 && (
                         <button

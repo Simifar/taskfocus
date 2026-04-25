@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type DashboardView = "today" | "inbox" | "week" | "calendar" | "day" | "archive";
-export type SortBy = "energy" | "priority" | "dueDate" | "created";
+export type DashboardView = "today" | "inbox" | "week" | "calendar" | "matrix" | "day" | "archive";
+export type SortBy = "energy" | "eisenhower" | "dueDate" | "created";
 export type SortOrder = "asc" | "desc";
 
 interface DashboardState {

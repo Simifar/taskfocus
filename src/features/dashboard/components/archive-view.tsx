@@ -9,17 +9,12 @@ import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent } from "@/shared/ui/card";
 import { useTasks } from "@/features/tasks/hooks";
 import { cn } from "@/shared/lib/utils";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface ArchiveViewProps {
   stats: StatsResponse | null;
   onRestore: (taskId: string) => void;
   onDelete: (taskId: string) => void;
-}
-
-function getPriorityLabel(priority: Task["priority"]) {
-  if (priority === "high") return { label: "⚡ Высокий", className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" };
-  if (priority === "medium") return { label: "→ Средний", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" };
-  return { label: "✓ Низкий", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" };
 }
 
 export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
@@ -61,7 +56,7 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
       ) : (
         <div className="space-y-3">
           {rootTasks.map((task) => {
-            const priority = getPriorityLabel(task.priority);
+            const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
             const archivedDate = task.updatedAt
               ? format(new Date(task.updatedAt), "d MMM yyyy", { locale: ru })
               : null;
@@ -80,8 +75,8 @@ export function ArchiveView({ stats, onRestore, onDelete }: ArchiveViewProps) {
                         </p>
                       )}
                       <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <Badge variant="secondary" className={cn("text-xs font-semibold", priority.className)}>
-                          {priority.label}
+                        <Badge variant="outline" className={cn("text-xs font-semibold", quadrant.badge)}>
+                          {quadrant.action}
                         </Badge>
                         {archivedDate && (
                           <span className="text-xs text-muted-foreground">

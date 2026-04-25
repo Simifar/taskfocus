@@ -14,6 +14,7 @@ import {
   CalendarCheck,
   CalendarDays,
   CalendarRange,
+  Grid2X2,
   Zap,
   Settings,
   LogOut,
@@ -77,6 +78,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
     { id: "inbox", label: "Входящие", icon: <Inbox className="h-4 w-4" />, badge: counts.inboxCount },
     { id: "week", label: "Эта неделя", icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
     { id: "calendar", label: "Календарь", icon: <CalendarRange className="h-4 w-4" /> },
+    { id: "matrix", label: "Матрица", icon: <Grid2X2 className="h-4 w-4" /> },
   ];
 
   const handleNavClick = (view: DashboardView) => {

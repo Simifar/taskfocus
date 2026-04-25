@@ -16,13 +16,6 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -33,6 +26,7 @@ import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -51,10 +45,13 @@ export function CreateTaskDialog({
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [important, setImportant] = useState(true);
+  const [urgent, setUrgent] = useState(false);
   const [energyLevel, setEnergyLevel] = useState(defaultEnergy ?? 3);
   const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate ?? new Date());
   const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate ?? new Date());
+  const quadrant = getEisenhowerQuadrant({ important, urgent });
+  const quadrantMeta = EISENHOWER_META[quadrant];
 
   const getEnergyIcon = (level: number) => {
     if (level <= 1) return <BatteryLow className="h-4 w-4" />;
@@ -80,7 +77,8 @@ export function CreateTaskDialog({
       await createTask.mutateAsync({
         title: title.trim(),
         description: description.trim() || null,
-        priority,
+        important,
+        urgent,
         energyLevel,
         dueDateStart: dueDateStart ? dueDateStart.toISOString() : null,
         dueDateEnd: dueDateEnd ? dueDateEnd.toISOString() : null,
@@ -88,7 +86,8 @@ export function CreateTaskDialog({
       toast.success("Задача создана! 🎉");
       setTitle("");
       setDescription("");
-      setPriority("medium");
+      setImportant(true);
+      setUrgent(false);
       setEnergyLevel(defaultEnergy ?? 3);
       onOpenChange(false);
     } catch (err) {
@@ -162,17 +161,37 @@ export function CreateTaskDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Приоритет</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as "low" | "medium" | "high")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">🟢 Низкий</SelectItem>
-                  <SelectItem value="medium">🟡 Средний</SelectItem>
-                  <SelectItem value="high">🔴 Высокий</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Матрица Эйзенхауэра</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setImportant((value) => !value)}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                    important
+                      ? "border-sky-500 bg-sky-50 text-sky-900 dark:bg-sky-950/30 dark:text-sky-100"
+                      : "text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  Важно
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUrgent((value) => !value)}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                    urgent
+                      ? "border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-950/30 dark:text-rose-100"
+                      : "text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  Срочно
+                </button>
+              </div>
+              <div className={cn("rounded-lg border px-3 py-2 text-sm", quadrantMeta.panel)}>
+                <div className="font-semibold">{quadrantMeta.action}</div>
+                <p className="text-xs text-muted-foreground">{quadrantMeta.description}</p>
+              </div>
             </div>
 
             <div className="space-y-3">

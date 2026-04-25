@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface TaskWithSubtasksProps {
   task: Task;
@@ -49,19 +50,6 @@ function getEnergyColor(level: number) {
   return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
 }
 
-function getPriorityColor(priority: string) {
-  switch (priority) {
-    case "high":
-      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-    case "low":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-    default:
-      return "";
-  }
-}
-
 export function TaskWithSubtasks({
   task,
   subtasks,
@@ -84,6 +72,7 @@ export function TaskWithSubtasks({
   const completedSubtasks = subtasks.filter(st => st.status === "completed").length;
   const totalSubtasks = subtasks.length;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
+  const quadrantMeta = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
   const handleAddSubtask = async () => {
     if (!newSubtaskTitle.trim()) return;
@@ -109,7 +98,8 @@ export function TaskWithSubtasks({
 
   return (
     <Card className={cn(
-      "transition-all border-l-4 border-l-brand shadow-sm hover:shadow-md",
+      "transition-all border-l-4 shadow-sm hover:shadow-md",
+      quadrantMeta.border,
       task.status === "completed" && "opacity-60 bg-muted/40",
       isDragging && "shadow-lg ring-2 ring-brand/50"
     )}>
@@ -177,12 +167,8 @@ export function TaskWithSubtasks({
                 {getEnergyIcon(task.energyLevel)}
                 <span className="text-xs font-semibold">{task.energyLevel}</span>
               </Badge>
-              <Badge variant="secondary" className={cn("text-xs font-semibold", getPriorityColor(task.priority))}>
-                {task.priority === "high"
-                  ? "⚡ Высокий"
-                  : task.priority === "medium"
-                  ? "→ Средний"
-                  : "✓ Низкий"}
+              <Badge variant="outline" className={cn("text-xs font-semibold", quadrantMeta.badge)}>
+                {quadrantMeta.action}
               </Badge>
             </div>
           </div>

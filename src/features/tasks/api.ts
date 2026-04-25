@@ -1,7 +1,7 @@
 import { apiFetch } from "@/shared/lib/fetcher";
-import type { Task, TasksListResponse, TaskStatus, Priority } from "@/shared/types";
+import type { Task, TasksListResponse, TaskStatus } from "@/shared/types";
 
-export type { TaskStatus, Priority };
+export type { TaskStatus };
 
 export interface TasksQuery {
   status?: TaskStatus;
@@ -12,7 +12,8 @@ export interface TasksQuery {
 export interface CreateTaskInput {
   title: string;
   description?: string | null;
-  priority?: Priority;
+  important?: boolean;
+  urgent?: boolean;
   energyLevel?: number;
   dueDateStart?: string | null;
   dueDateEnd?: string | null;
@@ -22,7 +23,8 @@ export interface CreateTaskInput {
 export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
-  priority?: Priority;
+  important?: boolean;
+  urgent?: boolean;
   energyLevel?: number;
   status?: TaskStatus;
   dueDateStart?: string | null;

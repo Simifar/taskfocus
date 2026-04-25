@@ -125,7 +125,7 @@ type ApiEnvelope<T> =
 | Поле | Смысл |
 |---|---|
 | `status` | `active`, `completed`, `archived` |
-| `priority` | `low`, `medium`, `high` |
+| `important`, `urgent` | признаки для квадранта матрицы Эйзенхауэра |
 | `energyLevel` | Сложность/энергозатратность задачи от `1` до `5` |
 | `dueDateStart` | Начало мягкого дедлайна |
 | `dueDateEnd` | Конец мягкого дедлайна |

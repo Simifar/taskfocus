@@ -27,6 +27,13 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import {
+  compareByEisenhower,
+  EISENHOWER_META,
+  EISENHOWER_ORDER,
+  getEisenhowerQuadrant,
+} from "@/features/tasks/lib/eisenhower";
+import type { EisenhowerQuadrant } from "@/shared/types";
 
 interface InboxViewProps {
   tasks: Task[];
@@ -70,7 +77,7 @@ export function InboxView({
   const [parentTaskForSubtask, setParentTaskForSubtask] = useState<Task | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
-  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [filterQuadrant, setFilterQuadrant] = useState<EisenhowerQuadrant | "all">("all");
   const [filterEnergy, setFilterEnergy] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created");
   const [viewMode, setViewMode] = useState<"compact" | "detailed">("detailed");
@@ -101,9 +108,9 @@ export function InboxView({
       });
     }
 
-    // Priority filter
-    if (filterPriority !== "all") {
-      filtered = filtered.filter((task) => task.priority === filterPriority);
+    // Eisenhower quadrant filter
+    if (filterQuadrant !== "all") {
+      filtered = filtered.filter((task) => getEisenhowerQuadrant(task) === filterQuadrant);
     }
 
     // Energy filter
@@ -115,10 +122,8 @@ export function InboxView({
     // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case "priority":
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
-                 (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+        case "eisenhower":
+          return compareByEisenhower(a, b);
         case "energy":
           return b.energyLevel - a.energyLevel;
         case "created":
@@ -128,7 +133,7 @@ export function InboxView({
     });
 
     return filtered;
-  }, [inboxTasks, searchQuery, filterPriority, filterEnergy, sortBy]);
+  }, [inboxTasks, searchQuery, filterQuadrant, filterEnergy, sortBy]);
 
   const processingProgress = useMemo(() => {
     const total = inboxTasks.length;
@@ -156,15 +161,6 @@ export function InboxView({
     }
   }, [selectedTasks.size, filteredTasks]);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "bg-red-100 text-red-800 border-red-200";
-      case "medium": return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "low": return "bg-green-100 text-green-800 border-green-200";
-      default: return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
   const getEnergyIcon = (level: number) => {
     if (level >= 4) return <Zap className="h-3 w-3 text-orange-500" />;
     if (level >= 3) return <Clock className="h-3 w-3 text-muted-foreground" />;
@@ -176,7 +172,8 @@ export function InboxView({
     try {
       await createTask.mutateAsync({
         title: quickAddTitle.trim(),
-        priority: "medium",
+        important: true,
+        urgent: false,
         energyLevel: 3,
       });
       toast.success("Задача добавлена!");
@@ -275,40 +272,25 @@ export function InboxView({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <div className="px-2 py-1.5 text-sm font-semibold">Приоритет</div>
+                <div className="px-2 py-1.5 text-sm font-semibold">Матрица</div>
                 <DropdownMenuCheckboxItem
-                  checked={filterPriority === "all"}
-                  onCheckedChange={() => setFilterPriority("all")}
+                  checked={filterQuadrant === "all"}
+                  onCheckedChange={() => setFilterQuadrant("all")}
                 >
-                  Все приоритеты
+                  Все квадранты
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filterPriority === "high"}
-                  onCheckedChange={() => setFilterPriority("high")}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full" />
-                    Высокий
-                  </div>
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filterPriority === "medium"}
-                  onCheckedChange={() => setFilterPriority("medium")}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                    Средний
-                  </div>
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filterPriority === "low"}
-                  onCheckedChange={() => setFilterPriority("low")}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    Низкий
-                  </div>
-                </DropdownMenuCheckboxItem>
+                {EISENHOWER_ORDER.map((quadrant) => (
+                  <DropdownMenuCheckboxItem
+                    key={quadrant}
+                    checked={filterQuadrant === quadrant}
+                    onCheckedChange={() => setFilterQuadrant(quadrant)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={cn("h-2 w-2 rounded-full", EISENHOWER_META[quadrant].dot)} />
+                      {EISENHOWER_META[quadrant].shortTitle}
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
                 <DropdownMenuSeparator />
                 <div className="px-2 py-1.5 text-sm font-semibold">Энергия</div>
                 <DropdownMenuCheckboxItem
@@ -352,10 +334,10 @@ export function InboxView({
                   По дате создания
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
-                  checked={sortBy === "priority"}
-                  onCheckedChange={() => setSortBy("priority")}
+                  checked={sortBy === "eisenhower"}
+                  onCheckedChange={() => setSortBy("eisenhower")}
                 >
-                  По приоритету
+                  По матрице
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={sortBy === "energy"}
@@ -436,7 +418,10 @@ export function InboxView({
 
         {filteredTasks.length > 0 ? (
           <div className="space-y-3">
-            {filteredTasks.map((task) => (
+            {filteredTasks.map((task) => {
+              const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
+
+              return (
               <Card 
                 key={task.id} 
                 className={cn(
@@ -471,14 +456,9 @@ export function InboxView({
                           >
                             {task.title}
                           </h3>
-                          {task.priority && (
-                            <Badge 
-                              variant="outline" 
-                              className={cn("text-xs", getPriorityColor(task.priority))}
-                            >
-                              {task.priority === "high" ? "В" : task.priority === "medium" ? "С" : "Н"}
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className={cn("text-xs", quadrant.badge)}>
+                            {quadrant.shortTitle}
+                          </Badge>
                           <div className="flex items-center gap-1">
                             {getEnergyIcon(task.energyLevel)}
                             <span className="text-xs text-muted-foreground">{task.energyLevel}</span>
@@ -564,7 +544,7 @@ export function InboxView({
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )})}
           </div>
         ) : (
           <Card className="border-dashed">

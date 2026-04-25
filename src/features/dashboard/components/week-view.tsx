@@ -20,6 +20,7 @@ import {
   isTaskScheduledForCurrentWeek,
   isTaskScheduledForDay,
 } from "@/features/dashboard/lib/task-date-filters";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface WeekViewProps {
   tasks: Task[];
@@ -34,18 +35,6 @@ interface WeekViewProps {
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
-}
-
-function getPriorityLabel(priority: Task["priority"]) {
-  if (priority === "high") return "Высокий";
-  if (priority === "medium") return "Средний";
-  return "Низкий";
-}
-
-function getPriorityTone(priority: Task["priority"]) {
-  if (priority === "high") return "bg-red-500";
-  if (priority === "medium") return "bg-amber-500";
-  return "bg-emerald-500";
 }
 
 export function WeekView({
@@ -170,7 +159,10 @@ export function WeekView({
 
                 {dayTasks.length > 0 ? (
                   <div className="space-y-2">
-                    {dayTasks.map((task) => (
+                    {dayTasks.map((task) => {
+                      const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
+
+                      return (
                       <div
                         key={task.id}
                         className="group rounded-2xl border border-border bg-background p-3 shadow-sm transition-colors hover:border-brand/40"
@@ -181,14 +173,14 @@ export function WeekView({
                           onClick={() => onEdit?.(task)}
                         >
                           <div className="flex items-start gap-2">
-                            <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", getPriorityTone(task.priority))} />
+                            <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", quadrant.dot)} />
                             <div className="min-w-0 flex-1">
                               <p className="line-clamp-2 text-sm font-semibold leading-snug">
                                 {task.title}
                               </p>
                               <div className="mt-2 flex flex-wrap gap-1.5">
                                 <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px]">
-                                  {getPriorityLabel(task.priority)}
+                                  {quadrant.shortTitle}
                                 </Badge>
                                 <Badge variant="outline" className="h-5 rounded-full px-2 text-[11px]">
                                   энергия {task.energyLevel}
@@ -237,7 +229,7 @@ export function WeekView({
                           </Button>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : (
                   <button

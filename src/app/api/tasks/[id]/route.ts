@@ -13,7 +13,8 @@ import type { TaskStatus } from "@/shared/types";
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).nullish(),
-  priority: z.enum(["low", "medium", "high"]).optional(),
+  important: z.boolean().optional(),
+  urgent: z.boolean().optional(),
   energyLevel: z.number().int().min(MIN_ENERGY_LEVEL).max(MAX_ENERGY_LEVEL).optional(),
   status: z.enum(["active", "completed", "archived"]).optional(),
   dueDateStart: z.string().datetime().nullish(),
@@ -97,7 +98,8 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
     const data: Record<string, unknown> = {};
     if (parsed.title !== undefined) data.title = parsed.title;
     if (parsed.description !== undefined) data.description = parsed.description;
-    if (parsed.priority !== undefined) data.priority = parsed.priority;
+    if (parsed.important !== undefined) data.important = parsed.important;
+    if (parsed.urgent !== undefined) data.urgent = parsed.urgent;
     if (parsed.energyLevel !== undefined) data.energyLevel = parsed.energyLevel;
     if (parsed.status !== undefined) {
       data.status = parsed.status;

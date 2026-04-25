@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { TaskWithSubtasks } from "./task-with-subtasks";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -149,26 +150,13 @@ function SortableTaskItem({
     return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-      case "low":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-      default:
-        return "";
-    }
-  };
+  const quadrantMeta = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
   return (
     <div ref={setNodeRef} style={style}>
       <Card className={cn(
         "transition-all hover:shadow-md border-l-4 border-l-border",
-        task.priority === "high" && "border-l-red-500",
-        task.priority === "medium" && "border-l-yellow-500",
-        task.priority === "low" && "border-l-green-500",
+        quadrantMeta.border,
         task.status === "completed" && "opacity-60 bg-muted/40",
         isSortableDragging && "shadow-lg ring-2 ring-brand/50"
       )}>
@@ -220,12 +208,8 @@ function SortableTaskItem({
                   {getEnergyIcon(task.energyLevel)}
                   <span className="text-xs font-semibold">{task.energyLevel}</span>
                 </Badge>
-                <Badge variant="secondary" className={cn("text-xs font-semibold", getPriorityColor(task.priority))}>
-                  {task.priority === "high"
-                    ? "⚡ Высокий"
-                    : task.priority === "medium"
-                    ? "→ Средний"
-                    : "✓ Низкий"}
+                <Badge variant="outline" className={cn("text-xs font-semibold", quadrantMeta.badge)}>
+                  {quadrantMeta.action}
                 </Badge>
                 {task.subtasks && task.subtasks.length > 0 && (
                   <Badge variant="secondary" className="bg-brand/15 text-brand text-xs font-semibold gap-1">

@@ -18,6 +18,7 @@ import { TodayView } from "./today-view";
 import { InboxView } from "./inbox-view";
 import { WeekView } from "./week-view";
 import { CalendarView } from "./calendar-view";
+import { EisenhowerMatrixView } from "./eisenhower-matrix-view";
 import { DayView } from "./day-view";
 import { ArchiveView } from "./archive-view";
 import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
@@ -235,6 +236,19 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+            />
+          )}
+
+          {currentView === "matrix" && (
+            <EisenhowerMatrixView
+              tasks={tasks}
+              onEdit={setEditingTask}
+              onArchive={handleArchiveTask}
+              onComplete={handleToggleCompleteTask}
+              onDelete={handleDeleteTask}
+              onAddTask={handleAddTask}
+              onAssignToToday={handleAssignToToday}
+              onAssignToWeek={handleAssignToWeek}
             />
           )}
 

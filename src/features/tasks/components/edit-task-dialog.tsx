@@ -25,6 +25,8 @@ import {
 } from "@/shared/ui/select";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/shared/lib/utils";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface EditTaskDialogProps {
   task: Task;
@@ -37,7 +39,8 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
-  const [priority, setPriority] = useState<"low" | "medium" | "high">(task.priority);
+  const [important, setImportant] = useState(task.important);
+  const [urgent, setUrgent] = useState(task.urgent);
   const [energyLevel, setEnergyLevel] = useState(task.energyLevel);
   const [dueDateStart, setDueDateStart] = useState(
     task.dueDateStart ? new Date(task.dueDateStart).toISOString().split("T")[0] : "",
@@ -45,6 +48,8 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
   const [dueDateEnd, setDueDateEnd] = useState(
     task.dueDateEnd ? new Date(task.dueDateEnd).toISOString().split("T")[0] : "",
   );
+  const quadrant = getEisenhowerQuadrant({ important, urgent });
+  const quadrantMeta = EISENHOWER_META[quadrant];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +64,8 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
         input: {
           title: title.trim(),
           description: description.trim() || null,
-          priority,
+          important,
+          urgent,
           energyLevel,
           dueDateStart: dueDateStart ? new Date(dueDateStart).toISOString() : null,
           dueDateEnd: dueDateEnd ? new Date(dueDateEnd).toISOString() : null,
@@ -107,19 +113,39 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Приоритет</Label>
-                <Select value={priority} onValueChange={(v) => setPriority(v as "low" | "medium" | "high")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Низкий</SelectItem>
-                    <SelectItem value="medium">Средний</SelectItem>
-                    <SelectItem value="high">Высокий</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Матрица Эйзенхауэра</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setImportant((value) => !value)}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                      important
+                        ? "border-sky-500 bg-sky-50 text-sky-900 dark:bg-sky-950/30 dark:text-sky-100"
+                        : "text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    Важно
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUrgent((value) => !value)}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                      urgent
+                        ? "border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-950/30 dark:text-rose-100"
+                        : "text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    Срочно
+                  </button>
+                </div>
+                <div className={cn("rounded-lg border px-3 py-2 text-sm", quadrantMeta.panel)}>
+                  <div className="font-semibold">{quadrantMeta.action}</div>
+                  <p className="text-xs text-muted-foreground">{quadrantMeta.description}</p>
+                </div>
               </div>
 
               <div className="space-y-2">
