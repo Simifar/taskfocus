@@ -67,7 +67,7 @@ function SortableTaskWithSubtasks({
   task: Task;
   subtasks: Task[];
   onToggleSubtask: (subtask: Task) => void;
-  onAddSubtask: (parentId: string, title: string) => void;
+  onAddSubtask: (parentId: string, title: string) => Promise<void> | void;
   onEditTask: (task: Task) => void;
   onEditSubtask: (subtask: Task) => void;
   onDeleteSubtask: (subtaskId: string) => void;
@@ -112,7 +112,7 @@ interface SortableTaskItemProps {
   onArchive: (taskId: string) => void;
   onComplete: (task: Task) => void;
   onDelete: (taskId: string) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onOpenSubtaskDialog?: (task: Task) => void;
   isDragging?: boolean;
 }
@@ -270,7 +270,7 @@ interface SortableTasksListProps {
   onReorder?: (tasks: Task[]) => void;
   // Подзадачи
   onToggleSubtask?: (subtask: Task) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onEditTask?: (task: Task) => void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
@@ -397,11 +397,7 @@ export function SortableTasksList({
           onOpenChange={setSubtaskDialogOpen}
           parentTaskId={parentTaskForSubtask!.id}
           parentTaskTitle={parentTaskForSubtask!.title}
-          onSubmit={(parentId, title) => {
-            if (onAddSubtask) {
-              onAddSubtask(parentId, title);
-            }
-          }}
+          onSubmit={(parentId, title) => onAddSubtask?.(parentId, title)}
         />
       )}
     </>

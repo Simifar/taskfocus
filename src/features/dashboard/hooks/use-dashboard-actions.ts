@@ -29,9 +29,7 @@ export function useDashboardActions() {
         id: task.id,
         completed: task.status !== "completed",
       });
-      toast.success(
-        task.status === "completed" ? "Задача снова активна" : "Задача выполнена! ✨",
-      );
+      toast.success(task.status === "completed" ? "Задача снова активна" : "Задача выполнена");
     } catch (err) {
       reportError(err, "Не удалось обновить задачу");
     }
@@ -76,7 +74,7 @@ export function useDashboardActions() {
       });
       toast.success("Задача назначена на сегодня");
     } catch (err) {
-      reportError(err, "Ошибка назначения задачи");
+      reportError(err, "Не удалось назначить задачу");
     }
   };
 
@@ -93,7 +91,7 @@ export function useDashboardActions() {
       });
       toast.success("Задача назначена на неделю");
     } catch (err) {
-      reportError(err, "Ошибка назначения задачи");
+      reportError(err, "Не удалось назначить задачу");
     }
   };
 
@@ -103,21 +101,14 @@ export function useDashboardActions() {
         id: subtask.id,
         completed: subtask.status !== "completed",
       });
-      toast.success(
-        subtask.status === "completed" ? "Подзадача снова активна" : "Подзадача выполнена! ✨",
-      );
+      toast.success(subtask.status === "completed" ? "Подзадача снова активна" : "Подзадача выполнена");
     } catch (err) {
       reportError(err, "Не удалось обновить подзадачу");
     }
   };
 
   const handleAddSubtask = async (parentId: string, title: string) => {
-    try {
-      await createSubtask.mutateAsync({ parentId, title });
-      toast.success("Подзадача добавлена");
-    } catch (err) {
-      reportError(err, "Не удалось добавить подзадачу");
-    }
+    await createSubtask.mutateAsync({ parentId, title });
   };
 
   const handleDeleteSubtask = async (subtaskId: string) => {
@@ -136,7 +127,7 @@ export function useDashboardActions() {
       );
       toast.success(`${taskIds.length} задач отправлено в архив`);
     } catch (err) {
-      reportError(err, "Ошибка архивации задач");
+      reportError(err, "Не удалось архивировать задачи");
     }
   };
 
@@ -145,7 +136,7 @@ export function useDashboardActions() {
       await Promise.all(taskIds.map((id) => deleteTask.mutateAsync(id)));
       toast.success(`${taskIds.length} задач удалено`);
     } catch (err) {
-      reportError(err, "Ошибка удаления задач");
+      reportError(err, "Не удалось удалить задачи");
     }
   };
 
@@ -165,7 +156,7 @@ export function useDashboardActions() {
       );
       toast.success(`${taskIds.length} задач назначено на сегодня`);
     } catch (err) {
-      reportError(err, "Ошибка назначения задач");
+      reportError(err, "Не удалось назначить задачи");
     }
   };
 
@@ -186,7 +177,7 @@ export function useDashboardActions() {
       );
       toast.success(`${taskIds.length} задач назначено на неделю`);
     } catch (err) {
-      reportError(err, "Ошибка назначения задач");
+      reportError(err, "Не удалось назначить задачи");
     }
   };
 

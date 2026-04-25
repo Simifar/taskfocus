@@ -23,7 +23,7 @@ interface TaskWithSubtasksProps {
   task: Task;
   subtasks: Task[];
   onToggleSubtask: (subtask: Task) => void;
-  onAddSubtask: (parentId: string, title: string) => void;
+  onAddSubtask: (parentId: string, title: string) => Promise<void> | void;
   onEditTask: (task: Task) => void;
   onEditSubtask: (subtask: Task) => void;
   onDeleteSubtask: (subtaskId: string) => void;
@@ -78,7 +78,7 @@ export function TaskWithSubtasks({
     if (!newSubtaskTitle.trim()) return;
 
     try {
-      onAddSubtask(task.id, newSubtaskTitle.trim());
+      await onAddSubtask(task.id, newSubtaskTitle.trim());
       setNewSubtaskTitle("");
       setIsAddingSubtask(false);
       toast.success("Подзадача добавлена!");

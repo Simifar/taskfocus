@@ -1,19 +1,20 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
-import { db } from "@/server/db";
-import type { TaskStatus } from "@/shared/types";
+
 import { err, handleUnknownError, ok, withAuth } from "@/server/api";
+import { db } from "@/server/db";
 import {
   countActiveTasksForToday,
+  DEFAULT_ENERGY_LEVEL,
   isScheduledForToday,
   MAX_ACTIVE_TASKS_PER_DAY,
-  MIN_ENERGY_LEVEL,
   MAX_ENERGY_LEVEL,
-  DEFAULT_ENERGY_LEVEL,
+  MIN_ENERGY_LEVEL,
 } from "@/server/task-scheduling";
+import type { TaskStatus } from "@/shared/types";
 
 const createTaskSchema = z.object({
-  title: z.string().min(1, "Название обязательно").max(200),
+  title: z.string().trim().min(1, "Название обязательно").max(200),
   description: z.string().max(2000).nullish(),
   important: z.boolean().default(false),
   urgent: z.boolean().default(false),
@@ -77,9 +78,21 @@ export const POST = withAuth(async (request, { user }) => {
     const parsed = createTaskSchema.parse(body);
     const dueDateStart = parsed.dueDateStart ? new Date(parsed.dueDateStart) : null;
     const dueDateEnd = parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null;
+    const parentTaskId = parsed.parentTaskId ?? null;
 
     if (dueDateStart && dueDateEnd && dueDateStart > dueDateEnd) {
       return err("VALIDATION_ERROR", "Дата окончания не может быть раньше даты начала", 400);
+    }
+
+    if (parentTaskId) {
+      const parent = await db.task.findFirst({
+        where: { id: parentTaskId, userId: user.id },
+        select: { id: true, parentTaskId: true, status: true },
+      });
+
+      if (!parent) return err("PARENT_NOT_FOUND", "Родительская задача не найдена", 404);
+      if (parent.parentTaskId) return err("VALIDATION_ERROR", "Подзадачи второго уровня не поддерживаются", 400);
+      if (parent.status === "archived") return err("VALIDATION_ERROR", "Нельзя добавить подзадачу в архивную задачу", 400);
     }
 
     if (
@@ -87,7 +100,7 @@ export const POST = withAuth(async (request, { user }) => {
         dueDateStart,
         dueDateEnd,
         status: "active",
-        parentTaskId: parsed.parentTaskId ?? null,
+        parentTaskId,
       })
     ) {
       const todayActiveCount = await countActiveTasksForToday(user.id);
@@ -101,7 +114,7 @@ export const POST = withAuth(async (request, { user }) => {
     }
 
     const maxPosition = await db.task.aggregate({
-      where: { userId: user.id, parentTaskId: parsed.parentTaskId ?? null },
+      where: { userId: user.id, parentTaskId },
       _max: { position: true },
     });
 
@@ -109,13 +122,13 @@ export const POST = withAuth(async (request, { user }) => {
       data: {
         userId: user.id,
         title: parsed.title,
-        description: parsed.description,
+        description: parsed.description?.trim() || null,
         important: parsed.important,
         urgent: parsed.urgent,
         energyLevel: parsed.energyLevel,
         dueDateStart,
         dueDateEnd,
-        parentTaskId: parsed.parentTaskId ?? null,
+        parentTaskId,
         position: (maxPosition._max.position ?? -1) + 1,
       },
       include: {

@@ -22,12 +22,12 @@ import { CreateSubtaskDialog } from "@/features/tasks/components/create-subtask-
 import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { cn } from "@/shared/lib/utils";
-import { 
-  Plus, Inbox, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2, 
-  Filter, Star, Clock, Zap, ChevronDown, CheckCircle2, Circle, AlertCircle
+import {
+  Plus, Inbox, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2,
+  Filter, Clock, Zap, ChevronDown, CheckCircle2, Circle
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   compareByEisenhower,
@@ -48,7 +48,7 @@ interface InboxViewProps {
   onAssignToWeek?: (taskId: string) => void;
   onAddTask?: () => void;
   onToggleSubtask?: (subtask: Task) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
   onBatchArchive?: (taskIds: string[]) => void;
@@ -80,6 +80,7 @@ export function InboxView({
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
   const [parentTaskForSubtask, setParentTaskForSubtask] = useState<Task | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");
+  const [quickDue, setQuickDue] = useState<"none" | "today" | "week">("none");
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [filterQuadrant, setFilterQuadrant] = useState<EisenhowerQuadrant | "all">("all");
   const [filterEnergy, setFilterEnergy] = useState<string>("all");
@@ -175,15 +176,22 @@ export function InboxView({
 
   const handleQuickAdd = async () => {
     if (!quickAddTitle.trim()) return;
+    const now = new Date();
+    const dueDateStart = quickDue === "none" ? null : now.toISOString();
+    const dueDateEnd = quickDue === "week" ? addDays(now, 7).toISOString() : dueDateStart;
+
     try {
       await createTask.mutateAsync({
         title: quickAddTitle.trim(),
         important: true,
         urgent: false,
         energyLevel: 3,
+        dueDateStart,
+        dueDateEnd,
       });
       toast.success("Задача добавлена!");
       setQuickAddTitle("");
+      setQuickDue("none");
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Ошибка соединения";
       toast.error(message);
@@ -252,6 +260,24 @@ export function InboxView({
                   <Plus className="h-4 w-4" />
                 )}
               </Button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                ["none", "Без даты"],
+                ["today", "Сегодня"],
+                ["week", "Неделя"],
+              ].map(([value, label]) => (
+                <Button
+                  key={value}
+                  type="button"
+                  variant={quickDue === value ? "default" : "outline"}
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setQuickDue(value as typeof quickDue)}
+                >
+                  {label}
+                </Button>
+              ))}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Нажмите Enter или кнопку для быстрого добавления • Детали можно отредактировать позже
@@ -337,7 +363,7 @@ export function InboxView({
                   checked={sortBy === "position"}
                   onCheckedChange={() => setSortBy("position")}
                 >
-                  Р СѓС‡РЅРѕР№ РїРѕСЂСЏРґРѕРє
+                  Ручной порядок
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={sortBy === "created"}
@@ -596,9 +622,7 @@ export function InboxView({
           onOpenChange={setSubtaskDialogOpen}
           parentTaskId={parentTaskForSubtask.id}
           parentTaskTitle={parentTaskForSubtask.title}
-          onSubmit={(parentId, title) => {
-            if (onAddSubtask) onAddSubtask(parentId, title);
-          }}
+          onSubmit={(parentId, title) => onAddSubtask?.(parentId, title)}
         />
       )}
     </>

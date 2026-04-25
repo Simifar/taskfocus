@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/shared/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,19 +13,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { cn } from "@/shared/lib/utils";
 
 interface CreateSubtaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   parentTaskId: string;
   parentTaskTitle: string;
-  onSubmit: (parentId: string, title: string) => void;
+  onSubmit: (parentId: string, title: string) => Promise<void> | void;
 }
 
 export function CreateSubtaskDialog({
@@ -29,16 +29,13 @@ export function CreateSubtaskDialog({
   onOpenChange,
   parentTaskId,
   parentTaskTitle,
-  onSubmit
+  onSubmit,
 }: CreateSubtaskDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState("");
 
-  // Reset form when dialog opens
   useEffect(() => {
-    if (open) {
-      setTitle("");
-    }
+    if (open) setTitle("");
   }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,10 +47,11 @@ export function CreateSubtaskDialog({
 
     setIsLoading(true);
     try {
-      onSubmit(parentTaskId, title.trim());
+      await onSubmit(parentTaskId, title.trim());
+      toast.success("Подзадача добавлена");
       onOpenChange(false);
-    } catch (error) {
-      toast.error("Ошибка при создании подзадачи");
+    } catch {
+      toast.error("Не удалось создать подзадачу");
     } finally {
       setIsLoading(false);
     }
@@ -65,19 +63,20 @@ export function CreateSubtaskDialog({
         <DialogHeader>
           <DialogTitle>Добавить подзадачу</DialogTitle>
           <DialogDescription>
-            Создание подзадачи для: <strong>{parentTaskTitle}</strong>
+            Для задачи: <strong>{parentTaskTitle}</strong>
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Название подзадачи</Label>
+              <Label htmlFor="subtask-title">Название подзадачи</Label>
               <Input
-                id="title"
+                id="subtask-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Что нужно сделать?"
+                maxLength={200}
                 autoFocus
               />
             </div>
@@ -94,7 +93,7 @@ export function CreateSubtaskDialog({
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Создать подзадачу
+              Создать
             </Button>
           </DialogFooter>
         </form>
