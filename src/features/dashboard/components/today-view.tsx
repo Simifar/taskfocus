@@ -1,12 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { Task, StatsResponse } from "@/shared/types";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Progress } from "@/shared/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
 import { EnergyStatus } from "./energy-status";
+import { FocusModeDialog } from "./focus-mode-dialog";
 import {
   CheckCircle2,
   Calendar,
@@ -15,6 +24,8 @@ import {
   TrendingUp,
   Plus,
   Sparkles,
+  Timer,
+  Play,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -79,6 +90,10 @@ export function TodayView({
   onDeleteSubtask,
   isLoading = false,
 }: TodayViewProps) {
+  const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+  const [focusModeOpen, setFocusModeOpen] = useState(false);
+  const [focusSessionKey, setFocusSessionKey] = useState(0);
+
   // Filter tasks for today
   const todayTasks = tasks.filter((task) => {
     if (task.status !== "active" && task.status !== "completed") return false;
@@ -117,6 +132,12 @@ export function TodayView({
     ? (completedTasks.length / todayTasks.length) * 100 
     : 0;
   const hasTasksButFiltered = currentEnergy !== null && activeTasks.length === 0 && filteredTasks.length > 0;
+  const selectedFocusTask = activeTasks.find((task) => task.id === focusTaskId) ?? activeTasks[0] ?? null;
+
+  const handleOpenFocusMode = () => {
+    setFocusSessionKey((key) => key + 1);
+    setFocusModeOpen(true);
+  };
 
   const handleReorder = (reorderedActiveTasks: Task[]) => {
     const reorderedMap = new Map(reorderedActiveTasks.map((t, i) => [t.id, i]));
@@ -187,6 +208,17 @@ export function TodayView({
                   ({completedTasks.length})
                 </Button>
               )}
+              {activeTasks.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenFocusMode}
+                  className="h-8 px-2 md:px-3 text-xs font-medium gap-1 border-brand/30 text-brand hover:bg-brand/10"
+                >
+                  <Timer className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <span className="hidden sm:inline">Фокус</span>
+                </Button>
+              )}
               <Badge className="h-8 px-2 md:px-3 text-xs md:text-sm font-semibold bg-muted text-muted-foreground border border-border">
                 {activeTasks.length}/{maxActive}
               </Badge>
@@ -207,6 +239,35 @@ export function TodayView({
                     style={{ width: `${(activeTasks.length / maxActive) * 100}%` }}
                   />
                 </div>
+                {activeTasks.length > 0 && (
+                  <div className="grid gap-3 rounded-lg border border-brand/20 bg-brand/5 p-3 md:grid-cols-[1fr_auto] md:items-end">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-brand">
+                        <Timer className="h-4 w-4" />
+                        Фокус-режим
+                      </div>
+                      <Select value={selectedFocusTask?.id} onValueChange={setFocusTaskId}>
+                        <SelectTrigger className="w-full bg-background">
+                          <SelectValue placeholder="Выберите задачу для фокуса" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeTasks.map((task) => (
+                            <SelectItem key={task.id} value={task.id}>
+                              {task.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      onClick={handleOpenFocusMode}
+                      className="h-10 gap-2 bg-brand text-brand-foreground hover:bg-brand/90"
+                    >
+                      <Play className="h-4 w-4" />
+                      Начать
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="pt-6">
@@ -332,6 +393,13 @@ export function TodayView({
           </Card>
         </div>
       </div>
+      <FocusModeDialog
+        key={focusSessionKey}
+        open={focusModeOpen}
+        task={selectedFocusTask}
+        onOpenChange={setFocusModeOpen}
+        onComplete={onComplete}
+      />
     </div>
   );
 }
