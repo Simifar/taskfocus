@@ -37,6 +37,7 @@ export function DashboardLayout() {
   const setShowCompleted = useDashboardStore((s) => s.setShowCompleted);
   const setView = useDashboardStore((s) => s.setView);
   const selectedDate = useSelectedDate();
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
   const tasksQueryInput = useMemo<TasksQuery>(() => {
     const selectedDateIso = selectedDate?.toISOString();
@@ -44,12 +45,13 @@ export function DashboardLayout() {
     if (currentView === "today") return { view: "today" };
     if (currentView === "inbox") return { view: "inbox" };
     if (currentView === "week") return { view: "week" };
+    if (currentView === "calendar") return { view: "calendar", date: calendarMonth.toISOString() };
     if (currentView === "day") return { view: "day", date: selectedDateIso };
     if (currentView === "archive") return { view: "archive" };
     if (currentView === "matrix") return { status: "active" };
 
     return {};
-  }, [currentView, selectedDate]);
+  }, [calendarMonth, currentView, selectedDate]);
 
   const tasksQuery = useTasks(tasksQueryInput);
   const statsQuery = useStats();
@@ -242,6 +244,8 @@ export function DashboardLayout() {
             <CalendarView
               tasks={tasks}
               stats={stats}
+              currentMonth={calendarMonth}
+              onMonthChange={setCalendarMonth}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}

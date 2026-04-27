@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Task, StatsResponse } from "@/shared/types";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
@@ -35,12 +35,14 @@ import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eis
 
 interface CalendarViewProps {
   tasks: Task[];
+  currentMonth: Date;
   stats: StatsResponse | null;
   onEdit?: (task: Task) => void;
   onComplete?: (task: Task) => void;
   onArchive?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
+  onMonthChange?: (date: Date) => void;
   onSelectDay?: (date: Date) => void;
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
@@ -53,12 +55,13 @@ const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 export function CalendarView({
   tasks,
+  currentMonth,
   onEdit,
   onCreateTask,
+  onMonthChange,
   onSelectDay,
   onReorder,
 }: CalendarViewProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
   const today = new Date();
 
   const { start: monthStart, end: monthEnd } = getMonthRange(currentMonth);
@@ -126,14 +129,14 @@ export function CalendarView({
               variant="outline"
               size="icon"
               className="bg-background/70"
-              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+              onClick={() => onMonthChange?.(subMonths(currentMonth, 1))}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               className="bg-background/70"
-              onClick={() => setCurrentMonth(new Date())}
+              onClick={() => onMonthChange?.(new Date())}
             >
               Сегодня
             </Button>
@@ -141,7 +144,7 @@ export function CalendarView({
               variant="outline"
               size="icon"
               className="bg-background/70"
-              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+              onClick={() => onMonthChange?.(addMonths(currentMonth, 1))}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
