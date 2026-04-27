@@ -79,7 +79,11 @@ export function useLogout() {
 export function useDeleteAccount() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: authApi.deleteAccount,
+    mutationFn: async () => {
+      await authApi.deleteAccount();
+      await signOut({ redirect: false, callbackUrl: "/" });
+      return null;
+    },
     onSuccess: () => {
       qc.clear();
     },
@@ -95,4 +99,3 @@ export function useUpdateProfile() {
     },
   });
 }
-

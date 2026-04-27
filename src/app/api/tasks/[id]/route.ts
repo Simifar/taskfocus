@@ -77,24 +77,6 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
       return err("VALIDATION_ERROR", "Дата окончания не может быть раньше даты начала", 400);
     }
 
-    if (
-      isScheduledForToday({
-        dueDateStart: nextDueDateStart,
-        dueDateEnd: nextDueDateEnd,
-        status: nextStatus,
-        parentTaskId: existing.parentTaskId,
-      })
-    ) {
-      const todayActiveCount = await countActiveTasksForToday(user.id, existing.id);
-      if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
-        return err(
-          "TODAY_LIMIT_REACHED",
-          `На сегодня уже запланировано ${MAX_ACTIVE_TASKS_PER_DAY} активных задач`,
-          400,
-        );
-      }
-    }
-
     const data: Record<string, unknown> = {};
     if (parsed.title !== undefined) data.title = parsed.title;
     if (parsed.description !== undefined) data.description = parsed.description;
@@ -108,14 +90,40 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
     if (parsed.dueDateStart !== undefined) data.dueDateStart = nextDueDateStart;
     if (parsed.dueDateEnd !== undefined) data.dueDateEnd = nextDueDateEnd;
 
-    const task = await db.task.update({
-      where: { id },
-      data,
-      include: { subtasks: true },
-    });
+    const task = await db.$transaction(
+      async (tx) => {
+        if (
+          isScheduledForToday({
+            dueDateStart: nextDueDateStart,
+            dueDateEnd: nextDueDateEnd,
+            status: nextStatus,
+            parentTaskId: existing.parentTaskId,
+          })
+        ) {
+          const todayActiveCount = await countActiveTasksForToday(user.id, existing.id, tx);
+          if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
+            throw new Error("TODAY_LIMIT_REACHED");
+          }
+        }
+
+        return tx.task.update({
+          where: { id },
+          data,
+          include: { subtasks: true },
+        });
+      },
+      { isolationLevel: "Serializable" },
+    );
 
     return ok(task);
   } catch (error) {
+    if (error instanceof Error && error.message === "TODAY_LIMIT_REACHED") {
+      return err(
+        "TODAY_LIMIT_REACHED",
+        `На сегодня уже запланировано ${MAX_ACTIVE_TASKS_PER_DAY} активных задач`,
+        400,
+      );
+    }
     return handleUnknownError("update task", error);
   }
 });

@@ -95,49 +95,57 @@ export const POST = withAuth(async (request, { user }) => {
       if (parent.status === "archived") return err("VALIDATION_ERROR", "Нельзя добавить подзадачу в архивную задачу", 400);
     }
 
-    if (
-      isScheduledForToday({
-        dueDateStart,
-        dueDateEnd,
-        status: "active",
-        parentTaskId,
-      })
-    ) {
-      const todayActiveCount = await countActiveTasksForToday(user.id);
-      if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
-        return err(
-          "TODAY_LIMIT_REACHED",
-          `На сегодня уже запланировано ${MAX_ACTIVE_TASKS_PER_DAY} активных задач`,
-          400,
-        );
-      }
-    }
+    const task = await db.$transaction(
+      async (tx) => {
+        if (
+          isScheduledForToday({
+            dueDateStart,
+            dueDateEnd,
+            status: "active",
+            parentTaskId,
+          })
+        ) {
+          const todayActiveCount = await countActiveTasksForToday(user.id, undefined, tx);
+          if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
+            throw new Error("TODAY_LIMIT_REACHED");
+          }
+        }
 
-    const maxPosition = await db.task.aggregate({
-      where: { userId: user.id, parentTaskId },
-      _max: { position: true },
-    });
+        const maxPosition = await tx.task.aggregate({
+          where: { userId: user.id, parentTaskId },
+          _max: { position: true },
+        });
 
-    const task = await db.task.create({
-      data: {
-        userId: user.id,
-        title: parsed.title,
-        description: parsed.description?.trim() || null,
-        important: parsed.important,
-        urgent: parsed.urgent,
-        energyLevel: parsed.energyLevel,
-        dueDateStart,
-        dueDateEnd,
-        parentTaskId,
-        position: (maxPosition._max.position ?? -1) + 1,
+        return tx.task.create({
+          data: {
+            userId: user.id,
+            title: parsed.title,
+            description: parsed.description?.trim() || null,
+            important: parsed.important,
+            urgent: parsed.urgent,
+            energyLevel: parsed.energyLevel,
+            dueDateStart,
+            dueDateEnd,
+            parentTaskId,
+            position: (maxPosition._max.position ?? -1) + 1,
+          },
+          include: {
+            subtasks: true,
+          },
+        });
       },
-      include: {
-        subtasks: true,
-      },
-    });
+      { isolationLevel: "Serializable" },
+    );
 
     return ok(task, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "TODAY_LIMIT_REACHED") {
+      return err(
+        "TODAY_LIMIT_REACHED",
+        `На сегодня уже запланировано ${MAX_ACTIVE_TASKS_PER_DAY} активных задач`,
+        400,
+      );
+    }
     return handleUnknownError("create task", error);
   }
 });

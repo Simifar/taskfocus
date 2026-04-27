@@ -44,7 +44,13 @@ export function isScheduledForToday(input: TaskScheduleInput): boolean {
   return start.getTime() === today.getTime();
 }
 
-export async function countActiveTasksForToday(userId: string, excludeTaskId?: string) {
+type TaskReader = Pick<typeof db, "task">;
+
+export async function countActiveTasksForToday(
+  userId: string,
+  excludeTaskId?: string,
+  client: TaskReader = db,
+) {
   const { start, end } = getTodayBounds();
 
   const where: Prisma.TaskWhereInput = {
@@ -68,5 +74,5 @@ export async function countActiveTasksForToday(userId: string, excludeTaskId?: s
     where.id = { not: excludeTaskId };
   }
 
-  return db.task.count({ where });
+  return client.task.count({ where });
 }
