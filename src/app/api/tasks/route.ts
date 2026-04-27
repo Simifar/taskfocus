@@ -13,6 +13,11 @@ import {
 } from "@/server/task-scheduling";
 import type { TaskStatus } from "@/shared/types";
 
+type TasksView = "today" | "inbox" | "week" | "day" | "calendar" | "archive";
+
+const VALID_STATUSES: TaskStatus[] = ["active", "completed", "archived"];
+const VALID_VIEWS: TasksView[] = ["today", "inbox", "week", "day", "calendar", "archive"];
+
 const createTaskSchema = z.object({
   title: z.string().trim().min(1, "Название обязательно").max(200),
   description: z.string().max(2000).nullish(),
@@ -24,18 +29,125 @@ const createTaskSchema = z.object({
   parentTaskId: z.string().nullish(),
 });
 
+function startOfDay(date: Date) {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function endOfDay(date: Date) {
+  const next = new Date(date);
+  next.setHours(23, 59, 59, 999);
+  return next;
+}
+
+function startOfWeek(date: Date) {
+  const next = startOfDay(date);
+  const day = next.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  next.setDate(next.getDate() + diff);
+  return next;
+}
+
+function endOfWeek(date: Date) {
+  const next = startOfWeek(date);
+  next.setDate(next.getDate() + 6);
+  return endOfDay(next);
+}
+
+function startOfMonth(date: Date) {
+  return startOfDay(new Date(date.getFullYear(), date.getMonth(), 1));
+}
+
+function endOfMonth(date: Date) {
+  return endOfDay(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+}
+
+function parseDateParam(value: string | null) {
+  if (!value) return new Date();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function addAnd(where: Prisma.TaskWhereInput, condition: Prisma.TaskWhereInput) {
+  const current = where.AND;
+  const items = Array.isArray(current) ? current : current ? [current] : [];
+  where.AND = [...items, condition];
+}
+
+function scheduledBetween(start: Date, end: Date): Prisma.TaskWhereInput {
+  return {
+    AND: [
+      {
+        OR: [
+          { dueDateStart: { lte: end } },
+          { dueDateStart: null, dueDateEnd: { lte: end } },
+        ],
+      },
+      {
+        OR: [
+          { dueDateEnd: { gte: start } },
+          { dueDateEnd: null, dueDateStart: { gte: start } },
+        ],
+      },
+    ],
+  };
+}
+
+function applyViewFilter(where: Prisma.TaskWhereInput, view: TasksView | null, date: Date) {
+  if (!view) return;
+
+  if (view === "archive") {
+    where.status = "archived";
+    return;
+  }
+
+  if (view === "inbox") {
+    where.status = "active";
+    addAnd(where, {
+      OR: [
+        { dueDateStart: null },
+        { dueDateStart: { gt: endOfDay(date) } },
+      ],
+    });
+    return;
+  }
+
+  where.status = { in: ["active", "completed"] };
+
+  if (view === "today" || view === "day") {
+    addAnd(where, scheduledBetween(startOfDay(date), endOfDay(date)));
+    return;
+  }
+
+  if (view === "week") {
+    addAnd(where, scheduledBetween(startOfWeek(date), endOfWeek(date)));
+    return;
+  }
+
+  if (view === "calendar") {
+    addAnd(where, scheduledBetween(startOfMonth(date), endOfMonth(date)));
+  }
+}
+
 export const GET = withAuth(async (request, { user }) => {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const energy = searchParams.get("energy");
   const search = searchParams.get("search");
+  const requestedView = searchParams.get("view");
+  const view = VALID_VIEWS.includes(requestedView as TasksView)
+    ? (requestedView as TasksView)
+    : null;
+  const date = parseDateParam(searchParams.get("date"));
 
   const where: Prisma.TaskWhereInput = {
     userId: user.id,
     parentTaskId: null,
   };
 
-  const VALID_STATUSES: TaskStatus[] = ["active", "completed", "archived"];
+  applyViewFilter(where, view, date);
+
   if (status && VALID_STATUSES.includes(status as TaskStatus)) {
     where.status = status as TaskStatus;
   }
@@ -46,10 +158,12 @@ export const GET = withAuth(async (request, { user }) => {
   }
 
   if (search) {
-    where.OR = [
-      { title: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-    ];
+    addAnd(where, {
+      OR: [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ],
+    });
   }
 
   const [tasks, activeCount] = await Promise.all([

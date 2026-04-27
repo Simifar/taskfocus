@@ -3,10 +3,14 @@ import type { Task, TasksListResponse, TaskStatus } from "@/shared/types";
 
 export type { TaskStatus };
 
+export type TasksView = "today" | "inbox" | "week" | "day" | "calendar" | "archive";
+
 export interface TasksQuery {
   status?: TaskStatus;
   energy?: number | null;
   search?: string;
+  view?: TasksView;
+  date?: string;
 }
 
 export interface CreateTaskInput {
@@ -48,6 +52,8 @@ export const tasksApi = {
         status: q.status,
         energy: q.energy ?? undefined,
         search: q.search,
+        view: q.view,
+        date: q.date,
       },
     }),
   get: (id: string) => apiFetch<Task>(`/api/tasks/${id}`),
