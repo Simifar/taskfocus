@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Menu, Brain } from "lucide-react";
@@ -10,6 +10,7 @@ import { Button } from "@/shared/ui/button";
 import { useCurrentUser, useLogout } from "@/features/auth/hooks";
 import { useStats } from "@/features/stats/hooks";
 import { useTasks } from "@/features/tasks/hooks";
+import type { TasksQuery } from "@/features/tasks/api";
 import { useDashboardStore, useSelectedDate } from "@/features/dashboard/store";
 import { useDashboardActions } from "@/features/dashboard/hooks/use-dashboard-actions";
 
@@ -37,7 +38,20 @@ export function DashboardLayout() {
   const setView = useDashboardStore((s) => s.setView);
   const selectedDate = useSelectedDate();
 
-  const tasksQuery = useTasks({});
+  const tasksQueryInput = useMemo<TasksQuery>(() => {
+    const selectedDateIso = selectedDate?.toISOString();
+
+    if (currentView === "today") return { view: "today" };
+    if (currentView === "inbox") return { view: "inbox" };
+    if (currentView === "week") return { view: "week" };
+    if (currentView === "day") return { view: "day", date: selectedDateIso };
+    if (currentView === "archive") return { view: "archive" };
+    if (currentView === "matrix") return { status: "active" };
+
+    return {};
+  }, [currentView, selectedDate]);
+
+  const tasksQuery = useTasks(tasksQueryInput);
   const statsQuery = useStats();
   const {
     handleAddSubtask,
@@ -277,6 +291,8 @@ export function DashboardLayout() {
 
           {currentView === "archive" && (
             <ArchiveView
+              tasks={tasks}
+              isLoading={tasksQuery.isLoading}
               stats={stats}
               onRestore={handleRestoreTask}
               onDelete={handleDeleteTask}

@@ -7,23 +7,21 @@ import type { Task, StatsResponse } from "@/shared/types";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent } from "@/shared/ui/card";
-import { useTasks } from "@/features/tasks/hooks";
 import { cn } from "@/shared/lib/utils";
 import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface ArchiveViewProps {
+  tasks: Task[];
+  isLoading?: boolean;
   stats: StatsResponse | null;
   onRestore: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   onReorder?: (tasks: Task[]) => void;
 }
 
-export function ArchiveView({ stats, onRestore, onDelete, onReorder }: ArchiveViewProps) {
-  const { data, isLoading } = useTasks({ status: "archived" });
-  const archivedTasks = data?.items ?? [];
-
+export function ArchiveView({ tasks: archivedTasks, isLoading = false, stats, onRestore, onDelete, onReorder }: ArchiveViewProps) {
   const rootTasks = archivedTasks.filter((t) => !t.parentTaskId);
 
   return (

@@ -46,6 +46,9 @@ export interface StatsResponse {
   activeTasks: number;
   completedTasks: number;
   archivedTasks: number;
+  inboxTasks: number;
+  todayTasks: number;
+  weekTasks: number;
   completedThisWeek: number;
   completedToday: number;
   totalTasks: number;

@@ -1,12 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
 import type { Task, User, StatsResponse } from "@/shared/types";
 import { useDashboardStore, type DashboardView } from "@/features/dashboard/store";
-import {
-  isTaskScheduledForCurrentWeek,
-  isTaskScheduledForDay,
-} from "@/features/dashboard/lib/task-date-filters";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import {
@@ -40,33 +35,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
   const currentView = useDashboardStore((s) => s.currentView);
   const setView = useDashboardStore((s) => s.setView);
 
-  const counts = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let inboxCount = 0;
-    let todayCount = 0;
-    let weekCount = 0;
-
-    for (const t of tasks) {
-      if (t.status !== "active") continue;
-
-      if (!t.dueDateStart && !t.dueDateEnd) {
-        inboxCount += 1;
-        continue;
-      }
-
-      if (isTaskScheduledForDay(t, today)) {
-        todayCount += 1;
-      }
-
-      if (isTaskScheduledForCurrentWeek(t)) {
-        weekCount += 1;
-      }
-    }
-
-    return { inboxCount, todayCount, weekCount };
-  }, [tasks]);
+  void tasks;
 
   const navigationItems: Array<{
     id: DashboardView;
@@ -74,9 +43,9 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
     icon: React.ReactNode;
     badge?: number;
   }> = [
-    { id: "today", label: "Сегодня", icon: <CalendarCheck className="h-4 w-4" />, badge: counts.todayCount },
-    { id: "inbox", label: "Входящие", icon: <Inbox className="h-4 w-4" />, badge: counts.inboxCount },
-    { id: "week", label: "Эта неделя", icon: <CalendarDays className="h-4 w-4" />, badge: counts.weekCount },
+    { id: "today", label: "Сегодня", icon: <CalendarCheck className="h-4 w-4" />, badge: stats?.todayTasks },
+    { id: "inbox", label: "Входящие", icon: <Inbox className="h-4 w-4" />, badge: stats?.inboxTasks },
+    { id: "week", label: "Эта неделя", icon: <CalendarDays className="h-4 w-4" />, badge: stats?.weekTasks },
     { id: "calendar", label: "Календарь", icon: <CalendarRange className="h-4 w-4" /> },
     { id: "matrix", label: "Матрица", icon: <Grid2X2 className="h-4 w-4" /> },
   ];

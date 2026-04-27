@@ -7,8 +7,9 @@ import { Badge } from "@/shared/ui/badge";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { ChevronLeft, Calendar, Loader2 } from "lucide-react";
-import { format, parseISO, isSameDay } from "date-fns";
+import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { isTaskScheduledForDay } from "@/features/dashboard/lib/task-date-filters";
 
 interface DayViewProps {
   tasks: Task[];
@@ -46,9 +47,7 @@ export function DayView({
 }: DayViewProps) {
   // Filter tasks for selected date
   const dayTasks = tasks.filter((task) => {
-    if (!task.dueDateStart) return false;
-    const taskDate = parseISO(task.dueDateStart);
-    return isSameDay(taskDate, selectedDate) && task.status !== "archived";
+    return task.status !== "archived" && isTaskScheduledForDay(task, selectedDate);
   });
 
   // Separate active and completed
