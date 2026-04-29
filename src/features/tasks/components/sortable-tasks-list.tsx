@@ -41,7 +41,7 @@ import { cn } from "@/shared/lib/utils";
 import { TaskWithSubtasks } from "./task-with-subtasks";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
 
-// Wrapper component to make TaskWithSubtasks draggable
+// Обёртка для TaskWithSubtasks с поддержкой drag & drop
 function SortableTaskWithSubtasks({
   task,
   subtasks,
@@ -366,7 +366,6 @@ export function SortableTasksList({
               </Card>
             ) : (
               tasks.map((task) => {
-                // Если у задачи есть подзадачи, используем SortableTaskWithSubtasks
                 if (task.subtasks && task.subtasks.length > 0) {
                   return (
                     <SortableTaskWithSubtasks
@@ -386,7 +385,6 @@ export function SortableTasksList({
                   );
                 }
 
-                // Иначе используем обычный SortableTaskItem
                 return (
                   <SortableTaskItem
                     key={task.id}

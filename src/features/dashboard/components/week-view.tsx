@@ -40,14 +40,11 @@ export function WeekView({
   onEditSubtask,
   onDeleteSubtask,
 }: WeekViewProps) {
-  // Получаем начало недели (понедельник)
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
 
-  // Получаем дни недели
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  // Фильтруем активные задачи на эту неделю
   const weekTasks = tasks.filter((task) => {
     if (task.status !== "active") return false;
     if (!task.dueDateStart) return false;
@@ -59,7 +56,6 @@ export function WeekView({
     });
   });
 
-  // Группируем задачи по дням
   const tasksByDay = weekDays.map((day) => ({
     date: day,
     tasks: weekTasks.filter((task) => {

@@ -10,10 +10,6 @@ const createCategorySchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "Цвет должен быть в формате #rrggbb")
     .optional(),
   icon: z.string().max(50).optional(),
-  // Temporarily remove new fields until migration
-  // description: z.string().max(200).optional(),
-  // parentId: z.string().cuid().optional(),
-  // position: z.number().int().min(0).optional(),
 });
 
 export const GET = withAuth(async (request, { user }) => {
@@ -25,7 +21,6 @@ export const GET = withAuth(async (request, { user }) => {
     orderBy: { name: "asc" },
   });
   
-  // Add computed stats for each category
   const categoriesWithStats = await Promise.all(
     categories.map(async (category) => {
       const [totalCount, activeCount, completedCount] = await Promise.all([
@@ -42,7 +37,6 @@ export const GET = withAuth(async (request, { user }) => {
       
       return {
         ...category,
-        // Add new fields with default values
         description: null,
         isFavorite: false,
         isArchived: false,
@@ -72,7 +66,6 @@ export const POST = withAuth(async (request, { user }) => {
       },
     });
     
-    // Add new fields with default values
     const result = {
       ...category,
       description: null,

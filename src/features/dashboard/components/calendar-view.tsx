@@ -52,13 +52,11 @@ export function CalendarView({
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
-  // Получаем все дни за месяц + доп дни из предыдущего месяца
   const daysInCalendar = eachDayOfInterval({
     start: monthStart,
     end: monthEnd,
   });
 
-  // Получаем нужное количество дней из предыдущего месяца для сетки 7х6
   const startDate = monthStart;
   let weekStart = startDate;
   while (weekStart.getDay() !== 1) {
@@ -66,13 +64,11 @@ export function CalendarView({
     weekStart.setDate(weekStart.getDate() - 1);
   }
 
-  // Всё дни в сетке
   const calendarDays = eachDayOfInterval({
     start: weekStart,
     end: new Date(monthEnd),
   });
 
-  // Добавляем дни следующего месяца до конца недели
   const additionalDays: Date[] = [];
   let lastDay = calendarDays[calendarDays.length - 1];
   while (lastDay.getDay() !== 0) {
@@ -81,10 +77,8 @@ export function CalendarView({
   }
   const finalCalendarDays = [...calendarDays, ...additionalDays];
 
-  // Фильтруем активные задачи
   const activeTasks = tasks.filter((t) => t.status === "active" && t.dueDateStart);
 
-  // Группируем задачи по дням
   const tasksByDay = new Map<string, Task[]>();
   activeTasks.forEach((task) => {
     const dateStr = format(parseISO(task.dueDateStart!), "yyyy-MM-dd");

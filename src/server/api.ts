@@ -1,4 +1,3 @@
-// src/server/api.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentUser } from "@/server/auth";
@@ -45,7 +44,6 @@ export function handleUnknownError(label: string, error: unknown) {
   return err("INTERNAL_ERROR", "Внутренняя ошибка сервера", 500);
 }
 
-// ✅ Обновлённые типы для совместимости с Next.js 16 App Router
 type NextContext = {
   params: Promise<Record<string, string>>;
 };
@@ -64,8 +62,6 @@ export function withAuth<Ctx extends NextContext = NextContext>(
   ): Promise<Response> => {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
-    
-    // ✅ Пробрасываем оригинальный context (включая params) + добавляем user
     return handler(request, { ...context, user } as Ctx & { user: AuthedUser });
   };
 }

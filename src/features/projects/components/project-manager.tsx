@@ -74,7 +74,6 @@ export function ProjectManager({
     parentId: "",
   });
 
-  // Group projects by hierarchy
   const rootProjects = projects.filter(p => !p.parentId);
   const getSubprojects = (parentId: string) => 
     projects.filter(p => p.parentId === parentId);

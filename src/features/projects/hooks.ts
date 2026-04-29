@@ -124,7 +124,8 @@ export function useCreateProjectFromTemplate() {
   });
 }
 
-// Helper hook for project statistics
+// Helper hook for project statistics — агрегирует данные на клиенте,
+// чтобы не делать отдельный запрос к /api/stats/projects
 export function useProjectStats() {
   const { data: projects = [] } = useProjects();
   

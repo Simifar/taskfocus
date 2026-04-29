@@ -79,7 +79,6 @@ export function TodayView({
   onDeleteSubtask,
   isLoading = false,
 }: TodayViewProps) {
-  // Filter tasks for today
   const todayTasks = tasks.filter((task) => {
     if (task.status !== "active" && task.status !== "completed") return false;
     if (!task.dueDateStart && !task.dueDateEnd) return false;
@@ -102,12 +101,10 @@ export function TodayView({
     return false;
   });
 
-  // Apply energy filter
   const filteredTasks = currentEnergy
     ? todayTasks.filter((t) => t.energyLevel <= currentEnergy)
     : todayTasks;
 
-  // Separate completed and active
   const activeTasks = filteredTasks.filter((t) => t.status === "active");
   const completedTasks = filteredTasks.filter((t) => t.status === "completed");
 
@@ -134,7 +131,7 @@ export function TodayView({
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="p-8 max-w-6xl mx-auto space-y-8">
-        {/* Header with date and add button */}
+        {/* Шапка */}
         <div className="flex items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -153,7 +150,7 @@ export function TodayView({
           </Button>
         </div>
 
-        {/* Energy Status */}
+        {/* Уровень энергии */}
         <div>
           <EnergyStatus
             currentEnergy={currentEnergy}
@@ -162,7 +159,7 @@ export function TodayView({
           />
         </div>
 
-        {/* Active Tasks Section */}
+        {/* Активные задачи */}
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -232,7 +229,7 @@ export function TodayView({
           </Card>
         </div>
 
-        {/* Completed Tasks Toggle */}
+        {/* Переключатель выполненных */}
         {completedTasks.length > 0 && (
           <div className="space-y-3">
             <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
@@ -253,7 +250,7 @@ export function TodayView({
           </div>
         )}
 
-        {/* Completed Tasks Section */}
+        {/* Выполненные задачи */}
         {completedTasks.length > 0 && showCompleted && (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
@@ -294,7 +291,7 @@ export function TodayView({
           </div>
         )}
 
-        {/* Progress Section */}
+        {/* Прогресс */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
@@ -309,7 +306,7 @@ export function TodayView({
           <Card className="border-2 border-blue-200 dark:border-blue-800/50 shadow-sm bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent">
             <CardContent className="pt-8">
               <div className="space-y-6">
-                {/* Progress bar with stats */}
+                {/* Прогресс-бар */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold">Завершено задач</span>
@@ -325,7 +322,7 @@ export function TodayView({
                   </p>
                 </div>
 
-                {/* Motivational message */}
+                {/* Мотивационная цитата */}
                 <div className="bg-blue-100/50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200/50 dark:border-blue-800/30">
                   <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
                     <Sparkles className="h-5 w-5 flex-shrink-0" />

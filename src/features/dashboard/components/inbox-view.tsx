@@ -94,7 +94,6 @@ export function InboxView({
   const filteredTasks = useMemo(() => {
     let filtered = inboxTasks;
 
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       filtered = filtered.filter((task) => {
@@ -103,18 +102,15 @@ export function InboxView({
       });
     }
 
-    // Priority filter
     if (filterPriority !== "all") {
       filtered = filtered.filter((task) => task.priority === filterPriority);
     }
 
-    // Energy filter
     if (filterEnergy !== "all") {
       const energyLevel = parseInt(filterEnergy);
       filtered = filtered.filter((task) => task.energyLevel >= energyLevel);
     }
 
-    // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "priority":

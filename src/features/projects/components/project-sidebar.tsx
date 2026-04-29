@@ -46,7 +46,6 @@ export function ProjectSidebar({
 }: ProjectSidebarProps) {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
-  // Group projects by hierarchy
   const rootProjects = useMemo(() => 
     projects.filter(p => !p.parentId).sort((a, b) => a.position - b.position),
     [projects]

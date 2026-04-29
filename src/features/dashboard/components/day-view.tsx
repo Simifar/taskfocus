@@ -41,24 +41,20 @@ export function DayView({
   onEditSubtask,
   onDeleteSubtask,
 }: DayViewProps) {
-  // Filter tasks for selected date
   const dayTasks = tasks.filter((task) => {
     if (!task.dueDateStart) return false;
     const taskDate = parseISO(task.dueDateStart);
     return isSameDay(taskDate, selectedDate) && task.status !== "archived";
   });
 
-  // Separate active and completed
   const activeTasks = dayTasks.filter((t) => t.status === "active");
   const completedTasks = dayTasks.filter((t) => t.status === "completed");
 
-  // Calculate completion rate
   const completionRate =
     dayTasks.length > 0
       ? Math.round((completedTasks.length / dayTasks.length) * 100)
       : 0;
 
-  // Average energy
   const avgEnergy =
     activeTasks.length > 0
       ? Math.round(activeTasks.reduce((sum, t) => sum + t.energyLevel, 0) / activeTasks.length)

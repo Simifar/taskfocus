@@ -34,11 +34,8 @@ export function CreateSubtaskDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState("");
 
-  // Reset form when dialog opens
   useEffect(() => {
-    if (open) {
-      setTitle("");
-    }
+    if (open) setTitle("");
   }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {

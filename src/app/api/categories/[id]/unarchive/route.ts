@@ -11,11 +11,10 @@ export const POST = withAuth<RouteCtx>(async (_request, { params, user }) => {
   });
   
   if (!category) return notFound("Project not found");
-  
-  // Use raw SQL until Prisma schema is updated
+
+  // raw SQL — поле is_archived пока не добавлено в Prisma-схему
   await db.$executeRaw`UPDATE categories SET is_archived = false WHERE id = ${id}`;
   
-  // Return the updated category
   const result = await db.category.findFirst({
     where: { id, userId: user.id },
   });

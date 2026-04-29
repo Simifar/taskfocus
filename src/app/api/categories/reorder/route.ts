@@ -15,7 +15,6 @@ export const PATCH = withAuth(async (request, { user }) => {
     const body = await request.json();
     const { items } = reorderSchema.parse(body);
     
-    // Verify all items belong to the user
     const categoryIds = items.map(item => item.id);
     const existingCategories = await db.category.findMany({
       where: {
@@ -29,7 +28,7 @@ export const PATCH = withAuth(async (request, { user }) => {
       return err("INVALID_CATEGORIES", "Some categories not found or don't belong to user", 400);
     }
     
-    // Update positions using raw SQL until Prisma schema is updated
+    // raw SQL — поля position/parent_id пока не добавлены в Prisma-схему
     const updates = items.map(item => 
       db.$executeRaw`UPDATE categories SET position = ${item.position}, parent_id = ${item.parentId} WHERE id = ${item.id}`
     );

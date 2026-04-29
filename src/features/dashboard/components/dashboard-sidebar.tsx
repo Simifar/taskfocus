@@ -109,7 +109,6 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
   };
 
   const handleCreateProject = () => {
-    // This would open a more sophisticated project creation dialog
     handleAddCategory();
   };
 
@@ -221,7 +220,7 @@ export function DashboardSidebar({ user, stats, tasks, onLogout }: DashboardSide
           onToggleFavorite={(id) => handleProjectAction("toggleFavorite", id)}
           onArchiveProject={(id) => handleProjectAction("archive", id)}
           onEditProject={(project) => {
-            // TODO: Implement edit dialog
+            // TODO: диалог редактирования проекта
             const newName = window.prompt("Edit project name:", project.name);
             if (newName && newName.trim() && newName !== project.name) {
               updateProject.mutateAsync({ id: project.id, data: { name: newName.trim() } });
