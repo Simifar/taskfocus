@@ -123,7 +123,7 @@ export function CreateTaskDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[65vh] overflow-y-auto px-1">
             <div className="space-y-2">
               <Label htmlFor="title">
                 Название <span className="text-destructive">*</span>

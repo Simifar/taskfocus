@@ -145,8 +145,8 @@ export function TodayView({
   };
 
   return (
-    <div className="min-h-full -m-4 md:-m-8">
-      <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-5 md:space-y-8">
+    <div className="min-h-full">
+      <div className="max-w-6xl mx-auto space-y-5 md:space-y-8">
         {/* Header with date and add button */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
