@@ -50,35 +50,8 @@ export function WeekView({
   onSelectDay,
   onReorder,
 }: WeekViewProps) {
-<<<<<<< HEAD
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = addDays(weekStart, 6);
-
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
-  const weekTasks = tasks.filter((task) => {
-    if (task.status !== "active") return false;
-    if (!task.dueDateStart) return false;
-
-    const taskDate = parseISO(task.dueDateStart);
-    return isWithinInterval(taskDate, {
-      start: weekStart,
-      end: weekEnd,
-    });
-  });
-
-  const tasksByDay = weekDays.map((day) => ({
-    date: day,
-    tasks: weekTasks.filter((task) => {
-      const taskDate = parseISO(task.dueDateStart!);
-      return isSameDay(taskDate, day);
-    }),
-  }));
-
-=======
   const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
   const today = new Date();
 
   const weekTasks = tasks.filter(

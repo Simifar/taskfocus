@@ -62,50 +62,6 @@ export function CalendarView({
   onSelectDay,
   onReorder,
 }: CalendarViewProps) {
-<<<<<<< HEAD
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-
-  const daysInCalendar = eachDayOfInterval({
-    start: monthStart,
-    end: monthEnd,
-  });
-
-  const startDate = monthStart;
-  let weekStart = startDate;
-  while (weekStart.getDay() !== 1) {
-    weekStart = new Date(weekStart);
-    weekStart.setDate(weekStart.getDate() - 1);
-  }
-
-  const calendarDays = eachDayOfInterval({
-    start: weekStart,
-    end: new Date(monthEnd),
-  });
-
-  const additionalDays: Date[] = [];
-  let lastDay = calendarDays[calendarDays.length - 1];
-  while (lastDay.getDay() !== 0) {
-    lastDay = new Date(lastDay.getTime() + 24 * 60 * 60 * 1000);
-    additionalDays.push(lastDay);
-  }
-  const finalCalendarDays = [...calendarDays, ...additionalDays];
-
-  const activeTasks = tasks.filter((t) => t.status === "active" && t.dueDateStart);
-
-  const tasksByDay = new Map<string, Task[]>();
-  activeTasks.forEach((task) => {
-    const dateStr = format(parseISO(task.dueDateStart!), "yyyy-MM-dd");
-    if (!tasksByDay.has(dateStr)) {
-      tasksByDay.set(dateStr, []);
-    }
-    tasksByDay.get(dateStr)!.push(task);
-  });
-
-=======
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
   const today = new Date();
 
   const { start: monthStart, end: monthEnd } = getMonthRange(currentMonth);

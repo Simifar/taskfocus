@@ -50,61 +50,9 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
     { id: "matrix", label: "Матрица", icon: <Grid2X2 className="h-4 w-4" /> },
   ];
 
-<<<<<<< HEAD
-  const handleProjectsNavigation = () => {
-    router.push("/projects");
-  };
-
-  const handleAddCategory = async () => {
-    const name = window.prompt("Название нового листа / проекта:");
-    if (!name || !name.trim()) return;
-    try {
-      const created = await createCategory.mutateAsync({ name: name.trim() });
-      setCategory(created.id);
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Не удалось создать категорию";
-      toast.error(message);
-    }
-  };
-
-  const handleCreateProject = () => {
-    handleAddCategory();
-  };
-
-  const handleProjectSelect = (projectId: string | null) => {
-    setCategory(projectId);
-    if (projectId) {
-      setView("inbox");
-    }
-  };
-
-  const handleProjectAction = async (action: string, projectId: string) => {
-    try {
-      switch (action) {
-        case "toggleFavorite":
-          await toggleFavorite.mutateAsync(projectId);
-          break;
-        case "archive":
-          await archiveProject.mutateAsync(projectId);
-          break;
-        case "delete":
-          if (window.confirm("Are you sure you want to delete this project?")) {
-            await deleteProject.mutateAsync(projectId);
-            if (currentCategoryId === projectId) {
-              setCategory(null);
-            }
-          }
-          break;
-      }
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Failed to perform action";
-      toast.error(message);
-    }
-=======
   const handleNavClick = (view: DashboardView) => {
     setView(view);
     onClose?.();
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
   };
 
   return (
@@ -178,40 +126,6 @@ export function DashboardSidebar({ user, stats, tasks, onLogout, isOpen = false,
             <span>Режим энергии</span>
           </Button>
         </div>
-<<<<<<< HEAD
-
-        <Separator className="my-4" />
-        <div className="mb-6">
-          <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">MANAGEMENT</p>
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2"
-            onClick={handleProjectsNavigation}
-          >
-            <FolderOpen className="h-4 w-4 text-blue-500" />
-            <span>Manage Projects</span>
-          </Button>
-        </div>
-
-        <Separator className="my-4" />
-        <ProjectSidebar
-          projects={categories}
-          selectedProjectId={currentCategoryId}
-          onProjectSelect={handleProjectSelect}
-          onCreateProject={handleCreateProject}
-          onToggleFavorite={(id) => handleProjectAction("toggleFavorite", id)}
-          onArchiveProject={(id) => handleProjectAction("archive", id)}
-          onEditProject={(project) => {
-            // TODO: диалог редактирования проекта
-            const newName = window.prompt("Edit project name:", project.name);
-            if (newName && newName.trim() && newName !== project.name) {
-              updateProject.mutateAsync({ id: project.id, data: { name: newName.trim() } });
-            }
-          }}
-          onDeleteProject={(id) => handleProjectAction("delete", id)}
-        />
-=======
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
       </div>
 
       <div className="border-t border-border p-3 space-y-1">

@@ -76,7 +76,7 @@ export function AuthPage() {
         password: registerPassword,
       });
       if (registerName.trim()) {
-        // имя обновляется отдельным запросом на странице профиля
+        // best-effort post-register name update is handled in Profile page
       }
       toast.success("Аккаунт создан! Добро пожаловать!");
     } catch (err) {

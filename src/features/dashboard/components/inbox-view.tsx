@@ -104,6 +104,7 @@ export function InboxView({
   const filteredTasks = useMemo(() => {
     let filtered = inboxTasks;
 
+    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       filtered = filtered.filter((task) => {
@@ -112,21 +113,18 @@ export function InboxView({
       });
     }
 
-<<<<<<< HEAD
-    if (filterPriority !== "all") {
-      filtered = filtered.filter((task) => task.priority === filterPriority);
-=======
     // Eisenhower quadrant filter
     if (filterQuadrant !== "all") {
       filtered = filtered.filter((task) => getEisenhowerQuadrant(task) === filterQuadrant);
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
     }
 
+    // Energy filter
     if (filterEnergy !== "all") {
       const energyLevel = parseInt(filterEnergy);
       filtered = filtered.filter((task) => task.energyLevel >= energyLevel);
     }
 
+    // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "position":

@@ -91,14 +91,11 @@ export function TodayView({
   onDeleteSubtask,
   isLoading = false,
 }: TodayViewProps) {
-<<<<<<< HEAD
-=======
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [focusModeOpen, setFocusModeOpen] = useState(false);
   const [focusSessionKey, setFocusSessionKey] = useState(0);
 
   // Filter tasks for today
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
   const todayTasks = tasks.filter((task) => {
     if (task.status !== "active" && task.status !== "completed") return false;
     if (!task.dueDateStart && !task.dueDateEnd) return false;
@@ -121,10 +118,12 @@ export function TodayView({
     return false;
   });
 
+  // Apply energy filter
   const filteredTasks = currentEnergy
     ? todayTasks.filter((t) => t.energyLevel <= currentEnergy)
     : todayTasks;
 
+  // Separate completed and active
   const activeTasks = filteredTasks.filter((t) => t.status === "active");
   const completedTasks = filteredTasks.filter((t) => t.status === "completed");
 
@@ -146,17 +145,10 @@ export function TodayView({
   };
 
   return (
-<<<<<<< HEAD
-    <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="p-8 max-w-6xl mx-auto space-y-8">
-        {/* Шапка */}
-        <div className="flex items-end justify-between gap-6">
-=======
     <div className="min-h-full -m-4 md:-m-8">
       <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-5 md:space-y-8">
         {/* Header with date and add button */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
           <div>
             <div className="flex items-center gap-3 mb-2">
               <Calendar className="h-6 w-6 md:h-8 md:w-8 text-brand" />
@@ -174,7 +166,7 @@ export function TodayView({
           </Button>
         </div>
 
-        {/* Уровень энергии */}
+        {/* Energy Status */}
         <div>
           <EnergyStatus
             currentEnergy={currentEnergy}
@@ -183,7 +175,7 @@ export function TodayView({
           />
         </div>
 
-        {/* Активные задачи */}
+        {/* Active Tasks Section */}
         <div className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-2 md:gap-3">
@@ -307,32 +299,7 @@ export function TodayView({
           </Card>
         </div>
 
-<<<<<<< HEAD
-        {/* Переключатель выполненных */}
-        {completedTasks.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold">Выполненные задачи</p>
-                <p className="text-sm text-muted-foreground">{completedTasks.length} задача{completedTasks.length === 1 ? "" : "и"} на сегодня</p>
-              </div>
-              <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={showCompleted}
-                  onChange={(event) => onShowCompletedChange(event.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                Показать выполненные
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* Выполненные задачи */}
-=======
         {/* Completed Tasks Section */}
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
         {completedTasks.length > 0 && showCompleted && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 md:gap-3">
@@ -373,7 +340,7 @@ export function TodayView({
           </div>
         )}
 
-        {/* Прогресс */}
+        {/* Progress Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-muted shrink-0">
@@ -388,7 +355,7 @@ export function TodayView({
           <Card className="border shadow-sm">
             <CardContent className="pt-8">
               <div className="space-y-6">
-                {/* Прогресс-бар */}
+                {/* Progress bar with stats */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold">Завершено задач</span>
@@ -404,15 +371,9 @@ export function TodayView({
                   </p>
                 </div>
 
-<<<<<<< HEAD
-                {/* Мотивационная цитата */}
-                <div className="bg-blue-100/50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200/50 dark:border-blue-800/30">
-                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-=======
                 {/* Motivational message */}
                 <div className="bg-muted/50 rounded-lg p-4 border border-border">
                   <div className="flex items-center gap-2 text-muted-foreground">
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
                     <Sparkles className="h-5 w-5 flex-shrink-0" />
                     <p className="text-sm font-medium italic">
                       {getMotivationalQuote()}

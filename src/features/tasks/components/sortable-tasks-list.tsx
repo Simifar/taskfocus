@@ -50,7 +50,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
-// Обёртка для TaskWithSubtasks с поддержкой drag & drop
+// Wrapper component to make TaskWithSubtasks draggable
 function SortableTaskWithSubtasks({
   task,
   subtasks,
@@ -350,6 +350,7 @@ export function SortableTasksList({
               </Card>
             ) : (
               tasks.map((task) => {
+                // Если у задачи есть подзадачи, используем SortableTaskWithSubtasks
                 if (task.subtasks && task.subtasks.length > 0) {
                   return (
                     <SortableTaskWithSubtasks
@@ -369,6 +370,7 @@ export function SortableTasksList({
                   );
                 }
 
+                // Иначе используем обычный SortableTaskItem
                 return (
                   <SortableTaskItem
                     key={task.id}

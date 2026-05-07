@@ -66,11 +66,6 @@ export function withAuth<Ctx extends NextContext = NextContext>(
     request: NextRequest,
     context: Ctx
   ): Promise<Response> => {
-<<<<<<< HEAD
-    const user = await getCurrentUser();
-    if (!user) return unauthorized();
-    return handler(request, { ...context, user } as Ctx & { user: AuthedUser });
-=======
     const start = Date.now();
     const path = new URL(request.url).pathname;
 
@@ -106,7 +101,6 @@ export function withAuth<Ctx extends NextContext = NextContext>(
       });
       return err("INTERNAL_ERROR", "Внутренняя ошибка сервера", 500);
     }
->>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
   };
 }
 
