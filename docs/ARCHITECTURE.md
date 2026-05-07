@@ -1,101 +1,197 @@
-# TaskFocus Architecture
+# Архитектура TaskFocus
 
-Living document. Update whenever a significant decision changes.
+Документ описывает фактическую архитектуру проекта. Если код меняется, этот файл нужно обновлять вместе с ним.
 
-## Goals
+## Архитектурная цель
 
-- Task manager tuned for ADHD users (energy levels 1-5, soft deadlines as date ranges, "max 5 active" constraint).
-- Simple to deploy on Vercel.
-- Small, typed codebase that a single developer can maintain.
+TaskFocus проектируется как небольшое full-stack приложение, которое один разработчик может поддерживать в рамках дипломной работы. Поэтому архитектура выбрана прагматично: feature-based структура, Next.js Route Handlers как backend, Prisma как слой доступа к БД и client-heavy dashboard для высокой интерактивности.
 
-## Tech stack
+## Высокоуровневая схема
 
-| Layer        | Choice                         | Why                                                 |
-|--------------|--------------------------------|-----------------------------------------------------|
-| Framework    | Next.js 16 (App Router)        | Full-stack, Vercel-native                           |
-| Language     | TypeScript (strict)            | Type safety end-to-end                              |
-| UI           | React 19 + Tailwind v4 + shadcn/ui | Modern, minimal custom CSS                      |
-| Data fetching| TanStack Query                 | Cache, stale-while-revalidate, no manual reducers   |
-| UI state     | Zustand (persist)              | Tiny store for filters / current view               |
-| Forms        | react-hook-form + zod          | Validation shared with API                          |
-| Database     | PostgreSQL (Neon in prod)      | Serverless-friendly, free tier, Vercel integration  |
-| ORM          | Prisma                         | Typed schema, migrations                            |
-| Auth         | Custom JWT in httpOnly cookie  | No third-party, fits thesis scope                   |
-
-## Directory layout
-
+```text
+Browser
+  |
+  | React UI + TanStack Query
+  v
+Next.js App Router
+  |
+  | /api/* Route Handlers
+  v
+Server helpers
+  |
+  | Prisma Client
+  v
+PostgreSQL / Neon
 ```
+
+## Структура каталогов
+
+```text
 src/
-├── app/                    # Next.js routing only
-│   ├── (auth)/             # login, register
-│   ├── (app)/              # authenticated area, shared layout
-│   │   ├── dashboard/
-│   │   └── profile/
-│   ├── api/                # route handlers (thin, delegate to features/server)
-│   ├── layout.tsx          # root layout + providers
-│   └── globals.css
-│
-├── features/               # each feature owns its slice end-to-end
-│   ├── auth/
-│   │   ├── components/     # AuthPage, LoginForm, RegisterForm
-│   │   ├── hooks/          # useCurrentUser, useLogin, useRegister
-│   │   ├── api.ts          # client fetch functions
-│   │   └── schemas.ts      # zod schemas, shared with API
-│   ├── tasks/
-│   │   ├── components/     # TaskCard, TaskList, dialogs
-│   │   ├── hooks/          # useTasks, useCreateTask, useReorderTasks
-│   │   ├── api.ts
-│   │   ├── schemas.ts
-│   │   └── utils.ts        # date/energy filter helpers
-│   ├── categories/
-│   ├── dashboard/
-│   │   ├── layout/         # sidebar, page chrome
-│   │   ├── views/          # today, inbox, week, calendar, day
-│   │   ├── hooks/          # useDashboardState (UI state only)
-│   │   └── shared/         # energy-status, etc.
-│   ├── profile/
-│   └── stats/
-│
-├── shared/
-│   ├── ui/                 # shadcn components (only the ones we use)
-│   ├── lib/                # cn, date helpers, ApiResponse type
-│   ├── hooks/
-│   └── types/
-│
-└── server/                 # server-only modules
-    ├── db.ts               # Prisma client singleton
-    ├── auth.ts             # JWT, cookies, getCurrentUser
-    ├── rate-limit.ts
-    ├── api.ts              # ok(), err(), withAuth(), withRateLimit()
-    └── validation.ts       # shared zod helpers
+  app/             Next.js маршруты, layout, error boundaries, API route handlers
+  features/        функциональные модули приложения
+  server/          server-only логика: auth, db, api envelope, rate limit
+  shared/          общие UI-компоненты, типы и утилиты
+  types/           глобальные TypeScript-расширения
+prisma/            Prisma schema, seed, SQL/migrations
+docs/              проектная и дипломная документация
 ```
 
-## Data flow
+## Feature-модули
 
-1. **Server state** (tasks, categories, stats, user) → TanStack Query.
-2. **UI state** (current view, energy filter, search, sort) → Zustand with `persist`.
-3. **Forms** → react-hook-form + zod schemas from `features/*/schemas.ts`.
-4. **API response envelope**: `{ success, data, error }`. All route handlers use `ok()` / `err()` from `server/api.ts`.
+| Модуль | Ответственность |
+|---|---|
+| `features/auth` | Клиентские API и hooks для входа, регистрации, logout, профиля |
+| `features/tasks` | Клиентские API, hooks и UI-компоненты задач |
+| `features/dashboard` | Основной интерфейс планирования, views, dashboard actions, Zustand store |
+| `features/profile` | Страница профиля |
+| `features/stats` | Получение статистики |
 
-## Auth
+Такой подход ближе к feature-based architecture: код группируется по пользовательским возможностям, а не только по техническому типу файла.
 
-- Password hashed with bcrypt (cost 12).
-- JWT signed with `JWT_SECRET` (HS256, 7 days), stored in httpOnly `auth-token` cookie.
-- `middleware.ts` guards the `(app)` segment — unauthenticated users redirect to `/login`.
-- Every protected route handler uses `withAuth(handler)`; rate-limited auth endpoints use `withRateLimit`.
+## App Router модель
 
-## Database model
+Приложение использует Next.js App Router, но основной dashboard работает как интерактивное client-heavy приложение:
 
-- **User** — id, email, username, passwordHash, name, avatar.
-- **Category** — id, userId, name, color, icon. Unique per (userId, name).
-- **Task** — id, userId, categoryId?, title, description?, status, priority, energyLevel, position, dueDateStart?, dueDateEnd?, parentTaskId? (self-relation for subtasks), timestamps.
-- Hard deletes for Category set `Task.categoryId = null` (onDelete: SetNull).
-- Deleting a parent Task cascades to subtasks.
+- `src/app/layout.tsx` остается серверным layout;
+- `src/app/page.tsx` является client component, потому что выбирает между auth page и dashboard по текущему пользователю;
+- dashboard получает данные через TanStack Query и `/api/*`;
+- API route handlers выполняют серверную валидацию, авторизацию и работу с БД.
 
-## Conventions
+Это осознанный компромисс: для таск-менеджера важны быстрые локальные реакции, optimistic updates, drag and drop и состояние фильтров. В будущем часть первичной загрузки можно перенести в Server Components, но это не является блокером для текущего дипломного MVP.
 
-- No `console.log` outside `console.error` in error branches.
-- No test data in runtime code — use `prisma/seed.ts`.
-- Route handlers stay thin: parse → delegate → respond. Business logic lives in `features/*/server.ts` when it grows.
-- No barrel `index.ts` files; import from exact paths.
-- Keep comments out unless the *why* is non-obvious.
+## Backend и API
+
+Backend реализован через Next.js Route Handlers:
+
+| Endpoint | Назначение |
+|---|---|
+| `/api/auth/login` | Вход по email/password |
+| `/api/auth/register` | Регистрация |
+| `/api/auth/logout` | Очистка custom auth cookie |
+| `/api/auth/me` | Текущий пользователь |
+| `/api/auth/profile` | Обновление профиля |
+| `/api/auth/account` | Удаление аккаунта |
+| `/api/auth/[...nextauth]` | Google OAuth через NextAuth |
+| `/api/tasks` | Список и создание задач |
+| `/api/tasks/[id]` | Получение, обновление, удаление задачи |
+| `/api/tasks/reorder` | Сохранение порядка задач |
+| `/api/subtasks` | Создание подзадачи |
+| `/api/stats` | Статистика dashboard |
+
+Все защищенные endpoints используют `withAuth(...)`. Ответы API приводятся к общему envelope-формату:
+
+```ts
+type ApiEnvelope<T> =
+  | { success: true; data: T; error: null }
+  | { success: false; data: null; error: { code: string; message: string } };
+```
+
+Клиентские запросы проходят через `apiFetch(...)`, который:
+
+- добавляет `credentials: "include"`;
+- сериализует JSON body;
+- обрабатывает envelope;
+- превращает API-ошибки в `ApiError`;
+- ограничивает время запроса.
+
+## Авторизация
+
+В проекте поддерживаются два способа входа:
+
+1. Email/password:
+   - пароль хешируется через `bcryptjs`;
+   - сервер выпускает JWT через `jose`;
+   - токен хранится в httpOnly cookie `auth-token`.
+
+2. Google OAuth:
+   - используется `next-auth`;
+   - данные OAuth-аккаунта хранятся через Prisma Adapter;
+   - session strategy: `jwt`.
+
+`getCurrentUser()` сначала проверяет NextAuth session, затем custom JWT cookie. Это позволяет поддерживать оба сценария, но увеличивает сложность logout/delete-account flow.
+
+## Модель данных
+
+Основные Prisma-модели:
+
+- `User`;
+- `Account`;
+- `VerificationToken`;
+- `Task`.
+
+Ключевые поля `Task`:
+
+| Поле | Смысл |
+|---|---|
+| `status` | `active`, `completed`, `archived` |
+| `important`, `urgent` | признаки для квадранта матрицы Эйзенхауэра |
+| `energyLevel` | Сложность/энергозатратность задачи от `1` до `5` |
+| `dueDateStart` | Начало мягкого дедлайна |
+| `dueDateEnd` | Конец мягкого дедлайна |
+| `parentTaskId` | Связь подзадачи с родительской задачей |
+| `position` | Ручная сортировка |
+| `completedAt` | Дата выполнения |
+
+## Бизнес-правила
+
+Основные правила вынесены в серверный код:
+
+- пользователь видит и изменяет только свои задачи;
+- подзадачи исключаются из главного списка задач;
+- дата окончания не может быть раньше даты начала;
+- активных задач, запланированных на сегодня, не может быть больше `5`;
+- при переводе задачи в `completed` заполняется `completedAt`;
+- при возврате из `completed` дата выполнения сбрасывается.
+
+## Состояние на клиенте
+
+Используются два типа состояния:
+
+| Тип | Инструмент | Примеры |
+|---|---|---|
+| Server state | TanStack Query | задачи, статистика, текущий пользователь |
+| UI state | Zustand | текущий раздел dashboard, фильтры, сортировка |
+
+TanStack Query используется для кэширования, invalidation и optimistic updates. Zustand хранит локальные настройки интерфейса и частично сохраняет их в `localStorage`.
+
+## Безопасность
+
+В проекте реализованы:
+
+- httpOnly cookie для custom JWT;
+- server-side authorization в API handlers;
+- rate limiting для login/register;
+- security headers в `next.config.ts`;
+- CSP, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`;
+- Prisma-запросы с фильтрацией по `userId`.
+
+Важно: защищенность страниц сейчас реализована клиентской проверкой текущего пользователя. API защищен серверно, поэтому данные не отдаются без авторизации. Для production-hardening можно добавить middleware/proxy-level защиту страниц.
+
+## Инфраструктура
+
+Целевая схема деплоя:
+
+- Vercel для Next.js приложения;
+- Neon PostgreSQL для БД;
+- Prisma Client как ORM;
+- переменные окружения в Vercel Project Settings.
+
+`src/server/db.ts` добавляет Neon-friendly параметры подключения, если они отсутствуют в `DATABASE_URL`.
+
+## Текущие архитектурные ограничения
+
+- Dashboard actions вынесены в отдельный hook, но `dashboard-layout.tsx` все еще отвечает за композицию всех представлений.
+- Некоторые UI-компоненты крупные и требуют декомпозиции.
+- Auth flow смешивает custom JWT и NextAuth, что требует аккуратного сопровождения.
+- Нет автоматических unit/e2e тестов.
+- ESLint настроен мягко и часть правил отключена.
+
+## Рекомендуемые следующие шаги
+
+1. Разделить `inbox-view.tsx` на quick add, filters, batch toolbar, task card и empty state.
+2. Разделить `sortable-tasks-list.tsx` на draggable wrapper, task card и subtask dialog integration.
+3. Добавить unit-тесты для `task-scheduling`.
+4. Добавить e2e smoke-тесты для auth и task CRUD.
+5. Постепенно ужесточать ESLint.
+6. Рассмотреть server-side защиту страниц через middleware/proxy.

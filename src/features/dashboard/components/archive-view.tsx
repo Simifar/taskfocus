@@ -1,0 +1,125 @@
+"use client";
+
+import { Archive, Trash2, RotateCcw, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import type { Task, StatsResponse } from "@/shared/types";
+import { Button } from "@/shared/ui/button";
+import { Badge } from "@/shared/ui/badge";
+import { Card, CardContent } from "@/shared/ui/card";
+import { cn } from "@/shared/lib/utils";
+import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
+
+interface ArchiveViewProps {
+  tasks: Task[];
+  isLoading?: boolean;
+  stats: StatsResponse | null;
+  onRestore: (taskId: string) => void;
+  onDelete: (taskId: string) => void;
+  onReorder?: (tasks: Task[]) => void;
+}
+
+export function ArchiveView({ tasks: archivedTasks, isLoading = false, stats, onRestore, onDelete, onReorder }: ArchiveViewProps) {
+  const rootTasks = archivedTasks.filter((t) => !t.parentTaskId);
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-muted rounded-xl">
+          <Archive className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Архив</h1>
+          <p className="text-sm text-muted-foreground">
+            {stats?.archivedTasks ?? rootTasks.length} задач в архиве
+          </p>
+        </div>
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : rootTasks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="p-4 bg-muted rounded-full mb-4">
+            <Archive className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-lg font-medium text-muted-foreground">Архив пуст</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Заархивированные задачи появятся здесь
+          </p>
+        </div>
+      ) : (
+        <SimpleSortableTasksList
+          tasks={rootTasks}
+          onReorder={(reordered) => onReorder?.(mergeReorderedTasks(archivedTasks, reordered))}
+          className="space-y-3"
+        >
+          {(task, dragHandle) => {
+            const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
+            const archivedDate = task.updatedAt
+              ? format(new Date(task.updatedAt), "d MMM yyyy", { locale: ru })
+              : null;
+
+            return (
+              <Card className="border-l-4 border-l-border opacity-80 hover:opacity-100 transition-opacity">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    {dragHandle}
+                    <div className="flex-1 min-w-0">
+                      <p className={cn("font-medium leading-tight", "line-through text-muted-foreground")}>
+                        {task.title}
+                      </p>
+                      {task.description && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {task.description}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <Badge variant="outline" className={cn("text-xs font-semibold", quadrant.badge)}>
+                          {quadrant.action}
+                        </Badge>
+                        {archivedDate && (
+                          <span className="text-xs text-muted-foreground">
+                            Архивировано {archivedDate}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-brand hover:text-brand/80 hover:bg-brand/10"
+                        title="Восстановить"
+                        onClick={() => onRestore(task.id)}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Удалить навсегда"
+                        onClick={() => onDelete(task.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }}
+        </SimpleSortableTasksList>
+      )}
+    </div>
+  );
+}

@@ -1,152 +1,100 @@
-# Neon Database Migration Guide
+# Neon Deployment Guide
 
-## Overview
+This guide reflects the current TaskFocus setup: `Next.js + Prisma + Neon + Vercel`.
 
-This guide explains how to migrate your TaskFocus database on Neon to support the enhanced project system.
+## Goal
 
-## Prerequisites
+Use Neon as the production PostgreSQL database for the deployed Vercel app.
 
-- Your Neon database URL is configured in `.env` file
-- You have Prisma CLI installed
-- Database connection is working
+## 1. Create a Neon database
 
-## Migration Steps
+- create a project in Neon
+- create a database and copy the connection string
+- make sure SSL is enabled
 
-### 1. Verify Database Connection
+Expected format:
 
-```bash
-# Test connection
-npx prisma db pull
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 ```
 
-This should pull your current schema from Neon successfully.
+TaskFocus appends serverless-friendly query params in `src/server/db.ts`, so you do not need to manually add `connection_limit=1` unless you want to.
 
-### 2. Apply Schema Changes
+## 2. Configure Vercel environment variables
+
+Set these variables in Vercel:
+
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/DB?sslmode=require
+JWT_SECRET=your-random-32-char-secret
+NEXTAUTH_SECRET=your-second-random-32-char-secret
+NEXTAUTH_URL=https://YOUR_DOMAIN
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
+
+## 3. Apply schema to Neon
+
+From your local machine:
 
 ```bash
-# Push schema changes to Neon
-npx prisma db push
-
-# Generate updated Prisma client
 npx prisma generate
+npx prisma db push
 ```
 
-### 3. Verify Migration
+Optional demo data:
 
 ```bash
-# Check database status
-npx prisma migrate status
+npm run db:seed
 ```
 
-## Neon-Specific Considerations
+## 4. Google OAuth for production
 
-### Connection Pooling
-Neon uses connection pooling. Make sure your `DATABASE_URL` includes the pooling parameters:
+In Google Cloud Console add:
 
-```
-DATABASE_URL="postgresql://user:password@ep-xxx.us-east-2.aws.neon.tech/dbname?sslmode=require&pgbouncer=true"
-```
+- `https://YOUR_DOMAIN/api/auth/callback/google`
 
-### Migration Safety
-Neon supports safe migrations with:
+If you also work locally, keep:
 
-- **Automatic backups**: Neon creates backups before migrations
-- **Rollback support**: You can rollback if needed
-- **Zero downtime**: Migrations don't interrupt your app
+- `http://localhost:3000/api/auth/callback/google`
 
-### Performance
-- Neon handles the new indexes efficiently
-- The added columns are lightweight
-- Queries remain optimized
+## 5. Verify deployment
 
-## Manual Migration (if needed)
+After deploying to Vercel, verify:
 
-If `prisma db push` doesn't work, you can run SQL directly:
+- the app opens without server errors
+- login/register works
+- Google OAuth returns to the deployed app
+- `/api/auth/me` returns the current user after login
+- tasks can be created and fetched from Neon
 
-```sql
--- Connect to your Neon database and run:
-ALTER TABLE categories 
-ADD COLUMN description TEXT,
-ADD COLUMN is_favorite BOOLEAN DEFAULT FALSE,
-ADD COLUMN is_archived BOOLEAN DEFAULT FALSE,
-ADD COLUMN parent_id TEXT,
-ADD COLUMN position INTEGER DEFAULT 0;
+## Common issues
 
--- Add constraints
-ALTER TABLE categories 
-ADD CONSTRAINT categories_parent_id_fkey 
-FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL;
+### Google account picker opens, then nothing happens
 
--- Add indexes for performance
-CREATE INDEX categories_user_id_is_archived_idx ON categories(user_id, is_archived);
-CREATE INDEX categories_parent_id_idx ON categories(parent_id);
-```
+Check these first:
 
-## Verification
+- `NEXTAUTH_URL` matches the real deployed domain
+- Google callback URI exactly matches `https://YOUR_DOMAIN/api/auth/callback/google`
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set in Vercel
 
-After migration, verify the schema:
+### Prisma commands fail locally
 
-```bash
-# View current schema
-npx prisma db pull --print
+Check:
 
-# Test with Prisma Studio
-npx prisma studio
-```
+- `.env` exists
+- `DATABASE_URL` points to the correct Neon database
+- SSL is enabled in the URL
 
-## Troubleshooting
+### Production works, local auth does not
 
-### Common Neon Issues
+Check:
 
-1. **Connection Timeout**
-   ```bash
-   # Check your DATABASE_URL
-   echo $DATABASE_URL
-   ```
+- local `.env` uses `NEXTAUTH_URL=http://localhost:3000`
+- Google Cloud Console includes the localhost callback URI
 
-2. **Permission Errors**
-   - Ensure your Neon user has ALTER permissions
-   - Check if you're using the correct database
+## Notes
 
-3. **SSL Issues**
-   - Make sure `sslmode=require` is in your connection string
-   - Neon requires SSL connections
-
-### Rollback Plan
-
-If something goes wrong:
-
-```bash
-# Reset to previous state (WARNING: This deletes data!)
-npx prisma migrate reset
-
-# Or manually rollback:
-ALTER TABLE categories 
-DROP COLUMN IF EXISTS description,
-DROP COLUMN IF EXISTS is_favorite,
-DROP COLUMN IF EXISTS is_archived,
-DROP COLUMN IF EXISTS parent_id,
-DROP COLUMN IF EXISTS position;
-```
-
-## Next Steps
-
-After successful migration:
-
-1. Restart your development server
-2. Test the new project features
-3. Verify existing functionality still works
-4. Check the `/projects` page
-
-## Support
-
-If you encounter issues:
-
-1. Check Neon logs in your dashboard
-2. Verify Prisma configuration
-3. Test database connection manually
-4. Contact Neon support if needed
-
----
-
-**Note**: Neon automatically handles most migration complexities. The process should be smooth and safe.
+- Vercel region and proxy behavior are configured separately from Neon
+- Prisma CLI config is stored in `prisma.config.ts`
+- production DB is PostgreSQL only; old SQL Server references should be treated as obsolete

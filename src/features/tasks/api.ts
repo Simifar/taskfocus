@@ -1,22 +1,24 @@
 import { apiFetch } from "@/shared/lib/fetcher";
-import type { Task, TasksListResponse } from "@/shared/types";
+import type { Task, TasksListResponse, TaskStatus } from "@/shared/types";
 
-export type TaskStatus = "active" | "completed" | "archived";
-export type Priority = "low" | "medium" | "high";
+export type { TaskStatus };
+
+export type TasksView = "today" | "inbox" | "week" | "day" | "calendar" | "archive";
 
 export interface TasksQuery {
   status?: TaskStatus;
   energy?: number | null;
   search?: string;
-  categoryId?: string | null;
+  view?: TasksView;
+  date?: string;
 }
 
 export interface CreateTaskInput {
   title: string;
   description?: string | null;
-  priority?: Priority;
+  important?: boolean;
+  urgent?: boolean;
   energyLevel?: number;
-  categoryId?: string | null;
   dueDateStart?: string | null;
   dueDateEnd?: string | null;
   parentTaskId?: string | null;
@@ -25,9 +27,9 @@ export interface CreateTaskInput {
 export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
-  priority?: Priority;
+  important?: boolean;
+  urgent?: boolean;
   energyLevel?: number;
-  categoryId?: string | null;
   status?: TaskStatus;
   dueDateStart?: string | null;
   dueDateEnd?: string | null;
@@ -50,7 +52,8 @@ export const tasksApi = {
         status: q.status,
         energy: q.energy ?? undefined,
         search: q.search,
-        categoryId: q.categoryId,
+        view: q.view,
+        date: q.date,
       },
     }),
   get: (id: string) => apiFetch<Task>(`/api/tasks/${id}`),

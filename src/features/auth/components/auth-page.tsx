@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useLogin, useRegister } from "@/features/auth/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import { Button } from "@/shared/ui/button";
@@ -17,9 +19,29 @@ function describe(error: unknown, fallback: string) {
   return fallback;
 }
 
+function describeOAuthError(code: string | null): string | null {
+  if (!code) return null;
+
+  switch (code) {
+    case "OAuthSignin":
+    case "OAuthCallback":
+    case "OAuthCreateAccount":
+    case "Callback":
+      return "Не удалось завершить вход через Google. Проверьте callback URL и настройки OAuth.";
+    case "AccessDenied":
+      return "Вход через Google был отменен или отклонен.";
+    case "Configuration":
+      return "Google OAuth настроен не полностью. Проверьте NEXTAUTH_URL, NEXTAUTH_SECRET и ключи Google.";
+    default:
+      return "Ошибка входа через Google. Попробуйте еще раз.";
+  }
+}
+
 export function AuthPage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [error, setError] = useState<string | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const login = useLogin();
   const register = useRegister();
@@ -31,6 +53,7 @@ export function AuthPage() {
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerName, setRegisterName] = useState("");
+  const visibleError = error ?? describeOAuthError(searchParams.get("error"));
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,20 +84,26 @@ export function AuthPage() {
     }
   };
 
-  const isLoading = login.isPending || register.isPending;
+  const isLoading = login.isPending || register.isPending || isGoogleLoading;
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setIsGoogleLoading(true);
+    await signIn("google", { callbackUrl: "/" });
+  };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      <div className="lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 p-8 lg:p-16 flex flex-col justify-center text-white">
+      <div className="lg:w-1/2 bg-brand p-8 lg:p-16 flex flex-col justify-center text-brand-foreground">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-3 bg-white/20 rounded-xl">
               <Brain className="h-10 w-10" />
             </div>
-            <h1 className="text-4xl font-bold">TaskFocus</h1>
+            <h1 className="text-2xl font-bold tracking-tight">TaskFocus</h1>
           </div>
 
-          <h2 className="text-2xl lg:text-3xl font-semibold mb-6">
+          <h2 className="text-lg font-medium leading-snug mb-6">
             Интеллектуальный менеджер задач для людей с СДВГ
           </h2>
 
@@ -84,8 +113,8 @@ export function AuthPage() {
                 <CheckCircle className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Фокус на главном</p>
-                <p className="text-white/80 text-sm">Структурируйте задачи так, как удобно вам</p>
+                <p className="text-body-large font-medium">Фокус на главном</p>
+                <p className="text-body-small text-brand-foreground/80">Структурируйте задачи так, как удобно вам</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -93,8 +122,8 @@ export function AuthPage() {
                 <Zap className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Учёт уровня энергии</p>
-                <p className="text-white/80 text-sm">Выбирайте задачи по своим силам прямо сейчас</p>
+                <p className="text-body-large font-medium">Учёт уровня энергии</p>
+                <p className="text-body-small text-brand-foreground/80">Выбирайте задачи по своим силам прямо сейчас</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -102,20 +131,49 @@ export function AuthPage() {
                 <Brain className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Мягкие дедлайны</p>
-                <p className="text-white/80 text-sm">Диапазон дат вместо точного срока — меньше стресса</p>
+                <p className="text-body-large font-medium">Мягкие дедлайны</p>
+                <p className="text-body-small text-brand-foreground/80">Диапазон дат вместо точного срока — меньше стресса</p>
               </div>
             </div>
           </div>
 
-          <p className="text-white/70 text-sm">
+          <p className="text-body-small text-brand-foreground/70">
             Разработано с учётом нейробиологических особенностей внимания
           </p>
         </div>
       </div>
 
-      <div className="lg:w-1/2 p-8 lg:p-16 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="lg:w-1/2 p-8 lg:p-16 flex items-center justify-center bg-background">
         <div className="w-full max-w-md">
+          {/* Google OAuth */}
+          <Button
+            variant="outline"
+            className="w-full mb-4 gap-2"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+          >
+            {isGoogleLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+              </svg>
+            )}
+            Войти через Google
+          </Button>
+
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">или</span>
+            </div>
+          </div>
+
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Вход</TabsTrigger>
@@ -130,10 +188,10 @@ export function AuthPage() {
                 </CardHeader>
                 <form onSubmit={handleLogin}>
                   <CardContent className="space-y-4 pb-6">
-                    {error && (
+                    {visibleError && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{error}</AlertDescription>
+                        <AlertDescription>{visibleError}</AlertDescription>
                       </Alert>
                     )}
                     <div className="space-y-2">
@@ -148,7 +206,15 @@ export function AuthPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="login-password">Пароль</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="login-password">Пароль</Label>
+                        <a
+                          href="/forgot-password"
+                          className="text-caption text-brand hover:text-brand/80 transition-colors"
+                        >
+                          Забыли пароль?
+                        </a>
+                      </div>
                       <Input
                         id="login-password"
                         type="password"
@@ -177,10 +243,10 @@ export function AuthPage() {
                 </CardHeader>
                 <form onSubmit={handleRegister}>
                   <CardContent className="space-y-4 pb-6">
-                    {error && (
+                    {visibleError && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{error}</AlertDescription>
+                        <AlertDescription>{visibleError}</AlertDescription>
                       </Alert>
                     )}
                     <div className="space-y-2">

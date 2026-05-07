@@ -3,8 +3,6 @@
 import { useState, useMemo, useCallback } from "react";
 import type { Task, StatsResponse } from "@/shared/types";
 import { useCreateTask } from "@/features/tasks/hooks";
-import { useDashboardStore } from "@/features/dashboard/store";
-import { useCategories } from "@/features/categories/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
@@ -21,12 +19,23 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/shared/ui/dropdown-menu";
 import { CreateSubtaskDialog } from "@/features/tasks/components/create-subtask-dialog";
+import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { cn } from "@/shared/lib/utils";
-import { 
-  Plus, Inbox, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2, 
-  Filter, Star, Clock, Zap, ChevronDown, CheckCircle2, Circle, AlertCircle
+import {
+  Plus, Inbox, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2,
+  Filter, Clock, Zap, ChevronDown, CheckCircle2, Circle
 } from "lucide-react";
 import { toast } from "sonner";
+import { addDays, format } from "date-fns";
+import { ru } from "date-fns/locale";
+import {
+  compareByEisenhower,
+  EISENHOWER_META,
+  EISENHOWER_ORDER,
+  getEisenhowerQuadrant,
+} from "@/features/tasks/lib/eisenhower";
+import type { EisenhowerQuadrant } from "@/shared/types";
 
 interface InboxViewProps {
   tasks: Task[];
@@ -39,13 +48,14 @@ interface InboxViewProps {
   onAssignToWeek?: (taskId: string) => void;
   onAddTask?: () => void;
   onToggleSubtask?: (subtask: Task) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
   onBatchArchive?: (taskIds: string[]) => void;
   onBatchDelete?: (taskIds: string[]) => void;
   onBatchAssignToToday?: (taskIds: string[]) => void;
   onBatchAssignToWeek?: (taskIds: string[]) => void;
+  onReorder?: (tasks: Task[]) => void;
 }
 
 export function InboxView({
@@ -62,19 +72,19 @@ export function InboxView({
   onBatchDelete,
   onBatchAssignToToday,
   onBatchAssignToWeek,
+  onReorder,
 }: InboxViewProps) {
-  const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
   const createTask = useCreateTask();
-  const { data: categories = [] } = useCategories();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
   const [parentTaskForSubtask, setParentTaskForSubtask] = useState<Task | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");
+  const [quickDue, setQuickDue] = useState<"none" | "today" | "week">("none");
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
-  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [filterQuadrant, setFilterQuadrant] = useState<EisenhowerQuadrant | "all">("all");
   const [filterEnergy, setFilterEnergy] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("created");
+  const [sortBy, setSortBy] = useState<string>("position");
   const [viewMode, setViewMode] = useState<"compact" | "detailed">("detailed");
 
   const inboxTasks = useMemo(() => {
@@ -102,8 +112,14 @@ export function InboxView({
       });
     }
 
+<<<<<<< HEAD
     if (filterPriority !== "all") {
       filtered = filtered.filter((task) => task.priority === filterPriority);
+=======
+    // Eisenhower quadrant filter
+    if (filterQuadrant !== "all") {
+      filtered = filtered.filter((task) => getEisenhowerQuadrant(task) === filterQuadrant);
+>>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
     }
 
     if (filterEnergy !== "all") {
@@ -113,10 +129,10 @@ export function InboxView({
 
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case "priority":
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
-                 (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+        case "position":
+          return a.position - b.position;
+        case "eisenhower":
+          return compareByEisenhower(a, b);
         case "energy":
           return b.energyLevel - a.energyLevel;
         case "created":
@@ -126,7 +142,7 @@ export function InboxView({
     });
 
     return filtered;
-  }, [inboxTasks, searchQuery, filterPriority, filterEnergy, sortBy]);
+  }, [inboxTasks, searchQuery, filterQuadrant, filterEnergy, sortBy]);
 
   const processingProgress = useMemo(() => {
     const total = inboxTasks.length;
@@ -154,32 +170,30 @@ export function InboxView({
     }
   }, [selectedTasks.size, filteredTasks]);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "bg-red-100 text-red-800 border-red-200";
-      case "medium": return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "low": return "bg-green-100 text-green-800 border-green-200";
-      default: return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
   const getEnergyIcon = (level: number) => {
     if (level >= 4) return <Zap className="h-3 w-3 text-orange-500" />;
-    if (level >= 3) return <Clock className="h-3 w-3 text-blue-500" />;
+    if (level >= 3) return <Clock className="h-3 w-3 text-muted-foreground" />;
     return <Circle className="h-3 w-3 text-gray-400" />;
   };
 
   const handleQuickAdd = async () => {
     if (!quickAddTitle.trim()) return;
+    const now = new Date();
+    const dueDateStart = quickDue === "none" ? null : now.toISOString();
+    const dueDateEnd = quickDue === "week" ? addDays(now, 7).toISOString() : dueDateStart;
+
     try {
       await createTask.mutateAsync({
         title: quickAddTitle.trim(),
-        priority: "medium",
+        important: true,
+        urgent: false,
         energyLevel: 3,
-        categoryId: currentCategoryId ?? null,
+        dueDateStart,
+        dueDateEnd,
       });
       toast.success("Задача добавлена!");
       setQuickAddTitle("");
+      setQuickDue("none");
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Ошибка соединения";
       toast.error(message);
@@ -189,42 +203,39 @@ export function InboxView({
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Inbox className="h-6 w-6 text-blue-500" />
-              Входящие задачи
-              <Badge variant="secondary" className="ml-2">
+            <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 flex-wrap">
+              <Inbox className="h-5 w-5 md:h-6 md:w-6 text-brand shrink-0" />
+              Входящие
+              <Badge variant="secondary">
                 {filteredTasks.length}/{inboxTasks.length}
               </Badge>
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {inboxTasks.length} задач без даты • Соберите фокус перед началом работы
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
+              {inboxTasks.length} задач без даты
             </p>
             {inboxTasks.length > 0 && (
-              <div className="mt-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Прогресс обработки:</span>
-                  <div className="flex-1 max-w-xs">
-                    <Progress value={processingProgress} className="h-2" />
-                  </div>
-                  <span>{Math.round(processingProgress)}%</span>
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="shrink-0">Прогресс:</span>
+                <div className="flex-1 max-w-xs">
+                  <Progress value={processingProgress} className="h-2" />
                 </div>
+                <span className="shrink-0">{Math.round(processingProgress)}%</span>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setViewMode(viewMode === "compact" ? "detailed" : "compact")}
-            >
-              {viewMode === "compact" ? "Детально" : "Компактно"}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 self-start"
+            onClick={() => setViewMode(viewMode === "compact" ? "detailed" : "compact")}
+          >
+            {viewMode === "compact" ? "Детально" : "Компактно"}
+          </Button>
         </div>
 
-        <Card className="border-blue-200 dark:border-blue-800">
+        <Card className="border-brand/30">
           <CardContent className="p-4">
             <div className="flex gap-3">
               <div className="flex-1">
@@ -241,7 +252,7 @@ export function InboxView({
               </div>
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 shrink-0"
+                className="bg-brand hover:bg-brand/90 shrink-0"
                 onClick={handleQuickAdd}
                 disabled={createTask.isPending || !quickAddTitle.trim()}
               >
@@ -252,8 +263,26 @@ export function InboxView({
                 )}
               </Button>
             </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                ["none", "Без даты"],
+                ["today", "Сегодня"],
+                ["week", "Неделя"],
+              ].map(([value, label]) => (
+                <Button
+                  key={value}
+                  type="button"
+                  variant={quickDue === value ? "default" : "outline"}
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setQuickDue(value as typeof quickDue)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Нажмите Enter или кнопку для быстрого добавления • Detали можно отредактировать позже
+              Нажмите Enter или кнопку для быстрого добавления • Детали можно отредактировать позже
             </p>
           </CardContent>
         </Card>
@@ -264,7 +293,7 @@ export function InboxView({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Поиск в входящих..."
-              className="bg-white/80 dark:bg-gray-900/60"
+              className=""
             />
           </div>
           <div className="flex gap-2">
@@ -277,40 +306,25 @@ export function InboxView({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <div className="px-2 py-1.5 text-sm font-semibold">Приоритет</div>
+                <div className="px-2 py-1.5 text-sm font-semibold">Матрица</div>
                 <DropdownMenuCheckboxItem
-                  checked={filterPriority === "all"}
-                  onCheckedChange={() => setFilterPriority("all")}
+                  checked={filterQuadrant === "all"}
+                  onCheckedChange={() => setFilterQuadrant("all")}
                 >
-                  Все приоритеты
+                  Все квадранты
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filterPriority === "high"}
-                  onCheckedChange={() => setFilterPriority("high")}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full" />
-                    Высокий
-                  </div>
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filterPriority === "medium"}
-                  onCheckedChange={() => setFilterPriority("medium")}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                    Средний
-                  </div>
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filterPriority === "low"}
-                  onCheckedChange={() => setFilterPriority("low")}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    Низкий
-                  </div>
-                </DropdownMenuCheckboxItem>
+                {EISENHOWER_ORDER.map((quadrant) => (
+                  <DropdownMenuCheckboxItem
+                    key={quadrant}
+                    checked={filterQuadrant === quadrant}
+                    onCheckedChange={() => setFilterQuadrant(quadrant)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={cn("h-2 w-2 rounded-full", EISENHOWER_META[quadrant].dot)} />
+                      {EISENHOWER_META[quadrant].shortTitle}
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
                 <DropdownMenuSeparator />
                 <div className="px-2 py-1.5 text-sm font-semibold">Энергия</div>
                 <DropdownMenuCheckboxItem
@@ -333,7 +347,7 @@ export function InboxView({
                   onCheckedChange={() => setFilterEnergy("3")}
                 >
                   <div className="flex items-center gap-2">
-                    <Clock className="h-3 w-3 text-blue-500" />
+                    <Clock className="h-3 w-3 text-muted-foreground" />
                     Средняя (3+)
                   </div>
                 </DropdownMenuCheckboxItem>
@@ -348,16 +362,22 @@ export function InboxView({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuCheckboxItem
+                  checked={sortBy === "position"}
+                  onCheckedChange={() => setSortBy("position")}
+                >
+                  Ручной порядок
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
                   checked={sortBy === "created"}
                   onCheckedChange={() => setSortBy("created")}
                 >
                   По дате создания
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
-                  checked={sortBy === "priority"}
-                  onCheckedChange={() => setSortBy("priority")}
+                  checked={sortBy === "eisenhower"}
+                  onCheckedChange={() => setSortBy("eisenhower")}
                 >
-                  По приоритету
+                  По матрице
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={sortBy === "energy"}
@@ -437,13 +457,22 @@ export function InboxView({
         )}
 
         {filteredTasks.length > 0 ? (
-          <div className="space-y-3">
-            {filteredTasks.map((task) => (
-              <Card 
-                key={task.id} 
+          <SimpleSortableTasksList
+            tasks={filteredTasks}
+            onReorder={(reordered) => {
+              setSortBy("position");
+              onReorder?.(mergeReorderedTasks(tasks, reordered));
+            }}
+            className="space-y-3"
+          >
+            {(task, dragHandle) => {
+              const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
+
+              return (
+              <Card
                 className={cn(
                   "hover:shadow-md transition-all duration-200",
-                  selectedTasks.has(task.id) && "ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-950/20",
+                  selectedTasks.has(task.id) && "ring-2 ring-brand/60 bg-brand/5",
                   viewMode === "compact" && "p-3"
                 )}
               >
@@ -453,6 +482,7 @@ export function InboxView({
                 )}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
+                      {dragHandle}
                       <Checkbox
                         checked={selectedTasks.has(task.id)}
                         onCheckedChange={() => toggleTaskSelection(task.id)}
@@ -473,23 +503,13 @@ export function InboxView({
                           >
                             {task.title}
                           </h3>
-                          {task.priority && (
-                            <Badge 
-                              variant="outline" 
-                              className={cn("text-xs", getPriorityColor(task.priority))}
-                            >
-                              {task.priority === "high" ? "В" : task.priority === "medium" ? "С" : "Н"}
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className={cn("text-xs", quadrant.badge)}>
+                            {quadrant.shortTitle}
+                          </Badge>
                           <div className="flex items-center gap-1">
                             {getEnergyIcon(task.energyLevel)}
                             <span className="text-xs text-muted-foreground">{task.energyLevel}</span>
                           </div>
-                          {task.category && (
-                            <Badge variant="secondary" className="text-xs">
-                              {task.category.name}
-                            </Badge>
-                          )}
                           {task.subtasks && task.subtasks.length > 0 && (
                             <Badge variant="secondary" className="text-xs">
                               {task.subtasks.filter(st => st.status === "completed").length}/{task.subtasks.length}
@@ -501,9 +521,9 @@ export function InboxView({
                         )}
                         {viewMode === "detailed" && (
                           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                            <span>Создано: {new Date(task.createdAt).toLocaleDateString()}</span>
+                            <span>Создано: {format(new Date(task.createdAt), "d MMM yyyy", { locale: ru })}</span>
                             {task.updatedAt && task.updatedAt !== task.createdAt && (
-                              <span>Обновлено: {new Date(task.updatedAt).toLocaleDateString()}</span>
+                              <span>Обновлено: {format(new Date(task.updatedAt), "d MMM yyyy", { locale: ru })}</span>
                             )}
                           </div>
                         )}
@@ -571,13 +591,13 @@ export function InboxView({
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            )}}
+          </SimpleSortableTasksList>
         ) : (
-          <Card className="border-dashed border-blue-200 dark:border-blue-800">
+          <Card className="border-dashed">
             <CardContent className="p-12 text-center">
-              <div className="mx-auto w-24 h-24 bg-blue-50 dark:bg-blue-950/50 rounded-full flex items-center justify-center mb-6">
-                <Inbox className="h-10 w-10 text-blue-500" />
+              <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
+                <Inbox className="h-10 w-10 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
                 {searchQuery ? "Ничего не найдено" : "Входящие пусты"}
@@ -588,7 +608,7 @@ export function InboxView({
                   : "Отлично! Все задачи распределены по времени. Теперь вы можете сосредоточиться на выполнении или добавить новые идеи для будущих задач."}
               </p>
               {!searchQuery && (
-                <Button onClick={onAddTask} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={onAddTask} className="bg-brand hover:bg-brand/90">
                   <Plus className="h-4 w-4 mr-2" />
                   Добавить задачу
                 </Button>
@@ -604,9 +624,7 @@ export function InboxView({
           onOpenChange={setSubtaskDialogOpen}
           parentTaskId={parentTaskForSubtask.id}
           parentTaskTitle={parentTaskForSubtask.title}
-          onSubmit={(parentId, title) => {
-            if (onAddSubtask) onAddSubtask(parentId, title);
-          }}
+          onSubmit={(parentId, title) => onAddSubtask?.(parentId, title)}
         />
       )}
     </>

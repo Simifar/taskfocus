@@ -1,13 +1,21 @@
 import { z } from "zod";
 import { db } from "@/server/db";
-import { handleUnknownError, notFound, ok, withAuth } from "@/server/api";
+import { err, handleUnknownError, notFound, ok, withAuth } from "@/server/api";
+import {
+  countActiveTasksForToday,
+  isScheduledForToday,
+  MAX_ACTIVE_TASKS_PER_DAY,
+  MIN_ENERGY_LEVEL,
+  MAX_ENERGY_LEVEL,
+} from "@/server/task-scheduling";
+import type { TaskStatus } from "@/shared/types";
 
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).nullish(),
-  priority: z.enum(["low", "medium", "high"]).optional(),
-  energyLevel: z.number().int().min(1).max(5).optional(),
-  categoryId: z.string().nullish(),
+  important: z.boolean().optional(),
+  urgent: z.boolean().optional(),
+  energyLevel: z.number().int().min(MIN_ENERGY_LEVEL).max(MAX_ENERGY_LEVEL).optional(),
   status: z.enum(["active", "completed", "archived"]).optional(),
   dueDateStart: z.string().datetime().nullish(),
   dueDateEnd: z.string().datetime().nullish(),
@@ -16,7 +24,17 @@ const updateTaskSchema = z.object({
 type RouteCtx = { params: Promise<{ id: string }> };
 
 async function ownedTask(id: string, userId: string) {
-  return db.task.findFirst({ where: { id, userId }, select: { id: true, userId: true } });
+  return db.task.findFirst({
+    where: { id, userId },
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      dueDateStart: true,
+      dueDateEnd: true,
+      parentTaskId: true,
+    },
+  });
 }
 
 export const GET = withAuth<RouteCtx>(async (_req, { params, user }) => {
@@ -24,7 +42,6 @@ export const GET = withAuth<RouteCtx>(async (_req, { params, user }) => {
   const task = await db.task.findFirst({
     where: { id, userId: user.id },
     include: {
-      category: true,
       subtasks: { orderBy: { position: "asc" } },
     },
   });
@@ -34,6 +51,7 @@ export const GET = withAuth<RouteCtx>(async (_req, { params, user }) => {
 
 export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
   const { id } = await params;
+
   try {
     const existing = await ownedTask(id, user.id);
     if (!existing) return notFound("Задача не найдена");
@@ -41,39 +59,71 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
     const body = await request.json();
     const parsed = updateTaskSchema.parse(body);
 
-    if (parsed.categoryId) {
-      const owns = await db.category.findFirst({
-        where: { id: parsed.categoryId, userId: user.id },
-        select: { id: true },
-      });
-      if (!owns) return notFound("Категория не найдена");
+    const nextDueDateStart =
+      parsed.dueDateStart !== undefined
+        ? parsed.dueDateStart
+          ? new Date(parsed.dueDateStart)
+          : null
+        : existing.dueDateStart;
+    const nextDueDateEnd =
+      parsed.dueDateEnd !== undefined
+        ? parsed.dueDateEnd
+          ? new Date(parsed.dueDateEnd)
+          : null
+        : existing.dueDateEnd;
+    const nextStatus: TaskStatus = (parsed.status ?? existing.status) as TaskStatus;
+
+    if (nextDueDateStart && nextDueDateEnd && nextDueDateStart > nextDueDateEnd) {
+      return err("VALIDATION_ERROR", "Дата окончания не может быть раньше даты начала", 400);
     }
 
     const data: Record<string, unknown> = {};
     if (parsed.title !== undefined) data.title = parsed.title;
     if (parsed.description !== undefined) data.description = parsed.description;
-    if (parsed.priority !== undefined) data.priority = parsed.priority;
+    if (parsed.important !== undefined) data.important = parsed.important;
+    if (parsed.urgent !== undefined) data.urgent = parsed.urgent;
     if (parsed.energyLevel !== undefined) data.energyLevel = parsed.energyLevel;
-    if (parsed.categoryId !== undefined) data.categoryId = parsed.categoryId;
     if (parsed.status !== undefined) {
       data.status = parsed.status;
       data.completedAt = parsed.status === "completed" ? new Date() : null;
     }
-    if (parsed.dueDateStart !== undefined) {
-      data.dueDateStart = parsed.dueDateStart ? new Date(parsed.dueDateStart) : null;
-    }
-    if (parsed.dueDateEnd !== undefined) {
-      data.dueDateEnd = parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null;
-    }
+    if (parsed.dueDateStart !== undefined) data.dueDateStart = nextDueDateStart;
+    if (parsed.dueDateEnd !== undefined) data.dueDateEnd = nextDueDateEnd;
 
-    const task = await db.task.update({
-      where: { id },
-      data,
-      include: { category: true, subtasks: true },
-    });
+    const task = await db.$transaction(
+      async (tx) => {
+        if (
+          isScheduledForToday({
+            dueDateStart: nextDueDateStart,
+            dueDateEnd: nextDueDateEnd,
+            status: nextStatus,
+            parentTaskId: existing.parentTaskId,
+          })
+        ) {
+          const todayActiveCount = await countActiveTasksForToday(user.id, existing.id, tx);
+          if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
+            throw new Error("TODAY_LIMIT_REACHED");
+          }
+        }
+
+        return tx.task.update({
+          where: { id },
+          data,
+          include: { subtasks: true },
+        });
+      },
+      { isolationLevel: "Serializable" },
+    );
 
     return ok(task);
   } catch (error) {
+    if (error instanceof Error && error.message === "TODAY_LIMIT_REACHED") {
+      return err(
+        "TODAY_LIMIT_REACHED",
+        `На сегодня уже запланировано ${MAX_ACTIVE_TASKS_PER_DAY} активных задач`,
+        400,
+      );
+    }
     return handleUnknownError("update task", error);
   }
 });

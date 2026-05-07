@@ -1,14 +1,28 @@
 "use client";
 
 import { Task, StatsResponse } from "@/shared/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
+import { Badge } from "@/shared/ui/badge";
+import { Card, CardContent } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
-import { Calendar, Plus } from "lucide-react";
-import { format, startOfWeek, addDays, isWithinInterval, parseISO, isSameDay, startOfDay, endOfDay } from "date-fns";
+import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
+import {
+  Archive,
+  CalendarDays,
+  CheckCircle2,
+  Edit2,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { addDays, endOfDay, format, isPast, isSameDay } from "date-fns";
 import { ru } from "date-fns/locale";
+import {
+  getCurrentWeekRange,
+  isTaskScheduledForCurrentWeek,
+  isTaskScheduledForDay,
+} from "@/features/dashboard/lib/task-date-filters";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface WeekViewProps {
   tasks: Task[];
@@ -19,27 +33,24 @@ interface WeekViewProps {
   onDelete?: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
   onSelectDay?: (date: Date) => void;
-  // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
+  onReorder?: (tasks: Task[]) => void;
 }
 
 export function WeekView({
   tasks,
-  stats,
   onEdit,
   onComplete,
   onArchive,
   onDelete,
   onCreateTask,
   onSelectDay,
-  onToggleSubtask,
-  onAddSubtask,
-  onEditSubtask,
-  onDeleteSubtask,
+  onReorder,
 }: WeekViewProps) {
+<<<<<<< HEAD
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
 
@@ -64,191 +75,219 @@ export function WeekView({
     }),
   }));
 
+=======
+  const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+>>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
   const today = new Date();
 
+  const weekTasks = tasks.filter(
+    (task) => task.status === "active" && isTaskScheduledForCurrentWeek(task),
+  );
+
+  const tasksByDay = weekDays.map((day) => ({
+    date: day,
+    tasks: weekTasks.filter((task) => isTaskScheduledForDay(task, day)),
+  }));
+
+  const busyDays = tasksByDay.filter((day) => day.tasks.length > 0).length;
+  const totalTasks = weekTasks.length;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-purple-500" />
-            Неделя
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {format(weekStart, "d MMM", { locale: ru })} — {format(weekEnd, "d MMM yyyy", { locale: ru })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="text-right">
-            <p className="text-sm font-medium">{weekTasks.length} задач</p>
-            <p className="text-xs text-muted-foreground">на этой неделе</p>
+    <div className="space-y-5">
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand/12 via-background to-muted/50 p-5 md:p-6">
+        <div className="absolute -right-16 -top-20 h-44 w-44 rounded-full bg-brand/10 blur-3xl" />
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
+              <CalendarDays className="h-3.5 w-3.5 text-brand" />
+              Недельный фокус
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Эта неделя</h2>
+              <p className="text-sm text-muted-foreground">
+                {format(weekStart, "d MMM", { locale: ru })} — {format(weekEnd, "d MMM yyyy", { locale: ru })}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:flex">
+            <Badge variant="secondary" className="justify-center rounded-full px-3 py-1.5">
+              {totalTasks} задач на неделе
+            </Badge>
+            <Badge variant="outline" className="justify-center rounded-full bg-background/70 px-3 py-1.5">
+              {busyDays} из 7 дней занято
+            </Badge>
           </div>
         </div>
       </div>
 
-      {/* Week Timeline */}
-      <div className="grid grid-cols-7 gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
-        {tasksByDay.map((day) => {
-          const isToday = isSameDay(day.date, today);
-          const dayName = format(day.date, "EEE", { locale: ru });
-          const dayNumber = format(day.date, "d");
-          const hasOverflow = day.tasks.length > 3;
+      <div className="flex snap-x gap-3 overflow-x-auto pb-3">
+        {tasksByDay.map(({ date, tasks: dayTasks }) => {
+          const isToday = isSameDay(date, today);
+          const isDayPast = isPast(endOfDay(date)) && !isToday;
+          const dayLabel = format(date, "EEEE", { locale: ru });
+          const dayNum = format(date, "d");
+          const monthLabel = format(date, "MMM", { locale: ru });
 
           return (
-            <div
-              key={day.date.toISOString()}
-              className="flex flex-col h-full"
+            <Card
+              key={date.toISOString()}
+              className={cn(
+                "min-h-[330px] w-[286px] shrink-0 snap-start overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-lg",
+                isToday && "border-brand/60 ring-2 ring-brand/20",
+                isDayPast && dayTasks.length === 0 && "opacity-60",
+              )}
             >
-              {/* Day Header */}
-              <div 
+              <button
+                type="button"
                 className={cn(
-                  "flex flex-col items-center p-2 rounded-t-lg cursor-pointer transition-colors",
-                  isToday 
-                    ? "bg-emerald-500 text-white" 
-                    : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  "w-full px-4 py-4 text-left transition-colors",
+                  isToday
+                    ? "bg-brand text-brand-foreground"
+                    : "bg-muted/45 hover:bg-muted",
                 )}
-                onClick={() => onSelectDay?.(day.date)}
+                onClick={() => onSelectDay?.(date)}
               >
-                <p className="text-xs font-medium">{dayName}</p>
-                <p className="text-lg font-bold">{dayNumber}</p>
-                {day.tasks.length > 0 && (
-                  <Badge 
-                    variant={isToday ? "secondary" : "outline"} 
-                    className={cn("text-xs mt-1", isToday && "bg-white/20 text-white border-white/30")}
-                  >
-                    {day.tasks.length}
-                  </Badge>
-                )}
-              </div>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold leading-none">{dayNum}</span>
+                      <span className={cn("text-xs uppercase", isToday ? "text-brand-foreground/75" : "text-muted-foreground")}>
+                        {monthLabel}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm font-semibold capitalize">{dayLabel}</p>
+                  </div>
 
-              {/* Tasks Container */}
-              <div className={cn(
-                "flex-1 p-2 space-y-1 min-h-[200px] rounded-b-lg",
-                isToday 
-                  ? "bg-emerald-50 dark:bg-emerald-900/20" 
-                  : "bg-white dark:bg-gray-900"
-              )}>
-                {day.tasks.length > 0 ? (
-                  <>
-                    {day.tasks.slice(0, 3).map((task) => (
+                  <div className="flex flex-col items-end gap-2">
+                    {isToday && (
+                      <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">
+                        сегодня
+                      </span>
+                    )}
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-semibold",
+                        isToday ? "bg-white/20" : "bg-background text-foreground",
+                      )}
+                    >
+                      {dayTasks.length}
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+              <CardContent className="space-y-3 p-3">
+                <Button
+                  variant="outline"
+                  className="h-9 w-full justify-center gap-2 border-dashed text-muted-foreground hover:border-brand hover:text-brand"
+                  onClick={() => onCreateTask?.(date)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Добавить задачу
+                </Button>
+
+                {dayTasks.length > 0 ? (
+                  <SimpleSortableTasksList
+                    tasks={dayTasks}
+                    onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
+                    className="space-y-2"
+                  >
+                    {(task, dragHandle) => {
+                      const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
+
+                      return (
                       <div
-                        key={task.id}
-                        className="group relative"
+                        className="group rounded-2xl border border-border bg-background p-3 shadow-sm transition-colors hover:border-brand/40"
                       >
-                        <div
-                          className={cn(
-                            "p-2 rounded text-xs cursor-pointer transition-all",
-                            "hover:shadow-sm hover:scale-[1.02] border border-transparent hover:border-gray-200 dark:hover:border-gray-700",
-                            task.priority === "high" 
-                              ? "bg-red-50 dark:bg-red-900/20 border-l-2 border-l-red-500" 
-                              : "bg-gray-50 dark:bg-gray-800"
-                          )}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit?.(task);
-                          }}
-                        >
-                          <p className="font-medium line-clamp-2 text-xs">{task.title}</p>
-                          <div className="flex items-center justify-between mt-1">
-                            <Badge variant="outline" className="text-xs h-4 px-1">
-                              E{task.energyLevel}
-                            </Badge>
-                            {task.priority === "high" && (
-                              <span className="text-red-500 text-xs">★</span>
-                            )}
-                          </div>
+                        <div className="flex items-start gap-2">
+                          {dragHandle}
+                          <button
+                            type="button"
+                            className="block min-w-0 flex-1 text-left"
+                            onClick={() => onEdit?.(task)}
+                          >
+                            <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", quadrant.dot)} />
+                            <div className="min-w-0">
+                              <p className="line-clamp-2 text-sm font-semibold leading-snug">
+                                {task.title}
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px]">
+                                  {quadrant.shortTitle}
+                                </Badge>
+                                <Badge variant="outline" className="h-5 rounded-full px-2 text-[11px]">
+                                  энергия {task.energyLevel}
+                                </Badge>
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-brand"
+                            title="Выполнить"
+                            onClick={() => onComplete?.(task)}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-brand"
+                            title="Редактировать"
+                            onClick={() => onEdit?.(task)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-brand"
+                            title="В архив"
+                            onClick={() => onArchive?.(task.id)}
+                          >
+                            <Archive className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            title="Удалить"
+                            onClick={() => onDelete?.(task.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                    ))}
-                    {hasOverflow && (
-                      <div 
-                        className="text-xs text-muted-foreground text-center py-1 cursor-pointer hover:text-foreground"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectDay?.(day.date);
-                        }}
-                      >
-                        +{day.tasks.length - 3} ещё
-                      </div>
-                    )}
-                  </>
+                    )}}
+                  </SimpleSortableTasksList>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    <p className="text-xs">Нет задач</p>
-                  </div>
+                  <button
+                    type="button"
+                    className="flex min-h-[150px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 px-4 text-center transition-colors hover:border-brand/50 hover:bg-brand/5"
+                    onClick={() => onCreateTask?.(date)}
+                  >
+                    <CheckCircle2 className="mb-2 h-6 w-6 text-muted-foreground/50" />
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {isDayPast ? "Нет задач" : "Свободный день"}
+                    </span>
+                    {!isDayPast && (
+                      <span className="mt-1 text-xs text-muted-foreground/70">
+                        Нажмите, чтобы запланировать дело
+                      </span>
+                    )}
+                  </button>
                 )}
-                
-                {/* Quick Add Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full mt-2 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreateTask?.(day.date);
-                  }}
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
-
-      {/* Summary Stats */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Статистика недели</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Всего задач</p>
-              <p className="text-2xl font-bold">{weekTasks.length}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Завтра + далее</p>
-              <p className="text-2xl font-bold">
-                {weekTasks.filter((t) => {
-                  const taskDate = parseISO(t.dueDateStart!);
-                  return taskDate > today;
-                }).length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Среднее энергии</p>
-              <p className="text-2xl font-bold">
-                {weekTasks.length > 0
-                  ? Math.round(
-                      weekTasks.reduce((sum, t) => sum + t.energyLevel, 0) / weekTasks.length
-                    )
-                  : 0}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* All Week Tasks List (optional detailed view) */}
-      {weekTasks.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Все задачи недели</h3>
-          <SortableTasksList
-            tasks={weekTasks}
-            onEdit={onEdit || (() => {})}
-            onComplete={onComplete || (() => {})}
-            onArchive={onArchive || (() => {})}
-            onDelete={onDelete || (() => {})}
-            onReorder={() => {}}
-            onAddSubtask={onAddSubtask}
-            onToggleSubtask={onToggleSubtask}
-            onEditSubtask={onEditSubtask}
-            onDeleteSubtask={onDeleteSubtask}
-          />
-        </div>
-      )}
     </div>
   );
 }

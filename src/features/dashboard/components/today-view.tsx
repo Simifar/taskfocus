@@ -1,12 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { Task, StatsResponse } from "@/shared/types";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Progress } from "@/shared/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { EnergyStatus } from "./energy-status";
+import { FocusModeDialog } from "./focus-mode-dialog";
 import {
   CheckCircle2,
   Calendar,
@@ -15,6 +25,8 @@ import {
   TrendingUp,
   Plus,
   Sparkles,
+  Timer,
+  Play,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -41,14 +53,14 @@ interface TodayViewProps {
 }
 
 const MOTIVATIONAL_QUOTES = [
-  "Every small step counts! 🎯",
-  "You've got this! 💪",
-  "One task at a time 🎯",
-  "Progress over perfection 📈",
-  "You're doing great! ✨",
-  "Break it into smaller pieces 🧩",
-  "Focus on what matters 🎯",
-  "You're closer than you think 🚀",
+  "Каждый маленький шаг имеет значение! 🎯",
+  "У тебя всё получится! 💪",
+  "Одна задача за раз 🎯",
+  "Прогресс важнее совершенства 📈",
+  "Ты отлично справляешься! ✨",
+  "Разбей на более мелкие части 🧩",
+  "Сконцентрируйся на главном 🎯",
+  "Ты ближе, чем думаешь 🚀",
 ];
 
 function getToday() {
@@ -79,6 +91,14 @@ export function TodayView({
   onDeleteSubtask,
   isLoading = false,
 }: TodayViewProps) {
+<<<<<<< HEAD
+=======
+  const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+  const [focusModeOpen, setFocusModeOpen] = useState(false);
+  const [focusSessionKey, setFocusSessionKey] = useState(0);
+
+  // Filter tasks for today
+>>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
   const todayTasks = tasks.filter((task) => {
     if (task.status !== "active" && task.status !== "completed") return false;
     if (!task.dueDateStart && !task.dueDateEnd) return false;
@@ -114,38 +134,42 @@ export function TodayView({
     ? (completedTasks.length / todayTasks.length) * 100 
     : 0;
   const hasTasksButFiltered = currentEnergy !== null && activeTasks.length === 0 && filteredTasks.length > 0;
+  const selectedFocusTask = activeTasks.find((task) => task.id === focusTaskId) ?? activeTasks[0] ?? null;
+
+  const handleOpenFocusMode = () => {
+    setFocusSessionKey((key) => key + 1);
+    setFocusModeOpen(true);
+  };
 
   const handleReorder = (reorderedActiveTasks: Task[]) => {
-    const reorderedMap = new Map(reorderedActiveTasks.map((t, i) => [t.id, i]));
-    const sorted = tasks.slice().sort((a, b) => {
-      const aIdx = reorderedMap.get(a.id);
-      const bIdx = reorderedMap.get(b.id);
-      if (aIdx !== undefined && bIdx !== undefined) return aIdx - bIdx;
-      if (aIdx !== undefined) return -1;
-      if (bIdx !== undefined) return 1;
-      return 0;
-    });
-    onReorder?.(sorted);
+    onReorder?.(mergeReorderedTasks(tasks, reorderedActiveTasks));
   };
 
   return (
+<<<<<<< HEAD
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="p-8 max-w-6xl mx-auto space-y-8">
         {/* Шапка */}
         <div className="flex items-end justify-between gap-6">
+=======
+    <div className="min-h-full -m-4 md:-m-8">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-5 md:space-y-8">
+        {/* Header with date and add button */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+>>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Calendar className="h-7 w-7 text-emerald-600" />
-              <h1 className="text-4xl font-bold">На сегодня</h1>
+              <Calendar className="h-6 w-6 md:h-8 md:w-8 text-brand" />
+              <h1 className="text-headline">На сегодня</h1>
             </div>
-            <p className="text-muted-foreground text-lg capitalize">{getToday()}</p>
+            <p className="text-body-large text-muted-foreground capitalize">{getToday()}</p>
           </div>
           <Button
             onClick={onAddTask}
-            disabled={isLoading}
-            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg h-12 px-6 text-base font-semibold"
+            disabled={isLoading || !canAddMore}
+            className="bg-brand hover:bg-brand/90 text-brand-foreground shadow-md hover:shadow-lg transition-all duration-200 rounded-lg h-10 px-4 text-sm font-semibold sm:h-12 sm:px-6 sm:text-base w-full sm:w-auto"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Добавить задачу
           </Button>
         </div>
@@ -161,42 +185,96 @@ export function TodayView({
 
         {/* Активные задачи */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-                <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 shrink-0">
+                <Zap className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 dark:text-yellow-500" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Фокус на сегодня</h2>
-                <p className="text-sm text-muted-foreground">Активные задачи, требующие вашего внимания</p>
+                <h2 className="text-title">Фокус на сегодня</h2>
+                <p className="text-caption">Активные задачи</p>
               </div>
             </div>
-            <Badge className="h-8 px-3 text-sm font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-              {activeTasks.length}/{maxActive} задач
-            </Badge>
+            <div className="flex items-center gap-2">
+              {completedTasks.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onShowCompletedChange(!showCompleted)}
+                  className="h-8 px-2 md:px-3 text-xs font-medium gap-1 border-brand/30 text-brand hover:bg-brand/10"
+                >
+                  <CheckCircle2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <span className="hidden sm:inline">{showCompleted ? "Скрыть" : "Выполненные"} </span>
+                  ({completedTasks.length})
+                </Button>
+              )}
+              {activeTasks.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenFocusMode}
+                  className="h-8 px-2 md:px-3 text-xs font-medium gap-1 border-brand/30 text-brand hover:bg-brand/10"
+                >
+                  <Timer className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <span className="hidden sm:inline">Фокус</span>
+                </Button>
+              )}
+              <Badge className="h-8 px-2 md:px-3 text-xs md:text-sm font-semibold bg-muted text-muted-foreground border border-border">
+                {activeTasks.length}/{maxActive}
+              </Badge>
+            </div>
           </div>
 
-          <Card className="border-2 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-4 bg-gradient-to-r from-yellow-50 to-transparent dark:from-yellow-900/10 dark:to-transparent border-b border-slate-200 dark:border-slate-700">
+          <Card className="border shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-4 border-b border-border">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">
                   {activeTasks.length < maxActive
                     ? `Осталось ${maxActive - activeTasks.length} слотов`
                     : `Максимум достигнут! Завершите одну задачу для добавления нового`}
                 </p>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all"
                     style={{ width: `${(activeTasks.length / maxActive) * 100}%` }}
                   />
                 </div>
+                {activeTasks.length > 0 && (
+                  <div className="grid gap-3 rounded-lg border border-brand/20 bg-brand/5 p-3 md:grid-cols-[1fr_auto] md:items-end">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-brand">
+                        <Timer className="h-4 w-4" />
+                        Фокус-режим
+                      </div>
+                      <Select value={selectedFocusTask?.id} onValueChange={setFocusTaskId}>
+                        <SelectTrigger className="w-full bg-background">
+                          <SelectValue placeholder="Выберите задачу для фокуса" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeTasks.map((task) => (
+                            <SelectItem key={task.id} value={task.id}>
+                              {task.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      onClick={handleOpenFocusMode}
+                      className="h-10 gap-2 bg-brand text-brand-foreground hover:bg-brand/90"
+                    >
+                      <Play className="h-4 w-4" />
+                      Начать
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="pt-6">
               {activeTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
-                    <CheckCircle2 className="h-8 w-8 text-slate-400" />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+                    <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
                   </div>
                   <p className="text-base text-muted-foreground mb-1 font-medium">
                     {hasTasksButFiltered
@@ -229,6 +307,7 @@ export function TodayView({
           </Card>
         </div>
 
+<<<<<<< HEAD
         {/* Переключатель выполненных */}
         {completedTasks.length > 0 && (
           <div className="space-y-3">
@@ -251,27 +330,30 @@ export function TodayView({
         )}
 
         {/* Выполненные задачи */}
+=======
+        {/* Completed Tasks Section */}
+>>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
         {completedTasks.length > 0 && showCompleted && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-brand/10 shrink-0">
+                <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-brand" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Завершено</h2>
-                <p className="text-sm text-muted-foreground">Отличная работа! Вы закончили {completedTasks.length} задач(и)</p>
+                <h2 className="text-title">Завершено</h2>
+                <p className="text-caption">Завершено {completedTasks.length} задач</p>
               </div>
             </div>
 
-            <Card className="border-2 border-emerald-200 dark:border-emerald-800/50 shadow-sm bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-900/10 dark:to-transparent">
+            <Card className="border border-brand/20 shadow-sm">
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   {completedTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-emerald-100/50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors group"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-brand/5 hover:bg-brand/10 transition-colors group"
                     >
-                      <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-500 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand flex-shrink-0" />
                       <span className="text-sm line-through text-muted-foreground flex-1 font-medium">
                         {task.title}
                       </span>
@@ -279,7 +361,7 @@ export function TodayView({
                         variant="ghost"
                         size="sm"
                         onClick={() => onComplete(task)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600 hover:text-emerald-700"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-brand hover:text-brand/80"
                       >
                         Вернуть
                       </Button>
@@ -293,24 +375,24 @@ export function TodayView({
 
         {/* Прогресс */}
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-              <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-500" />
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-muted shrink-0">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Прогресс</h2>
-              <p className="text-sm text-muted-foreground">Ваше достижение за сегодня</p>
+              <h2 className="text-title">Прогресс</h2>
+              <p className="text-caption">Ваше достижение за сегодня</p>
             </div>
           </div>
 
-          <Card className="border-2 border-blue-200 dark:border-blue-800/50 shadow-sm bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent">
+          <Card className="border shadow-sm">
             <CardContent className="pt-8">
               <div className="space-y-6">
                 {/* Прогресс-бар */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold">Завершено задач</span>
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <span className="text-2xl font-bold text-brand">
                       {completedTasks.length}/{todayTasks.length}
                     </span>
                   </div>
@@ -322,9 +404,15 @@ export function TodayView({
                   </p>
                 </div>
 
+<<<<<<< HEAD
                 {/* Мотивационная цитата */}
                 <div className="bg-blue-100/50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200/50 dark:border-blue-800/30">
                   <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+=======
+                {/* Motivational message */}
+                <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+>>>>>>> 5514de732cdfd0be41a83efef66e3b3a3a83618b
                     <Sparkles className="h-5 w-5 flex-shrink-0" />
                     <p className="text-sm font-medium italic">
                       {getMotivationalQuote()}
@@ -336,6 +424,13 @@ export function TodayView({
           </Card>
         </div>
       </div>
+      <FocusModeDialog
+        key={focusSessionKey}
+        open={focusModeOpen}
+        task={selectedFocusTask}
+        onOpenChange={setFocusModeOpen}
+        onComplete={onComplete}
+      />
     </div>
   );
 }

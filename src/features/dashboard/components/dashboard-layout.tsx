@@ -1,237 +1,105 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { addDays } from "date-fns";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Menu, Brain } from "lucide-react";
 
 import type { Task } from "@/shared/types";
-import { ApiError } from "@/shared/lib/fetcher";
+import { Button } from "@/shared/ui/button";
 import { useCurrentUser, useLogout } from "@/features/auth/hooks";
 import { useStats } from "@/features/stats/hooks";
-import {
-  useCreateSubtask,
-  useDeleteTask,
-  useReorderTasks,
-  useTasks,
-  useToggleComplete,
-  useUpdateTask,
-} from "@/features/tasks/hooks";
+import { useTasks } from "@/features/tasks/hooks";
+import type { TasksQuery } from "@/features/tasks/api";
 import { useDashboardStore, useSelectedDate } from "@/features/dashboard/store";
+import { useDashboardActions } from "@/features/dashboard/hooks/use-dashboard-actions";
 
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { TodayView } from "./today-view";
 import { InboxView } from "./inbox-view";
 import { WeekView } from "./week-view";
 import { CalendarView } from "./calendar-view";
+import { EisenhowerMatrixView } from "./eisenhower-matrix-view";
 import { DayView } from "./day-view";
+import { ArchiveView } from "./archive-view";
 import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
 import { EditTaskDialog } from "@/features/tasks/components/edit-task-dialog";
 
-function reportError(err: unknown, fallback: string) {
-  const message = err instanceof ApiError ? err.message : fallback;
-  toast.error(message);
-}
-
 export function DashboardLayout() {
   const router = useRouter();
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading: isAuthLoading, isError: isAuthError } = useCurrentUser();
   const logout = useLogout();
 
   const currentView = useDashboardStore((s) => s.currentView);
-  const currentCategoryId = useDashboardStore((s) => s.currentCategoryId);
   const currentEnergy = useDashboardStore((s) => s.currentEnergy);
   const showCompleted = useDashboardStore((s) => s.showCompleted);
   const setEnergy = useDashboardStore((s) => s.setEnergy);
   const setShowCompleted = useDashboardStore((s) => s.setShowCompleted);
   const setView = useDashboardStore((s) => s.setView);
   const selectedDate = useSelectedDate();
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
-  const tasksQuery = useTasks({ categoryId: currentCategoryId });
+  const tasksQueryInput = useMemo<TasksQuery>(() => {
+    const selectedDateIso = selectedDate?.toISOString();
+
+    if (currentView === "today") return { view: "today" };
+    if (currentView === "inbox") return { view: "inbox" };
+    if (currentView === "week") return { view: "week" };
+    if (currentView === "calendar") return { view: "calendar", date: calendarMonth.toISOString() };
+    if (currentView === "day") return { view: "day", date: selectedDateIso };
+    if (currentView === "archive") return { view: "archive" };
+    if (currentView === "matrix") return { status: "active" };
+
+    return {};
+  }, [calendarMonth, currentView, selectedDate]);
+
+  const tasksQuery = useTasks(tasksQueryInput);
   const statsQuery = useStats();
-
-  const updateTask = useUpdateTask();
-  const deleteTask = useDeleteTask();
-  const toggleComplete = useToggleComplete();
-  const createSubtask = useCreateSubtask();
-  const reorderTasks = useReorderTasks();
+  const {
+    handleAddSubtask,
+    handleArchiveTask,
+    handleAssignToToday,
+    handleAssignToWeek,
+    handleBatchArchive,
+    handleBatchAssignToToday,
+    handleBatchAssignToWeek,
+    handleBatchDelete,
+    handleDeleteSubtask,
+    handleDeleteTask,
+    handleReorder,
+    handleRestoreTask,
+    handleToggleCompleteTask,
+    handleToggleSubtask,
+  } = useDashboardActions();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dayReturnView, setDayReturnView] = useState<"today" | "week" | "calendar">("today");
+
+  // Wait for auth to finish loading before deciding to redirect
+  useEffect(() => {
+    if (!isAuthLoading && (isAuthError || !user)) router.push("/");
+  }, [user, isAuthLoading, isAuthError, router]);
 
   useEffect(() => {
-    if (!user) router.push("/");
-  }, [user, router]);
+    if (tasksQuery.isError) {
+      toast.error("Не удалось загрузить задачи. Обновите страницу.");
+    }
+  }, [tasksQuery.isError]);
 
   const tasks = tasksQuery.data?.items ?? [];
   const stats = statsQuery.data ?? null;
-  const isLoading = tasksQuery.isLoading;
+  const isLoading = isAuthLoading || tasksQuery.isLoading;
 
   const handleLogout = async () => {
     try {
       await logout.mutateAsync();
-      toast.success("Logged out");
+      toast.success("Вы вышли из аккаунта");
       router.push("/");
-    } catch (err) {
-      reportError(err, "Logout failed");
-    }
-  };
-
-  const handleToggleCompleteTask = async (task: Task) => {
-    try {
-      await toggleComplete.mutateAsync({
-        id: task.id,
-        completed: task.status !== "completed",
-      });
-      toast.success(
-        task.status === "completed" ? "Task moved back" : "Task completed! ✨",
-      );
-    } catch (err) {
-      reportError(err, "Failed to update task");
-    }
-  };
-
-  const handleArchiveTask = async (taskId: string) => {
-    try {
-      await updateTask.mutateAsync({ id: taskId, input: { status: "archived" } });
-      toast.success("Task archived");
-    } catch (err) {
-      reportError(err, "Failed to archive");
-    }
-  };
-
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      await deleteTask.mutateAsync(taskId);
-      toast.success("Task deleted");
-    } catch (err) {
-      reportError(err, "Failed to delete");
-    }
-  };
-
-  const handleAssignToToday = async (taskId: string) => {
-    try {
-      const today = new Date();
-      await updateTask.mutateAsync({
-        id: taskId,
-        input: {
-          dueDateStart: today.toISOString(),
-          dueDateEnd: today.toISOString(),
-        },
-      });
-      toast.success("Задача назначена на сегодня");
-    } catch (err) {
-      reportError(err, "Ошибка назначения задачи");
-    }
-  };
-
-  const handleAssignToWeek = async (taskId: string) => {
-    try {
-      const today = new Date();
-      const weekEnd = addDays(today, 7);
-      await updateTask.mutateAsync({
-        id: taskId,
-        input: {
-          dueDateStart: today.toISOString(),
-          dueDateEnd: weekEnd.toISOString(),
-        },
-      });
-      toast.success("Задача назначена на неделю");
-    } catch (err) {
-      reportError(err, "Ошибка назначения задачи");
-    }
-  };
-
-  const handleToggleSubtask = async (subtask: Task) => {
-    try {
-      await toggleComplete.mutateAsync({
-        id: subtask.id,
-        completed: subtask.status !== "completed",
-      });
-      toast.success(
-        subtask.status === "completed" ? "Subtask moved back" : "Subtask completed! ✨",
-      );
-    } catch (err) {
-      reportError(err, "Failed to update subtask");
-    }
-  };
-
-  const handleAddSubtask = async (parentId: string, title: string) => {
-    try {
-      await createSubtask.mutateAsync({ parentId, title });
-      toast.success("Subtask added!");
-    } catch (err) {
-      reportError(err, "Failed to add subtask");
-    }
-  };
-
-  const handleDeleteSubtask = async (subtaskId: string) => {
-    try {
-      await deleteTask.mutateAsync(subtaskId);
-      toast.success("Subtask deleted");
-    } catch (err) {
-      reportError(err, "Failed to delete subtask");
-    }
-  };
-
-  const handleBatchArchive = async (taskIds: string[]) => {
-    try {
-      await Promise.all(
-        taskIds.map(id => updateTask.mutateAsync({ id, input: { status: "archived" } }))
-      );
-      toast.success(`${taskIds.length} задач отправлено в архив`);
-    } catch (err) {
-      reportError(err, "Ошибка архивации задач");
-    }
-  };
-
-  const handleBatchDelete = async (taskIds: string[]) => {
-    try {
-      await Promise.all(
-        taskIds.map(id => deleteTask.mutateAsync(id))
-      );
-      toast.success(`${taskIds.length} задач удалено`);
-    } catch (err) {
-      reportError(err, "Ошибка удаления задач");
-    }
-  };
-
-  const handleBatchAssignToToday = async (taskIds: string[]) => {
-    try {
-      const today = new Date();
-      await Promise.all(
-        taskIds.map(id => updateTask.mutateAsync({
-          id,
-          input: {
-            dueDateStart: today.toISOString(),
-            dueDateEnd: today.toISOString(),
-          },
-        }))
-      );
-      toast.success(`${taskIds.length} задач назначено на сегодня`);
-    } catch (err) {
-      reportError(err, "Ошибка назначения задач");
-    }
-  };
-
-  const handleBatchAssignToWeek = async (taskIds: string[]) => {
-    try {
-      const today = new Date();
-      const weekEnd = addDays(today, 7);
-      await Promise.all(
-        taskIds.map(id => updateTask.mutateAsync({
-          id,
-          input: {
-            dueDateStart: today.toISOString(),
-            dueDateEnd: weekEnd.toISOString(),
-          },
-        }))
-      );
-      toast.success(`${taskIds.length} задач назначено на неделю`);
-    } catch (err) {
-      reportError(err, "Ошибка назначения задач");
+    } catch {
+      toast.error("Не удалось выйти из аккаунта");
     }
   };
 
@@ -241,21 +109,16 @@ export function DashboardLayout() {
   };
 
   const handleSelectDay = (date: Date) => {
-    setView("day", undefined, date);
+    if (currentView === "week" || currentView === "calendar") {
+      setDayReturnView(currentView);
+    } else {
+      setDayReturnView("today");
+    }
+    setView("day", date);
   };
 
   const handleBackFromDay = () => {
-    setView("today");
-  };
-
-  const handleReorder = async (reordered: Task[]) => {
-    try {
-      await reorderTasks.mutateAsync({
-        items: reordered.map((task, index) => ({ id: task.id, position: index })),
-      });
-    } catch (err) {
-      reportError(err, "Не удалось сохранить порядок");
-    }
+    setView(dayReturnView);
   };
 
   const handleAddTask = () => {
@@ -269,25 +132,51 @@ export function DashboardLayout() {
     setCreateDialogOpen(true);
   };
 
-  if (isLoading) {
+  // Show spinner while auth or data is loading, and while redirecting on auth failure
+  if (isLoading || isAuthError || !user) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950">
+    <div className="flex h-screen bg-background overflow-hidden">
+      {/* backdrop — always in DOM, transitions opacity so it syncs with sidebar slide */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       <DashboardSidebar
         user={user ?? null}
         stats={stats}
         tasks={tasks}
         onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-auto p-6 md:p-8">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className="md:hidden flex items-center gap-3 p-4 border-b border-border shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-brand rounded-lg">
+              <Brain className="h-4 w-4 text-brand-foreground" />
+            </div>
+            <span className="font-bold text-base">TaskFocus</span>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 md:p-8">
           {currentView === "today" && (
             <TodayView
               tasks={tasks}
@@ -325,6 +214,7 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onReorder={handleReorder}
               onBatchArchive={handleBatchArchive}
               onBatchDelete={handleBatchDelete}
               onBatchAssignToToday={handleBatchAssignToToday}
@@ -346,6 +236,7 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onReorder={handleReorder}
             />
           )}
 
@@ -353,6 +244,8 @@ export function DashboardLayout() {
             <CalendarView
               tasks={tasks}
               stats={stats}
+              currentMonth={calendarMonth}
+              onMonthChange={setCalendarMonth}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
@@ -363,6 +256,21 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onReorder={handleReorder}
+            />
+          )}
+
+          {currentView === "matrix" && (
+            <EisenhowerMatrixView
+              tasks={tasks}
+              onEdit={setEditingTask}
+              onArchive={handleArchiveTask}
+              onComplete={handleToggleCompleteTask}
+              onDelete={handleDeleteTask}
+              onAddTask={handleAddTask}
+              onAssignToToday={handleAssignToToday}
+              onAssignToWeek={handleAssignToWeek}
+              onReorder={handleReorder}
             />
           )}
 
@@ -381,19 +289,35 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onReorder={handleReorder}
+            />
+          )}
+
+          {currentView === "archive" && (
+            <ArchiveView
+              tasks={tasks}
+              isLoading={tasksQuery.isLoading}
+              stats={stats}
+              onRestore={handleRestoreTask}
+              onDelete={handleDeleteTask}
+              onReorder={handleReorder}
             />
           )}
         </div>
       </div>
 
       <CreateTaskDialog
+        key={
+          createDialogOpen
+            ? `${preSelectedDate?.toISOString() ?? "no-date"}:${currentEnergy ?? "no-energy"}`
+            : "closed"
+        }
         open={createDialogOpen}
         onOpenChange={(open) => {
           if (!open) setPreSelectedDate(undefined);
           setCreateDialogOpen(open);
         }}
         preSelectedDate={preSelectedDate}
-        currentCategoryId={currentCategoryId}
         defaultEnergy={currentEnergy}
       />
       {editingTask && (

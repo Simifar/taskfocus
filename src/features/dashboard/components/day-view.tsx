@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { ChevronLeft, Calendar, Loader2 } from "lucide-react";
-import { format, parseISO, isSameDay } from "date-fns";
+import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { isTaskScheduledForDay } from "@/features/dashboard/lib/task-date-filters";
 
 interface DayViewProps {
   tasks: Task[];
@@ -19,6 +21,7 @@ interface DayViewProps {
   onArchive?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
   onAddTask?: () => void;
+  onReorder?: (tasks: Task[]) => void;
   // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
@@ -36,15 +39,14 @@ export function DayView({
   onArchive,
   onDelete,
   onAddTask,
+  onReorder,
   onToggleSubtask,
   onAddSubtask,
   onEditSubtask,
   onDeleteSubtask,
 }: DayViewProps) {
   const dayTasks = tasks.filter((task) => {
-    if (!task.dueDateStart) return false;
-    const taskDate = parseISO(task.dueDateStart);
-    return isSameDay(taskDate, selectedDate) && task.status !== "archived";
+    return task.status !== "archived" && isTaskScheduledForDay(task, selectedDate);
   });
 
   const activeTasks = dayTasks.filter((t) => t.status === "active");
@@ -72,7 +74,7 @@ export function DayView({
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-blue-500" />
+            <Calendar className="h-6 w-6 text-brand" />
             {dayName}
           </h2>
         </div>
@@ -124,9 +126,9 @@ export function DayView({
                   {completedTasks.length}/{dayTasks.length} ({completionRate}%)
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className="bg-emerald-500 h-2 rounded-full transition-all"
+                  className="bg-brand h-2 rounded-full transition-all"
                   style={{ width: `${completionRate}%` }}
                 />
               </div>
@@ -150,7 +152,7 @@ export function DayView({
             onComplete={onComplete || (() => {})}
             onArchive={onArchive || (() => {})}
             onDelete={onDelete || (() => {})}
-            onReorder={() => {}}
+            onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
             onToggleSubtask={onToggleSubtask}
             onAddSubtask={onAddSubtask}
             onEditSubtask={onEditSubtask}
@@ -181,7 +183,7 @@ export function DayView({
             onComplete={onComplete || (() => {})}
             onArchive={onArchive || (() => {})}
             onDelete={onDelete || (() => {})}
-            onReorder={() => {}}
+            onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
             onToggleSubtask={onToggleSubtask}
             onAddSubtask={onAddSubtask}
             onEditSubtask={onEditSubtask}

@@ -1,48 +1,86 @@
 # TaskFocus
 
-Task manager designed for ADHD users: energy-based prioritisation (1–5), soft deadlines (date ranges), and a hard cap of 5 active tasks per day to avoid overload.
+TaskFocus - дипломный full-stack проект: веб-приложение для планирования задач с учетом когнитивной нагрузки пользователя. Приложение помогает ограничивать фокус, выбирать задачи по уровню энергии и работать с мягкими дедлайнами вместо жестких дат.
 
-Built with Next.js 16, TypeScript, Prisma, PostgreSQL, TanStack Query and shadcn/ui.
+## Идея проекта
 
-## Getting started
+Обычные таск-менеджеры часто показывают пользователю длинный список задач и усиливают перегрузку. TaskFocus предлагает более щадящую модель:
+
+- не больше `5` активных задач на сегодня;
+- уровень энергии задачи от `1` до `5`;
+- мягкий дедлайн как диапазон дат;
+- входящие задачи без даты;
+- подзадачи для декомпозиции крупных дел;
+- календарь, неделя, день, архив и статистика;
+- русскоязычный интерфейс без i18n-слоя.
+
+## Стек
+
+| Слой | Технологии |
+|---|---|
+| Frontend | Next.js 16 App Router, React 19, TypeScript |
+| UI | Tailwind CSS v4, shadcn/ui, Radix UI, lucide-react |
+| Server state | TanStack Query |
+| UI state | Zustand |
+| Backend | Next.js Route Handlers |
+| Database | PostgreSQL / Neon |
+| ORM | Prisma |
+| Auth | Custom JWT auth + NextAuth Google OAuth |
+
+## Основные возможности
+
+- Регистрация и вход по email/password.
+- Вход через Google OAuth.
+- Создание, редактирование, выполнение, архивирование и удаление задач.
+- Подзадачи с отдельным статусом выполнения.
+- Приоритеты `low | medium | high`.
+- Уровни энергии `1..5`.
+- Мягкие дедлайны `dueDateStart` / `dueDateEnd`.
+- Ограничение количества активных задач на сегодня.
+- Представления: сегодня, входящие, неделя, календарь, день, архив.
+- Профиль пользователя и статистика.
+
+## Быстрый запуск
 
 ```bash
-bun install
-cp .env.example .env        # fill in DATABASE_URL and JWT_SECRET
-bun run db:migrate          # apply migrations
-bun run db:seed              # (optional) seed demo data
-bun run dev
+npm install
+cp .env.example .env
+npm run db:generate
+npm run db:push
+npm run db:seed
+npm run dev
 ```
 
-Open http://localhost:3000.
+После запуска приложение доступно по адресу `http://localhost:3000`.
 
-## Environment
+Демо-пользователь после `npm run db:seed`:
 
-| Variable      | Example                                                      |
-|---------------|--------------------------------------------------------------|
-| `DATABASE_URL`| `postgresql://user:pass@host/db?sslmode=require`             |
-| `JWT_SECRET`  | Any 32+ char random string                                   |
+```text
+email: demo@taskfocus.app
+password: demo1234
+```
 
-For production, use Neon (recommended) or Vercel Postgres — both are serverless Postgres and integrate with Vercel in one click.
+## Скрипты
 
-## Scripts
+| Команда | Назначение |
+|---|---|
+| `npm run dev` | Запуск dev-сервера |
+| `npm run build` | Production-сборка |
+| `npm run start` | Запуск production-сервера |
+| `npm run lint` | Проверка ESLint |
+| `npm run db:generate` | Генерация Prisma Client |
+| `npm run db:push` | Синхронизация схемы с БД |
+| `npm run db:migrate` | Dev-миграции Prisma |
+| `npm run db:reset` | Сброс БД |
+| `npm run db:seed` | Демо-данные |
 
-| Script              | Description                          |
-|---------------------|--------------------------------------|
-| `bun run dev`       | Next.js dev server on port 3000      |
-| `bun run build`     | Production build                     |
-| `bun run start`     | Serve the build                      |
-| `bun run lint`      | ESLint                               |
-| `bun run db:generate`| Prisma client                       |
-| `bun run db:migrate`| Apply migrations (dev)               |
-| `bun run db:push`   | Push schema without a migration      |
-| `bun run db:seed`   | Seed demo data                       |
-| `bun run db:reset`  | Drop & recreate the schema           |
+## Документация
 
-## Documentation
+- [Локальная настройка](docs/SETUP.md)
+- [Архитектура](docs/ARCHITECTURE.md)
+- [Контекст дипломной работы](docs/THESIS.md)
+- [План GitHub Releases](docs/RELEASES.md)
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system design.
+## Статус
 
-## License
-
-Diploma thesis project.
+Проект находится в стадии активной доработки в рамках дипломной работы.

@@ -35,11 +35,20 @@ import {
   BatteryLow,
   BatteryFull,
   Plus,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { TaskWithSubtasks } from "./task-with-subtasks";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 
 // Обёртка для TaskWithSubtasks с поддержкой drag & drop
 function SortableTaskWithSubtasks({
@@ -58,7 +67,7 @@ function SortableTaskWithSubtasks({
   task: Task;
   subtasks: Task[];
   onToggleSubtask: (subtask: Task) => void;
-  onAddSubtask: (parentId: string, title: string) => void;
+  onAddSubtask: (parentId: string, title: string) => Promise<void> | void;
   onEditTask: (task: Task) => void;
   onEditSubtask: (subtask: Task) => void;
   onDeleteSubtask: (subtaskId: string) => void;
@@ -103,7 +112,7 @@ interface SortableTaskItemProps {
   onArchive: (taskId: string) => void;
   onComplete: (task: Task) => void;
   onDelete: (taskId: string) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onOpenSubtaskDialog?: (task: Task) => void;
   isDragging?: boolean;
 }
@@ -141,50 +150,35 @@ function SortableTaskItem({
     return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-      case "low":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-      default:
-        return "";
-    }
-  };
+  const quadrantMeta = EISENHOWER_META[getEisenhowerQuadrant(task)];
 
   return (
     <div ref={setNodeRef} style={style}>
       <Card className={cn(
-        "transition-all hover:shadow-md border-l-4 border-l-slate-300 dark:border-l-slate-600",
-        task.priority === "high" && "border-l-red-500",
-        task.priority === "medium" && "border-l-yellow-500",
-        task.priority === "low" && "border-l-green-500",
-        task.status === "completed" && "opacity-60 bg-slate-50 dark:bg-slate-900/50",
-        isSortableDragging && "shadow-lg ring-2 ring-blue-400"
+        "transition-all hover:shadow-md border-l-4 border-l-border",
+        quadrantMeta.border,
+        task.status === "completed" && "opacity-60 bg-muted/40",
+        isSortableDragging && "shadow-lg ring-2 ring-brand/50"
       )}>
         <CardContent className="p-4">
           {/* Main Row */}
           <div className="flex items-start gap-3">
             {/* Drag Handle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="cursor-grab active:cursor-grabbing flex-shrink-0 mt-1"
+            <button
+              className="cursor-grab active:cursor-grabbing flex-shrink-0 mt-1 h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent touch-manipulation"
               {...attributes}
               {...listeners}
             >
               <GripVertical className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            </button>
 
             {/* Complete Button */}
             <Button
               variant="ghost"
               size="icon"
               className={cn(
-                "flex-shrink-0 mt-0.5",
-                task.status === "completed" ? "text-emerald-600 hover:text-emerald-700" : "text-muted-foreground hover:text-emerald-600"
+                "flex-shrink-0 h-9 w-9",
+                task.status === "completed" ? "text-brand hover:text-brand/80" : "text-muted-foreground hover:text-brand"
               )}
               onClick={() => onComplete(task)}
             >
@@ -198,7 +192,7 @@ function SortableTaskItem({
             {/* Task Content */}
             <div className="flex-1 min-w-0">
               <h3 className={cn(
-                "font-semibold text-base leading-tight",
+                "text-body-large font-semibold leading-tight",
                 task.status === "completed" && "line-through text-muted-foreground"
               )}>
                 {task.title}
@@ -214,15 +208,11 @@ function SortableTaskItem({
                   {getEnergyIcon(task.energyLevel)}
                   <span className="text-xs font-semibold">{task.energyLevel}</span>
                 </Badge>
-                <Badge variant="secondary" className={cn("text-xs font-semibold", getPriorityColor(task.priority))}>
-                  {task.priority === "high"
-                    ? "⚡ Высокий"
-                    : task.priority === "medium"
-                    ? "→ Средний"
-                    : "✓ Низкий"}
+                <Badge variant="outline" className={cn("text-xs font-semibold", quadrantMeta.badge)}>
+                  {quadrantMeta.action}
                 </Badge>
                 {task.subtasks && task.subtasks.length > 0 && (
-                  <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 text-xs font-semibold gap-1">
+                  <Badge variant="secondary" className="bg-brand/15 text-brand text-xs font-semibold gap-1">
                     📋 {task.subtasks.filter(s => s.status === "completed").length}/{task.subtasks.length}
                   </Badge>
                 )}
@@ -230,48 +220,40 @@ function SortableTaskItem({
             </div>
 
             {/* Actions */}
-            {task.status === "active" && (
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {onAddSubtask && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      onOpenSubtaskDialog?.(task);
-                    }}
-                    title="Добавить подзадачу"
-                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                  >
-                    <Plus className="h-4 w-4" />
+            <div className="flex-shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => onEdit(task)}
-                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onArchive(task.id)}
-                  title="В архив"
-                  className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <Archive className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(task.id)}
-              className="text-destructive/70 hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {task.status === "active" && (
+                    <>
+                      {onAddSubtask && (
+                        <DropdownMenuItem onClick={() => onOpenSubtaskDialog?.(task)}>
+                          <Plus className="h-4 w-4" />
+                          Добавить подзадачу
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => onEdit(task)}>
+                        <Edit2 className="h-4 w-4" />
+                        Редактировать
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onArchive(task.id)}>
+                        <Archive className="h-4 w-4" />
+                        В архив
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem variant="destructive" onClick={() => onDelete(task.id)}>
+                    <Trash2 className="h-4 w-4" />
+                    Удалить
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -288,7 +270,7 @@ interface SortableTasksListProps {
   onReorder?: (tasks: Task[]) => void;
   // Подзадачи
   onToggleSubtask?: (subtask: Task) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onEditTask?: (task: Task) => void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
@@ -317,7 +299,9 @@ export function SortableTasksList({
   }, []);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -411,11 +395,7 @@ export function SortableTasksList({
           onOpenChange={setSubtaskDialogOpen}
           parentTaskId={parentTaskForSubtask!.id}
           parentTaskTitle={parentTaskForSubtask!.title}
-          onSubmit={(parentId, title) => {
-            if (onAddSubtask) {
-              onAddSubtask(parentId, title);
-            }
-          }}
+          onSubmit={(parentId, title) => onAddSubtask?.(parentId, title)}
         />
       )}
     </>
