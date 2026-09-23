@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Pause, Play, RotateCcw, Timer, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,20 +14,13 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 import { Progress } from "@/shared/ui/progress";
-
-const FOCUS_DURATION_SECONDS = 25 * 60;
+import { FOCUS_DURATION_SECONDS, formatFocusTime, getFocusProgress } from "@/features/dashboard/lib/focus";
 
 interface FocusModeDialogProps {
   open: boolean;
   task: Task | null;
   onOpenChange: (open: boolean) => void;
   onComplete: (task: Task) => void;
-}
-
-function formatTime(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
 
 export function FocusModeDialog({
@@ -60,9 +53,7 @@ export function FocusModeDialog({
     return () => window.clearInterval(intervalId);
   }, [isRunning, open]);
 
-  const progress = useMemo(() => {
-    return ((FOCUS_DURATION_SECONDS - remainingSeconds) / FOCUS_DURATION_SECONDS) * 100;
-  }, [remainingSeconds]);
+  const progress = getFocusProgress(remainingSeconds);
 
   const handleReset = () => {
     setRemainingSeconds(FOCUS_DURATION_SECONDS);
@@ -123,7 +114,7 @@ export function FocusModeDialog({
 
             <div className="space-y-4">
               <div className="text-center text-6xl font-bold tabular-nums tracking-normal">
-                {formatTime(remainingSeconds)}
+                {formatFocusTime(remainingSeconds)}
               </div>
               <Progress value={progress} className="h-3" />
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">

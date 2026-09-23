@@ -2,8 +2,8 @@ import { db } from "@/server/db";
 import { ok, withAuth } from "@/server/api";
 import {
   getCurrentWeekDateRange,
-  getDateBounds,
   getRequestTimeZone,
+  getTimeZoneDateBounds,
   scheduledBetweenWhere,
 } from "@/server/tasks/date-policy";
 import { getTodayDateOnly } from "@/shared/lib/dates/date-only";
@@ -11,11 +11,11 @@ import { getTodayDateOnly } from "@/shared/lib/dates/date-only";
 export const GET = withAuth(async (request, { user }) => {
   const timeZone = getRequestTimeZone(request);
   const todayDate = getTodayDateOnly(new Date(), timeZone);
-  const today = getDateBounds(todayDate);
+  const today = getTimeZoneDateBounds(todayDate, timeZone);
   const weekDates = getCurrentWeekDateRange(new Date(), timeZone);
   const week = {
-    start: getDateBounds(weekDates.start).start,
-    end: getDateBounds(weekDates.end).end,
+    start: getTimeZoneDateBounds(weekDates.start, timeZone).start,
+    end: getTimeZoneDateBounds(weekDates.end, timeZone).end,
   };
 
   // Single groupBy query replaces 3 separate count queries.

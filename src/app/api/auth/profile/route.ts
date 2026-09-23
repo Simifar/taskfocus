@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { db } from "@/server/db";
 import { handleUnknownError, ok, withAuth } from "@/server/api";
+import { normaliseDisplayName } from "@/server/auth-policy";
 
 const updateProfileSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
+  name: z.string().max(100).nullable().optional(),
 });
 
 export const PATCH = withAuth(async (request, { user }) => {
@@ -14,7 +15,7 @@ export const PATCH = withAuth(async (request, { user }) => {
     const updated = await db.user.update({
       where: { id: user.id },
       data: {
-        name: parsed.name,
+        name: normaliseDisplayName(parsed.name),
       },
       select: {
         id: true,

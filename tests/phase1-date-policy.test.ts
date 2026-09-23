@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { toDateOnly } from "../src/shared/lib/dates/date-only";
-import { getRequestTimeZone, parseDateQuery } from "../src/server/tasks/date-policy";
+import { getRequestTimeZone, getTimeZoneDateBounds, parseDateQuery } from "../src/server/tasks/date-policy";
 import {
   canAddToToday,
   classifyInboxTask,
@@ -105,4 +105,14 @@ test("falls back to today for an invalid date query", () => {
     parseDateQuery("2026-02-30", new Date("2026-09-23T12:00:00.000Z")),
     "2026-09-23",
   );
+});
+
+test("builds completed-at bounds in the requested timezone", () => {
+  const yekaterinburg = getTimeZoneDateBounds("2026-09-23", "Asia/Yekaterinburg");
+  assert.equal(yekaterinburg.start.toISOString(), "2026-09-22T19:00:00.000Z");
+  assert.equal(yekaterinburg.end.toISOString(), "2026-09-23T18:59:59.999Z");
+
+  const losAngeles = getTimeZoneDateBounds("2026-09-23", "America/Los_Angeles");
+  assert.equal(losAngeles.start.toISOString(), "2026-09-23T07:00:00.000Z");
+  assert.equal(losAngeles.end.toISOString(), "2026-09-24T06:59:59.999Z");
 });
