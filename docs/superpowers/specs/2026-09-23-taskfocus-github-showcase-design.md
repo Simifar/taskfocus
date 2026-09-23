@@ -6,11 +6,11 @@ Make the public TaskFocus repository clear, trustworthy, visually polished, and 
 
 ## Audience and success criteria
 
-The repository serves three audiences: people evaluating the product, developers who want to run or contribute to it, and readers reviewing it as an academic project. A first-time visitor should quickly understand what TaskFocus does, what is implemented, how the system is structured, how to start it locally, and where to find project and security guidance.
+The README is the main deliverable. The repository serves people evaluating the product, developers who want to run or contribute to it, and readers reviewing it as an academic project. Supporting files should help the README feel trustworthy and complete without turning the repository into a paperwork-heavy project.
 
 The repository is successful when:
 
-- the first screen of the README identifies the product, language, status, license, and documentation languages;
+- the first screen of the README identifies the product, shows its visual identity, and provides a clear path to the Russian and English descriptions;
 - English and Russian project descriptions remain equivalent and describe the current application accurately;
 - setup instructions can be followed from a clean clone without undocumented prerequisites;
 - architecture, security, contribution, release, and support guidance agree with the code and each other;
@@ -32,6 +32,8 @@ The repository is successful when:
 - Do not describe the historical draft release notes as published GitHub Releases unless the tags and releases are verified.
 
 ## Repository presentation
+
+Prioritize work in this order: first the README and real product screenshots; second only the docs, GitHub templates, CI, and metadata that make the README claims easy to trust and the project easy to try. Keep secondary materials concise and avoid adding ceremonial files without a practical reader benefit.
 
 ### README files
 
