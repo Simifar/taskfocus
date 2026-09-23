@@ -131,7 +131,7 @@ Task data is stored in the PostgreSQL database configured by the operator; this 
 
 Email/password sign-in is available. Google sign-in appears only when its OAuth credentials are configured. Password recovery pages are informational placeholders: password reset and email delivery are not implemented. The interface is Russian-only, and shared workspaces/team features are not part of the current application.
 
-See [`SECURITY.md`](SECURITY.md) for vulnerability reporting and [`SUPPORT.md`](SUPPORT.md) for project support routes.
+See [`SECURITY.md`](SECURITY.md) for the current vulnerability-reporting instructions and [`SUPPORT.md`](SUPPORT.md) for project support routes.
 
 ## Documentation
 
