@@ -56,8 +56,8 @@
   --font-size-label: clamp(0.75rem, 1.5vw, 0.875rem);
   
   /* Enhanced contrast */
-  --text-muted-foreground: rgb(var(--foreground) / 0.7);
-  --text-muted: rgb(var(--foreground) / 0.6);
+  --text-muted-foreground: color-mix(in oklch, var(--foreground) 70%, transparent);
+  --text-muted: color-mix(in oklch, var(--foreground) 60%, transparent);
 }
 
 :root {
@@ -224,7 +224,7 @@
 /* Base styles */
 * {
   border-color: var(--border);
-  outline-color: rgb(var(--ring) / 0.5);
+  outline-color: color-mix(in oklch, var(--ring) 50%, transparent);
 }
 
 body {
@@ -235,7 +235,7 @@ body {
 @layer base {
   /* Heading hierarchy — inside @layer base so Tailwind utilities can override */
   h1 {
-    font-size: var(--font-size-display);
+    font-size: var(--font-size-title);
     font-weight: 700;
     line-height: 1;
     letter-spacing: -0.025em;
@@ -243,14 +243,14 @@ body {
   }
 
   h2 {
-    font-size: var(--font-size-headline);
+    font-size: var(--font-size-subtitle);
     font-weight: 700;
     line-height: 1;
     color: var(--foreground);
   }
 
   h3 {
-    font-size: var(--font-size-title);
+    font-size: var(--font-size-body-large);
     font-weight: 600;
     line-height: 1;
     color: var(--foreground);
@@ -293,4 +293,23 @@ body {
   li:last-child {
     margin-bottom: 0;
   }
+}
+
+html,
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }

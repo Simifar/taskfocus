@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Menu, Brain } from "lucide-react";
@@ -78,7 +78,13 @@ export function DashboardLayout() {
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [dayReturnView, setDayReturnView] = useState<"today" | "week" | "calendar">("today");
+
+  const handleSidebarClose = useCallback(() => {
+    setSidebarOpen(false);
+    requestAnimationFrame(() => menuButtonRef.current?.focus());
+  }, []);
 
   // Wait for auth to finish loading before deciding to redirect
   useEffect(() => {
@@ -148,7 +154,8 @@ export function DashboardLayout() {
       {/* backdrop — always in DOM, transitions opacity so it syncs with sidebar slide */}
       <div
         className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+        onClick={handleSidebarClose}
       />
 
       <DashboardSidebar
@@ -157,16 +164,20 @@ export function DashboardLayout() {
         tasks={tasks}
         onLogout={handleLogout}
         isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        onClose={handleSidebarClose}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <div className="md:hidden flex items-center gap-3 p-4 border-b border-border shrink-0">
           <Button
+            ref={menuButtonRef}
             variant="ghost"
             size="icon"
             className="h-10 w-10"
             onClick={() => setSidebarOpen(true)}
+            aria-expanded={sidebarOpen}
+            aria-controls="dashboard-navigation"
+            aria-label="Открыть навигацию"
           >
             <Menu className="h-5 w-5" />
           </Button>
