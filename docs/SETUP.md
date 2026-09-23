@@ -32,7 +32,6 @@ npm run dev
 | Переменная | Обязательна | Назначение |
 |---|---:|---|
 | `DATABASE_URL` | Да | PostgreSQL / Neon connection string |
-| `JWT_SECRET` | Да | Секрет custom JWT для email/password входа |
 | `NEXTAUTH_SECRET` | Да | Секрет NextAuth |
 | `NEXTAUTH_URL` | Да | Базовый URL приложения |
 | `GOOGLE_CLIENT_ID` | Для Google OAuth | Google OAuth Client ID |
@@ -42,7 +41,6 @@ npm run dev
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
-JWT_SECRET="replace-with-a-random-string-at-least-32-chars"
 NEXTAUTH_SECRET="replace-with-a-second-random-string-at-least-32-chars"
 NEXTAUTH_URL="http://localhost:3000"
 GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
@@ -92,6 +90,11 @@ npm run build
 ```
 
 `npm run build` также выполняет `prisma generate`.
+
+## Дизайн миграции
+
+Целевая модель timezone/date-only/archivedAt описана в
+[`docs/PHASE4-MIGRATION-DESIGN.md`](PHASE4-MIGRATION-DESIGN.md). Документ является планом и не означает, что migration уже применена.
 
 ## Частые проблемы
 

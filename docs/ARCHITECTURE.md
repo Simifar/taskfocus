@@ -54,7 +54,8 @@ docs/              проектная и дипломная документац
 Приложение использует Next.js App Router, но основной dashboard работает как интерактивное client-heavy приложение:
 
 - `src/app/layout.tsx` остается серверным layout;
-- `src/app/page.tsx` является client component, потому что выбирает между auth page и dashboard по текущему пользователю;
+- `src/app/page.tsx` выполняет server-side проверку NextAuth session и защищает dashboard;
+- `src/app/login/page.tsx` является public client route для login/register;
 - dashboard получает данные через TanStack Query и `/api/*`;
 - API route handlers выполняют серверную валидацию, авторизацию и работу с БД.
 
@@ -66,16 +67,15 @@ Backend реализован через Next.js Route Handlers:
 
 | Endpoint | Назначение |
 |---|---|
-| `/api/auth/login` | Вход по email/password |
 | `/api/auth/register` | Регистрация |
-| `/api/auth/logout` | Очистка custom auth cookie |
 | `/api/auth/me` | Текущий пользователь |
 | `/api/auth/profile` | Обновление профиля |
 | `/api/auth/account` | Удаление аккаунта |
-| `/api/auth/[...nextauth]` | Google OAuth через NextAuth |
+| `/api/auth/[...nextauth]` | Credentials и Google OAuth через NextAuth |
 | `/api/tasks` | Список и создание задач |
 | `/api/tasks/[id]` | Получение, обновление, удаление задачи |
 | `/api/tasks/reorder` | Сохранение порядка задач |
+| `/api/tasks/batch` | Атомарные batch archive/delete/date operations |
 | `/api/subtasks` | Создание подзадачи |
 | `/api/stats` | Статистика dashboard |
 
@@ -97,19 +97,7 @@ type ApiEnvelope<T> =
 
 ## Авторизация
 
-В проекте поддерживаются два способа входа:
-
-1. Email/password:
-   - пароль хешируется через `bcryptjs`;
-   - сервер выпускает JWT через `jose`;
-   - токен хранится в httpOnly cookie `auth-token`.
-
-2. Google OAuth:
-   - используется `next-auth`;
-   - данные OAuth-аккаунта хранятся через Prisma Adapter;
-   - session strategy: `jwt`.
-
-`getCurrentUser()` сначала проверяет NextAuth session, затем custom JWT cookie. Это позволяет поддерживать оба сценария, но увеличивает сложность logout/delete-account flow.
+Email/password и Google OAuth используют один NextAuth session source с `jwt` session strategy. Пароли проверяются через Credentials provider и `bcryptjs`, OAuth accounts хранятся через Prisma Adapter. `getCurrentUser()` получает user id из NextAuth session и затем проверяет пользователя в Prisma.
 
 ## Модель данных
 
@@ -159,14 +147,14 @@ TanStack Query используется для кэширования, invalidat
 
 В проекте реализованы:
 
-- httpOnly cookie для custom JWT;
+- httpOnly cookie lifecycle NextAuth;
 - server-side authorization в API handlers;
 - rate limiting для login/register;
 - security headers в `next.config.ts`;
 - CSP, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`;
 - Prisma-запросы с фильтрацией по `userId`.
 
-Важно: защищенность страниц сейчас реализована клиентской проверкой текущего пользователя. API защищен серверно, поэтому данные не отдаются без авторизации. Для production-hardening можно добавить middleware/proxy-level защиту страниц.
+Главная dashboard page и profile page проверяются на сервере, а API дополнительно защищён `withAuth(...)`.
 
 ## Инфраструктура
 
@@ -183,7 +171,7 @@ TanStack Query используется для кэширования, invalidat
 
 - Dashboard actions вынесены в отдельный hook, но `dashboard-layout.tsx` все еще отвечает за композицию всех представлений.
 - Некоторые UI-компоненты крупные и требуют декомпозиции.
-- Auth flow смешивает custom JWT и NextAuth, что требует аккуратного сопровождения.
+- Migration design для новых date-only полей ещё не применён к базе.
 - Нет автоматических unit/e2e тестов.
 - ESLint настроен мягко и часть правил отключена.
 

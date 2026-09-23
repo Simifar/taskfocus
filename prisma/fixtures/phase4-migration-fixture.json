@@ -1,0 +1,53 @@
+{
+  "sourceTimeZone": "UTC",
+  "users": [
+    {
+      "id": "user-fixture-1",
+      "timezone": null
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-no-dates",
+      "status": "active",
+      "dueDateStart": null,
+      "dueDateEnd": null,
+      "energyLevel": 3
+    },
+    {
+      "id": "task-start-only",
+      "status": "active",
+      "dueDateStart": "2026-09-23T00:00:00.000Z",
+      "dueDateEnd": null,
+      "energyLevel": 2
+    },
+    {
+      "id": "task-full-range",
+      "status": "active",
+      "dueDateStart": "2026-09-23T00:00:00.000Z",
+      "dueDateEnd": "2026-09-25T00:00:00.000Z",
+      "energyLevel": 4
+    },
+    {
+      "id": "task-end-only-quarantine",
+      "status": "active",
+      "dueDateStart": null,
+      "dueDateEnd": "2026-09-25T00:00:00.000Z",
+      "energyLevel": 3
+    },
+    {
+      "id": "task-archived-no-history",
+      "status": "archived",
+      "dueDateStart": null,
+      "dueDateEnd": null,
+      "energyLevel": 3
+    },
+    {
+      "id": "task-invalid-energy",
+      "status": "active",
+      "dueDateStart": null,
+      "dueDateEnd": null,
+      "energyLevel": 8
+    }
+  ]
+}
