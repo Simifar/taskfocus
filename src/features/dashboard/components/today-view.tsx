@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Task, StatsResponse } from "@/shared/types";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import { Calendar, CheckCircle2, Plus, Timer } from "lucide-react";
+
+import type { StatsResponse, Task } from "@/shared/types";
+import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Badge } from "@/shared/ui/badge";
-import { Progress } from "@/shared/ui/progress";
 import {
   Select,
   SelectContent,
@@ -13,28 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/select";
-import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
-import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
-import { EnergyStatus } from "./energy-status";
-import { FocusModeDialog } from "./focus-mode-dialog";
-import {
-  CheckCircle2,
-  Calendar,
-  Clock,
-  Zap,
-  TrendingUp,
-  Plus,
-  Sparkles,
-  Timer,
-  Play,
-} from "lucide-react";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 import { isTaskScheduledForDay } from "@/features/dashboard/lib/task-date-filters";
+import { getTodayTaskRecommendation } from "@/features/dashboard/lib/today";
+import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
+import { TaskRow } from "@/features/tasks/components/task-row";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
+
+import { FocusModeDialog } from "./focus-mode-dialog";
 
 interface TodayViewProps {
   tasks: Task[];
-  stats: StatsResponse | null;
+  stats?: StatsResponse | null;
   currentEnergy: number | null;
   onEnergyChange: (level: number | null) => void;
   onEdit: (task: Task) => void;
@@ -45,7 +37,6 @@ interface TodayViewProps {
   onReorder?: (tasks: Task[]) => void;
   showCompleted: boolean;
   onShowCompletedChange: (show: boolean) => void;
-  // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
@@ -54,29 +45,14 @@ interface TodayViewProps {
   isLoading?: boolean;
 }
 
-const MOTIVATIONAL_QUOTES = [
-  "Каждый маленький шаг имеет значение! 🎯",
-  "У тебя всё получится! 💪",
-  "Одна задача за раз 🎯",
-  "Прогресс важнее совершенства 📈",
-  "Ты отлично справляешься! ✨",
-  "Разбей на более мелкие части 🧩",
-  "Сконцентрируйся на главном 🎯",
-  "Ты ближе, чем думаешь 🚀",
-];
+const MAX_ACTIVE_TASKS_PER_DAY = 5;
 
 function getToday() {
-  const today = new Date();
-  return format(today, "EEEE, MMMM d", { locale: ru });
-}
-
-function getMotivationalQuote() {
-  return MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+  return format(new Date(), "EEEE, MMMM d", { locale: ru });
 }
 
 export function TodayView({
   tasks,
-  stats,
   currentEnergy,
   onEnergyChange,
   onEdit,
@@ -97,35 +73,31 @@ export function TodayView({
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [focusModeOpen, setFocusModeOpen] = useState(false);
   const [focusSessionKey, setFocusSessionKey] = useState(0);
+  const today = new Date();
 
-  // Filter tasks for today
   const todayTasks = tasks.filter(
     (task) =>
+      !task.parentTaskId &&
       (task.status === "active" || task.status === "completed") &&
-      isTaskScheduledForDay(task, new Date()),
+      isTaskScheduledForDay(task, today),
   );
   const todayActiveTasks = todayTasks.filter((task) => task.status === "active");
-  const todayCompletedTasks = todayTasks.filter((task) => task.status === "completed");
+  const completedTasks = todayTasks.filter((task) => task.status === "completed");
+  const activeTasks = currentEnergy === null
+    ? todayActiveTasks
+    : todayActiveTasks.filter((task) => task.energyLevel <= currentEnergy);
+  const recommendation = getTodayTaskRecommendation(activeTasks, today, currentEnergy);
+  const remainingActiveTasks = recommendation
+    ? activeTasks.filter((task) => task.id !== recommendation.id)
+    : activeTasks;
 
-  // Apply energy filter
-  const filteredTasks = currentEnergy
-    ? todayTasks.filter((t) => t.energyLevel <= currentEnergy)
-    : todayTasks;
-
-  // Separate completed and active
-  const activeTasks = filteredTasks.filter((t) => t.status === "active");
-  const completedTasks = filteredTasks.filter((t) => t.status === "completed");
-
-  const maxActive = 5;
   const activeTodayCount = todayActiveCount ?? todayActiveTasks.length;
-  const canAddMore = activeTodayCount < maxActive;
-  const progressPercent = todayTasks.length > 0
-    ? (todayCompletedTasks.length / todayTasks.length) * 100
-    : 0;
-  const hasTasksButFiltered = currentEnergy !== null && activeTasks.length === 0 && filteredTasks.length > 0;
-  const selectedFocusTask = activeTasks.find((task) => task.id === focusTaskId) ?? activeTasks[0] ?? null;
+  const canAddMore = activeTodayCount < MAX_ACTIVE_TASKS_PER_DAY;
+  const hasTasksButFiltered = currentEnergy !== null && todayActiveTasks.length > 0 && activeTasks.length === 0;
+  const selectedFocusTask = activeTasks.find((task) => task.id === focusTaskId) ?? recommendation ?? activeTasks[0] ?? null;
 
   const handleOpenFocusMode = () => {
+    if (!selectedFocusTask) return;
     setFocusSessionKey((key) => key + 1);
     setFocusModeOpen(true);
   };
@@ -136,46 +108,91 @@ export function TodayView({
 
   return (
     <div className="min-h-full">
-      <div className="max-w-6xl mx-auto space-y-5 md:space-y-8">
-        {/* Header with date and add button */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Calendar className="h-6 w-6 md:h-8 md:w-8 text-brand" />
-              <h1 className="text-headline">На сегодня</h1>
+      <div className="mx-auto max-w-5xl space-y-6">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-6 w-6 shrink-0 text-brand" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-medium capitalize text-muted-foreground">{getToday()}</p>
+                <h1 className="text-headline">Сегодня</h1>
+              </div>
             </div>
-            <p className="text-body-large text-muted-foreground capitalize">{getToday()}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {activeTodayCount} активных задач из {MAX_ACTIVE_TASKS_PER_DAY} доступных слотов
+            </p>
           </div>
           <Button
             onClick={onAddTask}
             disabled={isLoading || !canAddMore}
-            className="bg-brand hover:bg-brand/90 text-brand-foreground shadow-md hover:shadow-lg transition-all duration-200 rounded-lg h-10 px-4 text-sm font-semibold sm:h-12 sm:px-6 sm:text-base w-full sm:w-auto"
+            className="w-full rounded-lg bg-brand px-4 text-brand-foreground hover:bg-brand/90 sm:w-auto"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Добавить задачу
           </Button>
+        </header>
+
+        <div className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium">Показать задачи по ёмкости</p>
+            <p className="text-xs text-muted-foreground">Фильтр меняет только этот список, не лимит дня</p>
+          </div>
+          <Select
+            value={currentEnergy === null ? "all" : String(currentEnergy)}
+            onValueChange={(value) => onEnergyChange(value === "all" ? null : Number(value))}
+            disabled={isLoading}
+          >
+            <SelectTrigger className="w-full sm:w-48" aria-label="Фильтр по энергии">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все уровни</SelectItem>
+              <SelectItem value="1">Энергия до 1</SelectItem>
+              <SelectItem value="2">Энергия до 2</SelectItem>
+              <SelectItem value="3">Энергия до 3</SelectItem>
+              <SelectItem value="4">Энергия до 4</SelectItem>
+              <SelectItem value="5">Энергия до 5</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Energy Status */}
-        <div>
-          <EnergyStatus
-            currentEnergy={currentEnergy}
-            onEnergyChange={onEnergyChange}
-            isLoading={isLoading}
-          />
-        </div>
-
-        {/* Active Tasks Section */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 shrink-0">
-                <Zap className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 dark:text-yellow-500" />
-              </div>
+        {recommendation && (
+          <Card className="border-brand/30 bg-brand/5">
+            <CardHeader className="gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-title">Фокус на сегодня</h2>
-                <p className="text-caption">Активные задачи</p>
+                <CardTitle className="text-title">Следующая задача</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">Выбрана по дате, ёмкости и порядку</p>
               </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">Рекомендовано</Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenFocusMode}
+                  className="gap-1.5"
+                >
+                  <Timer className="h-3.5 w-3.5" />
+                  Фокус
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <TaskRow
+                task={recommendation}
+                onComplete={onComplete}
+                onEdit={onEdit}
+                onArchive={onArchive}
+                onDelete={onDelete}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        <section aria-labelledby="today-tasks-title" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 id="today-tasks-title" className="text-title">Остальные задачи</h2>
+              <p className="text-sm text-muted-foreground">Активные задачи на сегодня</p>
             </div>
             <div className="flex items-center gap-2">
               {completedTasks.length > 0 && (
@@ -183,198 +200,74 @@ export function TodayView({
                   variant="outline"
                   size="sm"
                   onClick={() => onShowCompletedChange(!showCompleted)}
-                  className="h-8 px-2 md:px-3 text-xs font-medium gap-1 border-brand/30 text-brand hover:bg-brand/10"
+                  className="gap-1.5"
                 >
-                  <CheckCircle2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  <span className="hidden sm:inline">{showCompleted ? "Скрыть" : "Выполненные"} </span>
-                  ({completedTasks.length})
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {showCompleted ? "Скрыть" : "Выполненные"} ({completedTasks.length})
                 </Button>
               )}
-              {activeTasks.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleOpenFocusMode}
-                  className="h-8 px-2 md:px-3 text-xs font-medium gap-1 border-brand/30 text-brand hover:bg-brand/10"
-                >
-                  <Timer className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                  <span className="hidden sm:inline">Фокус</span>
-                </Button>
-              )}
-              <Badge className="h-8 px-2 md:px-3 text-xs md:text-sm font-semibold bg-muted text-muted-foreground border border-border">
-                {activeTodayCount}/{maxActive}
-              </Badge>
+              <Badge variant="outline">{activeTodayCount}/{MAX_ACTIVE_TASKS_PER_DAY}</Badge>
             </div>
           </div>
 
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-4 border-b border-border">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">
-                  {activeTasks.length < maxActive
-                    ? `Осталось ${maxActive - activeTasks.length} слотов`
-                    : `Максимум достигнут! Завершите одну задачу для добавления нового`}
-                </p>
-                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all"
-                    style={{ width: `${(activeTodayCount / maxActive) * 100}%` }}
-                  />
-                </div>
-                {activeTasks.length > 0 && (
-                  <div className="grid gap-3 rounded-lg border border-brand/20 bg-brand/5 p-3 md:grid-cols-[1fr_auto] md:items-end">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-brand">
-                        <Timer className="h-4 w-4" />
-                        Фокус-режим
-                      </div>
-                      <Select value={selectedFocusTask?.id} onValueChange={setFocusTaskId}>
-                        <SelectTrigger className="w-full bg-background">
-                          <SelectValue placeholder="Выберите задачу для фокуса" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {activeTasks.map((task) => (
-                            <SelectItem key={task.id} value={task.id}>
-                              {task.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button
-                      onClick={handleOpenFocusMode}
-                      className="h-10 gap-2 bg-brand text-brand-foreground hover:bg-brand/90"
-                    >
-                      <Play className="h-4 w-4" />
-                      Начать
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {activeTasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-                    <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <p className="text-base text-muted-foreground mb-1 font-medium">
-                    {hasTasksButFiltered
-                      ? "Нет задач для выбранного уровня энергии"
-                      : "Нет активных задач на сегодня"}
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {hasTasksButFiltered
-                      ? "Попробуйте увеличить уровень энергии или сбросить фильтр"
-                      : "Нажмите кнопку выше, чтобы создать новую задачу"}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <SortableTasksList
-                    tasks={activeTasks}
-                    onEdit={onEdit}
-                    onArchive={onArchive}
-                    onComplete={onComplete}
-                    onDelete={onDelete}
-                    onReorder={handleReorder}
-                    onToggleSubtask={onToggleSubtask}
-                    onAddSubtask={onAddSubtask}
-                    onEditSubtask={onEditSubtask}
-                    onDeleteSubtask={onDeleteSubtask}
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Completed Tasks Section */}
-        {completedTasks.length > 0 && showCompleted && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-brand/10 shrink-0">
-                <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-brand" />
-              </div>
-              <div>
-                <h2 className="text-title">Завершено</h2>
-                <p className="text-caption">Завершено {completedTasks.length} задач</p>
-              </div>
-            </div>
-
-            <Card className="border border-brand/20 shadow-sm">
-              <CardContent className="pt-6">
-                <div className="space-y-2">
-                  {completedTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-brand/5 hover:bg-brand/10 transition-colors group"
-                    >
-                      <CheckCircle2 className="h-5 w-5 text-brand flex-shrink-0" />
-                      <span className="text-sm line-through text-muted-foreground flex-1 font-medium">
-                        {task.title}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onComplete(task)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-brand hover:text-brand/80"
-                      >
-                        Вернуть
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+          {hasTasksButFiltered ? (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="font-medium">Нет задач для выбранной ёмкости</p>
+                <p className="mt-1 text-sm text-muted-foreground">Выберите более высокий уровень или сбросьте фильтр.</p>
               </CardContent>
             </Card>
-          </div>
-        )}
+          ) : todayActiveTasks.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <CheckCircle2 className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden="true" />
+                <p className="mt-3 font-medium">На сегодня активных задач нет</p>
+                <p className="mt-1 text-sm text-muted-foreground">Добавьте задачу, чтобы начать день.</p>
+              </CardContent>
+            </Card>
+          ) : remainingActiveTasks.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                Все подходящие активные задачи показаны выше.
+              </CardContent>
+            </Card>
+          ) : (
+            <SortableTasksList
+              tasks={remainingActiveTasks}
+              onEdit={onEdit}
+              onArchive={onArchive}
+              onComplete={onComplete}
+              onDelete={onDelete}
+              onReorder={handleReorder}
+              onToggleSubtask={onToggleSubtask}
+              onAddSubtask={onAddSubtask}
+              onEditSubtask={onEditSubtask}
+              onDeleteSubtask={onDeleteSubtask}
+            />
+          )}
+        </section>
 
-        {/* Progress Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-muted shrink-0">
-              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-            </div>
+        {completedTasks.length > 0 && showCompleted && (
+          <section aria-labelledby="completed-tasks-title" className="space-y-3">
             <div>
-              <h2 className="text-title">Прогресс</h2>
-              <p className="text-caption">Ваше достижение за сегодня</p>
+              <h2 id="completed-tasks-title" className="text-title">Выполненные</h2>
+              <p className="text-sm text-muted-foreground">Завершённые задачи остаются свернутыми по умолчанию.</p>
             </div>
-          </div>
-
-          <Card className="border shadow-sm">
-            <CardContent className="pt-8">
-              <div className="space-y-6">
-                {/* Progress bar with stats */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold">Завершено задач</span>
-                    <span className="text-2xl font-bold text-brand">
-                      {todayCompletedTasks.length}/{todayTasks.length}
-                    </span>
-                  </div>
-                  <Progress value={progressPercent} className="h-3 rounded-full" />
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    {todayTasks.length === 0
-                      ? "Начните с добавления первой задачи"
-                      : `${Math.round(progressPercent)}% завершено`}
-                  </p>
-                </div>
-
-                {/* Motivational message */}
-                <div className="bg-muted/50 rounded-lg p-4 border border-border">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Sparkles className="h-5 w-5 flex-shrink-0" />
-                    <p className="text-sm font-medium italic">
-                      {getMotivationalQuote()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="space-y-2">
+              {completedTasks.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  onComplete={onComplete}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
+
       <FocusModeDialog
         key={focusSessionKey}
         open={focusModeOpen}

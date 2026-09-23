@@ -55,7 +55,10 @@ function getTaskDateRange(task: Task, timeZone = getBrowserTimeZone()) {
   }
 }
 
-export function isTaskScheduledForDay(task: Task, day: Date) {
+export function isTaskScheduledForDay(
+  task: Pick<Task, "dueDateStart" | "dueDateEnd">,
+  day: Date,
+) {
   const timeZone = getBrowserTimeZone();
   try {
     return isScheduledForDate(task, day, timeZone);
