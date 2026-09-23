@@ -5,14 +5,14 @@
 ## Требования
 
 - Node.js 20+;
-- npm;
+- npm (основной package manager; `package-lock.json` является единственным lock-файлом);
 - PostgreSQL или Neon PostgreSQL;
 - Google OAuth Client ID, если нужен вход через Google.
 
 ## Установка
 
 ```bash
-npm install
+npm ci
 cp .env.example .env
 ```
 
@@ -86,10 +86,24 @@ password: demo1234
 
 ```bash
 npm run lint
+npm run typecheck
+npm test
 npm run build
 ```
 
 `npm run build` также выполняет `prisma generate`.
+
+Сокращённая локальная проверка без production build:
+
+```bash
+npm run check
+```
+
+## Vercel
+
+Для Vercel задайте `DATABASE_URL`, `NEXTAUTH_SECRET` и `NEXTAUTH_URL`. Для Google OAuth дополнительно задайте `GOOGLE_CLIENT_ID` и `GOOGLE_CLIENT_SECRET`. Build command — `npm run build`.
+
+Vercel не должен выполнять `prisma db:push`, `prisma migrate reset` или непроверенные миграции. Изменение production schema выполняется отдельным review-процессом после проверки backup и rollback plan.
 
 ## Дизайн миграции
 

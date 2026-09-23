@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 
@@ -11,6 +12,8 @@ export default function ProfileError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     console.error(
       JSON.stringify({
@@ -52,7 +55,7 @@ export default function ProfileError({
           <Button
             variant="outline"
             className="gap-2"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => router.push("/")}
           >
             <ArrowLeft className="h-4 w-4" />
             К задачам

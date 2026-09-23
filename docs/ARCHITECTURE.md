@@ -121,6 +121,8 @@ Email/password и Google OAuth используют один NextAuth session so
 | `position` | Ручная сортировка |
 | `completedAt` | Дата выполнения |
 
+В текущей схеме нет `archivedAt`; архив не показывает `updatedAt` как дату архива, чтобы не выдавать неверную семантику. Целевое поле и безопасный rollout описаны в [дизайне Phase 4](PHASE4-MIGRATION-DESIGN.md).
+
 ## Бизнес-правила
 
 Основные правила вынесены в серверный код:
@@ -142,6 +144,10 @@ Email/password и Google OAuth используют один NextAuth session so
 | UI state | Zustand | текущий раздел dashboard, фильтры, сортировка |
 
 TanStack Query используется для кэширования, invalidation и optimistic updates. Zustand хранит локальные настройки интерфейса и частично сохраняет их в `localStorage`.
+
+## Проверки
+
+Основной локальный gate состоит из `npm run lint`, `npm run typecheck`, `npm test` и `npm run build`. В репозитории есть domain/unit tests для date policy, auth policy, task service, plan views, Inbox capture, Today recommendation и focus timer. Автоматического E2E/browser harness пока нет; authenticated mobile verification требует доступной тестовой PostgreSQL database и browser session.
 
 ## Безопасность
 
@@ -171,15 +177,14 @@ TanStack Query используется для кэширования, invalidat
 
 - Dashboard actions вынесены в отдельный hook, но `dashboard-layout.tsx` все еще отвечает за композицию всех представлений.
 - Некоторые UI-компоненты крупные и требуют декомпозиции.
-- Migration design для новых date-only полей ещё не применён к базе.
-- Нет автоматических unit/e2e тестов.
+- Migration design для новых date-only полей и `archivedAt` ещё не применён к базе.
+- Unit/domain tests есть, но автоматического E2E/browser harness пока нет.
 - ESLint настроен мягко и часть правил отключена.
 
 ## Рекомендуемые следующие шаги
 
-1. Разделить `inbox-view.tsx` на quick add, filters, batch toolbar, task card и empty state.
-2. Разделить `sortable-tasks-list.tsx` на draggable wrapper, task card и subtask dialog integration.
-3. Добавить unit-тесты для `task-scheduling`.
-4. Добавить e2e smoke-тесты для auth и task CRUD.
-5. Постепенно ужесточать ESLint.
-6. Рассмотреть server-side защиту страниц через middleware/proxy.
+1. Подготовить и отдельно согласовать migration для date-only полей и `archivedAt`.
+2. Добавить E2E smoke-тесты для auth, task CRUD и mobile dashboard.
+3. Разделить `sortable-tasks-list.tsx` на draggable wrapper, task row и subtask integration.
+4. Постепенно ужесточать ESLint.
+5. Рассмотреть server-side защиту страниц через middleware/proxy.
