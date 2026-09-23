@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useLogin, useRegister } from "@/features/auth/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
@@ -38,6 +38,7 @@ function describeOAuthError(code: string | null): string | null {
 }
 
 export function AuthPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +62,7 @@ export function AuthPage() {
     try {
       await login.mutateAsync({ email: loginEmail, password: loginPassword });
       toast.success("Добро пожаловать!");
+      router.replace("/");
     } catch (err) {
       setError(describe(err, "Ошибка соединения"));
     }
@@ -74,11 +76,10 @@ export function AuthPage() {
         email: registerEmail,
         username: registerUsername,
         password: registerPassword,
+        name: registerName,
       });
-      if (registerName.trim()) {
-        // best-effort post-register name update is handled in Profile page
-      }
       toast.success("Аккаунт создан! Добро пожаловать!");
+      router.replace("/");
     } catch (err) {
       setError(describe(err, "Ошибка соединения"));
     }
@@ -104,7 +105,7 @@ export function AuthPage() {
           </div>
 
           <h2 className="text-lg font-medium leading-snug mb-6">
-            Интеллектуальный менеджер задач для людей с СДВГ
+            Менеджер задач с фокусом на небольшом плане на сегодня
           </h2>
 
           <div className="space-y-4 mb-8">
@@ -138,7 +139,7 @@ export function AuthPage() {
           </div>
 
           <p className="text-body-small text-brand-foreground/70">
-            Разработано с учётом нейробиологических особенностей внимания
+            Настройте рабочий ритм под текущую нагрузку и доступное внимание
           </p>
         </div>
       </div>
@@ -208,12 +209,9 @@ export function AuthPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="login-password">Пароль</Label>
-                        <a
-                          href="/forgot-password"
-                          className="text-caption text-brand hover:text-brand/80 transition-colors"
-                        >
-                          Забыли пароль?
-                        </a>
+                        <span className="text-caption text-muted-foreground">
+                          Минимум 8 символов
+                        </span>
                       </div>
                       <Input
                         id="login-password"
@@ -291,7 +289,7 @@ export function AuthPage() {
                         value={registerPassword}
                         onChange={(e) => setRegisterPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={8}
                       />
                     </div>
                   </CardContent>

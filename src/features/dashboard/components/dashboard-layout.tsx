@@ -82,7 +82,7 @@ export function DashboardLayout() {
 
   // Wait for auth to finish loading before deciding to redirect
   useEffect(() => {
-    if (!isAuthLoading && (isAuthError || !user)) router.push("/");
+    if (!isAuthLoading && (isAuthError || !user)) router.push("/login");
   }, [user, isAuthLoading, isAuthError, router]);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export function DashboardLayout() {
     try {
       await logout.mutateAsync();
       toast.success("Вы вышли из аккаунта");
-      router.push("/");
+      router.push("/login");
     } catch {
       toast.error("Не удалось выйти из аккаунта");
     }

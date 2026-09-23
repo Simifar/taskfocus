@@ -1,44 +1,45 @@
 import { z } from "zod";
 import { db } from "@/server/db";
-import { hashPassword, createToken, setAuthCookie } from "@/server/auth";
+import { hashPassword } from "@/server/auth";
+import {
+  GENERIC_REGISTRATION_ERROR,
+  isValidPassword,
+  normaliseDisplayName,
+  normaliseEmail,
+  normaliseUsername,
+} from "@/server/auth-policy";
 import { err, getClientIp, handleUnknownError, ok, withRateLimit } from "@/server/api";
 import { logger } from "@/server/logger";
 
 const registerSchema = z.object({
   email: z.string().email("Неверный формат email"),
   username: z.string().min(3, "Имя пользователя должно быть не менее 3 символов"),
-  password: z
-    .string()
-    .min(8, "Пароль должен быть не менее 8 символов")
-    .max(256, "Пароль слишком длинный"),
-  name: z.string().optional(),
+  password: z.string(),
+  name: z.string().max(100).optional(),
 });
 
 async function handler(request: Request) {
   try {
     const body = await request.json();
     const parsed = registerSchema.parse(body);
-    const email = parsed.email.trim().toLowerCase();
-    const username = parsed.username.trim();
+    const email = normaliseEmail(parsed.email);
+    const username = normaliseUsername(parsed.username);
+
+    if (!isValidPassword(parsed.password)) {
+      return err("INVALID_PASSWORD", "Пароль должен содержать от 8 до 256 символов", 400);
+    }
 
     const existing = await db.user.findFirst({
       where: { OR: [{ email }, { username }] },
     });
     if (existing) {
-      return err("USER_EXISTS", "Пользователь с таким email или username уже существует", 400);
+      return err("REGISTRATION_FAILED", GENERIC_REGISTRATION_ERROR, 400);
     }
 
     const passwordHash = await hashPassword(parsed.password);
     const user = await db.user.create({
-      data: { email, username, passwordHash, name: parsed.name },
+      data: { email, username, passwordHash, name: normaliseDisplayName(parsed.name) },
     });
-
-    const token = await createToken({
-      userId: user.id,
-      email: user.email,
-      username: username,
-    });
-    await setAuthCookie(token);
 
     logger.info("auth:register", { event: "success", userId: user.id });
 

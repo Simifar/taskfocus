@@ -40,7 +40,7 @@ export default function Error({
               Попробовать ещё раз
             </Button>
             
-            <Link href="/auth">
+            <Link href="/login">
               <Button variant="outline" className="w-full">
                 Вернуться к входу
               </Button>

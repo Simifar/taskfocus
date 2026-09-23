@@ -63,13 +63,7 @@ export function useRegister() {
 export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      await Promise.allSettled([
-        authApi.logout(),
-        signOut({ redirect: false, callbackUrl: "/" }),
-      ]);
-      return null;
-    },
+    mutationFn: authApi.logout,
     onSuccess: () => {
       qc.clear();
     },

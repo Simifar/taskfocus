@@ -1,13 +1,8 @@
-import { getCurrentUser, clearAuthCookie } from "@/server/auth";
 import { db } from "@/server/db";
-import { ok, unauthorized } from "@/server/api";
+import { ok, withAuth } from "@/server/api";
 
-export async function DELETE() {
-  const user = await getCurrentUser();
-  if (!user) return unauthorized();
-
+export const DELETE = withAuth(async (_request, { user }) => {
   await db.user.delete({ where: { id: user.id } });
-  await clearAuthCookie();
 
   return ok(null);
-}
+});
