@@ -314,7 +314,6 @@ export function DashboardLayout() {
               stats={stats}
               onRestore={handleRestoreTask}
               onDelete={handleDeleteTask}
-              onReorder={handleReorder}
             />
           )}
         </div>

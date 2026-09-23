@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Archive, CalendarDays, Check, Circle, Edit2, MoreVertical, Plus, Trash2 } from "lucide-react";
 
 import { formatTaskRowSchedule } from "@/features/tasks/lib/task-row";
@@ -10,6 +10,16 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Checkbox } from "@/shared/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +66,7 @@ export function TaskRow({
   isDragging = false,
   children,
 }: TaskRowProps) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const scheduleLabel = formatTaskRowSchedule(task);
   const completedSubtasks = task.subtasks?.filter((subtask) => subtask.status === "completed").length ?? 0;
   const totalSubtasks = task.subtasks?.length ?? 0;
@@ -64,14 +75,15 @@ export function TaskRow({
   );
 
   return (
-    <Card
+    <>
+      <Card
       className={cn(
         "border-border/80 transition-colors hover:border-brand/40",
         task.status === "completed" && "bg-muted/30",
         isDragging && "shadow-lg ring-2 ring-brand/50",
       )}
-    >
-      <CardContent className="p-3 sm:p-4">
+      >
+        <CardContent className="p-3 sm:p-4">
         <div className="flex items-start gap-2.5 sm:gap-3">
           {dragHandle}
 
@@ -198,7 +210,7 @@ export function TaskRow({
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
-                  <DropdownMenuItem variant="destructive" onClick={() => onDelete(task.id)}>
+                  <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
                     <Trash2 className="h-4 w-4" />
                     Удалить
                   </DropdownMenuItem>
@@ -209,7 +221,31 @@ export function TaskRow({
         </div>
 
         {children}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить задачу?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Задача «{task.title}» и её подзадачи будут удалены без возможности восстановления.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отменить</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onDelete?.(task.id);
+                setDeleteOpen(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

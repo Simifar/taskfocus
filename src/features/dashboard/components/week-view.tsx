@@ -20,6 +20,7 @@ import {
   isTaskScheduledForCurrentWeek,
   isTaskScheduledForDay,
 } from "@/features/dashboard/lib/task-date-filters";
+import { getPlannedRootTasks } from "@/features/dashboard/lib/plan";
 
 interface WeekViewProps {
   tasks: Task[];
@@ -51,9 +52,7 @@ export function WeekView({
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const today = new Date();
 
-  const weekTasks = tasks.filter(
-    (task) => task.status === "active" && isTaskScheduledForCurrentWeek(task),
-  );
+  const weekTasks = getPlannedRootTasks(tasks, isTaskScheduledForCurrentWeek);
 
   const tasksByDay = weekDays.map((day) => ({
     date: day,

@@ -31,6 +31,7 @@ import {
   isTaskScheduledForDay,
   isTaskScheduledForMonth,
 } from "@/features/dashboard/lib/task-date-filters";
+import { getPlannedRootTasks } from "@/features/dashboard/lib/plan";
 import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface CalendarViewProps {
@@ -71,9 +72,7 @@ export function CalendarView({
 
   const monthTasks = useMemo(
     () =>
-      tasks.filter(
-        (task) => task.status === "active" && isTaskScheduledForMonth(task, currentMonth),
-      ),
+      getPlannedRootTasks(tasks, (task) => isTaskScheduledForMonth(task, currentMonth)),
     [tasks, currentMonth],
   );
 

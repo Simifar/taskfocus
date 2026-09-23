@@ -10,6 +10,7 @@ import { ChevronLeft, Calendar, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { isTaskScheduledForDay } from "@/features/dashboard/lib/task-date-filters";
+import { getPlannedRootTasks } from "@/features/dashboard/lib/plan";
 
 interface DayViewProps {
   tasks: Task[];
@@ -46,9 +47,7 @@ export function DayView({
   onDeleteSubtask,
 }: DayViewProps) {
   // Filter tasks for selected date
-  const dayTasks = tasks.filter((task) => {
-    return task.status !== "archived" && isTaskScheduledForDay(task, selectedDate);
-  });
+  const dayTasks = getPlannedRootTasks(tasks, (task) => isTaskScheduledForDay(task, selectedDate));
 
   // Separate active and completed
   const activeTasks = dayTasks.filter((t) => t.status === "active");
