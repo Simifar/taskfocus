@@ -1,10 +1,11 @@
 import { addDays } from "date-fns";
 import { toast } from "sonner";
 
-import { ApiError } from "@/shared/lib/fetcher";
 import type { Task } from "@/shared/types";
+import { describeTaskError } from "@/features/tasks/errors";
 import {
   useCreateSubtask,
+  useBatchTasks,
   useDeleteTask,
   useReorderTasks,
   useToggleComplete,
@@ -12,8 +13,7 @@ import {
 } from "@/features/tasks/hooks";
 
 function reportError(err: unknown, fallback: string) {
-  const message = err instanceof ApiError ? err.message : fallback;
-  toast.error(message);
+  toast.error(describeTaskError(err, fallback));
 }
 
 export function useDashboardActions() {
@@ -22,6 +22,7 @@ export function useDashboardActions() {
   const toggleComplete = useToggleComplete();
   const createSubtask = useCreateSubtask();
   const reorderTasks = useReorderTasks();
+  const batchTasks = useBatchTasks();
 
   const handleToggleCompleteTask = async (task: Task) => {
     try {
@@ -122,9 +123,7 @@ export function useDashboardActions() {
 
   const handleBatchArchive = async (taskIds: string[]) => {
     try {
-      await Promise.all(
-        taskIds.map((id) => updateTask.mutateAsync({ id, input: { status: "archived" } })),
-      );
+      await batchTasks.mutateAsync({ action: "archive", taskIds });
       toast.success(`${taskIds.length} задач отправлено в архив`);
     } catch (err) {
       reportError(err, "Не удалось архивировать задачи");
@@ -133,7 +132,7 @@ export function useDashboardActions() {
 
   const handleBatchDelete = async (taskIds: string[]) => {
     try {
-      await Promise.all(taskIds.map((id) => deleteTask.mutateAsync(id)));
+      await batchTasks.mutateAsync({ action: "delete", taskIds });
       toast.success(`${taskIds.length} задач удалено`);
     } catch (err) {
       reportError(err, "Не удалось удалить задачи");
@@ -143,17 +142,12 @@ export function useDashboardActions() {
   const handleBatchAssignToToday = async (taskIds: string[]) => {
     try {
       const today = new Date();
-      await Promise.all(
-        taskIds.map((id) =>
-          updateTask.mutateAsync({
-            id,
-            input: {
-              dueDateStart: today.toISOString(),
-              dueDateEnd: today.toISOString(),
-            },
-          }),
-        ),
-      );
+      await batchTasks.mutateAsync({
+        action: "assign-range",
+        taskIds,
+        dueDateStart: today.toISOString(),
+        dueDateEnd: today.toISOString(),
+      });
       toast.success(`${taskIds.length} задач назначено на сегодня`);
     } catch (err) {
       reportError(err, "Не удалось назначить задачи");
@@ -164,17 +158,12 @@ export function useDashboardActions() {
     try {
       const today = new Date();
       const weekEnd = addDays(today, 7);
-      await Promise.all(
-        taskIds.map((id) =>
-          updateTask.mutateAsync({
-            id,
-            input: {
-              dueDateStart: today.toISOString(),
-              dueDateEnd: weekEnd.toISOString(),
-            },
-          }),
-        ),
-      );
+      await batchTasks.mutateAsync({
+        action: "assign-range",
+        taskIds,
+        dueDateStart: today.toISOString(),
+        dueDateEnd: weekEnd.toISOString(),
+      });
       toast.success(`${taskIds.length} задач назначено на неделю`);
     } catch (err) {
       reportError(err, "Не удалось назначить задачи");

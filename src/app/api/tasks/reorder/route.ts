@@ -1,38 +1,19 @@
-import { z } from "zod";
-import { db } from "@/server/db";
-import { handleUnknownError, ok, withAuth } from "@/server/api";
-
-const reorderSchema = z.object({
-  items: z
-    .array(z.object({ id: z.string(), position: z.number().int().min(0) }))
-    .min(1)
-    .max(100),
-});
+import { ok, withAuth } from "@/server/api";
+import { taskErrorResponse } from "@/server/tasks/errors";
+import { reorderSchema } from "@/server/tasks/schemas";
+import { reorderTasks } from "@/server/tasks/service";
+import { getRequestTimeZone } from "@/server/tasks/date-policy";
 
 export const PATCH = withAuth(async (request, { user }) => {
   try {
-    const body = await request.json();
-    const { items } = reorderSchema.parse(body);
-    const ids = items.map((it) => it.id);
-
-    const owned = await db.task.findMany({
-      where: { id: { in: ids }, userId: user.id },
-      select: { id: true },
-    });
-    const ownedIds = new Set(owned.map((t) => t.id));
-    const filtered = items.filter((it) => ownedIds.has(it.id));
-
-    await db.$transaction(
-      filtered.map((it) =>
-        db.task.update({
-          where: { id: it.id },
-          data: { position: it.position },
-        }),
+    const input = reorderSchema.parse(await request.json());
+    return ok(
+      await reorderTasks(
+        { userId: user.id, timeZone: getRequestTimeZone(request) },
+        input,
       ),
     );
-
-    return ok({ updated: filtered.length });
   } catch (error) {
-    return handleUnknownError("reorder tasks", error);
+    return taskErrorResponse("reorder tasks", error);
   }
 });

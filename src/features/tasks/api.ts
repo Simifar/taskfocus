@@ -45,6 +45,15 @@ export interface ReorderInput {
   items: { id: string; position: number }[];
 }
 
+export type BatchTaskAction = "archive" | "delete" | "assign-range";
+
+export interface BatchTasksInput {
+  action: BatchTaskAction;
+  taskIds: string[];
+  dueDateStart?: string | null;
+  dueDateEnd?: string | null;
+}
+
 export const tasksApi = {
   list: (q: TasksQuery = {}) =>
     apiFetch<TasksListResponse>("/api/tasks", {
@@ -66,6 +75,11 @@ export const tasksApi = {
   reorder: (input: ReorderInput) =>
     apiFetch<{ updated: number }>("/api/tasks/reorder", {
       method: "PATCH",
+      body: input,
+    }),
+  batch: (input: BatchTasksInput) =>
+    apiFetch<{ updated: number }>("/api/tasks/batch", {
+      method: "POST",
       body: input,
     }),
   createSubtask: (input: CreateSubtaskInput) =>

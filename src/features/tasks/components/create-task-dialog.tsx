@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 import { useCreateTask } from "@/features/tasks/hooks";
 import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
-import { ApiError } from "@/shared/lib/fetcher";
+import { describeTaskError } from "@/features/tasks/errors";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Calendar } from "@/shared/ui/calendar";
@@ -107,8 +107,7 @@ export function CreateTaskDialog({
       toast.success("Задача создана");
       onOpenChange(false);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Ошибка соединения";
-      toast.error(message);
+      toast.error(describeTaskError(err, "Ошибка соединения"));
     }
   };
 

@@ -8,13 +8,13 @@ import {
 import { getTodayDateOnly, type DateOnly } from "@/shared/lib/dates/date-only";
 import { isScheduledForDate } from "@/shared/lib/dates/task-date-policy";
 import type { TaskStatus } from "@/shared/types";
-
-export const MAX_ACTIVE_TASKS_PER_DAY = 5;
-
-export const MIN_ENERGY_LEVEL = 1;
-export const MAX_ENERGY_LEVEL = 5;
-export const DEFAULT_ENERGY_LEVEL = 3;
-export const DEFAULT_SUBTASK_ENERGY_LEVEL = 2;
+export {
+  MAX_ACTIVE_TASKS_PER_DAY,
+  MIN_ENERGY_LEVEL,
+  MAX_ENERGY_LEVEL,
+  DEFAULT_ENERGY_LEVEL,
+  DEFAULT_SUBTASK_ENERGY_LEVEL,
+} from "@/server/tasks/policy";
 
 type TaskScheduleInput = {
   dueDateStart: Date | string | null;
@@ -42,7 +42,7 @@ type TaskReader = Pick<typeof db, "task">;
 
 export async function countActiveTasksForToday(
   userId: string,
-  excludeTaskId?: string,
+  excludeTaskId?: string | string[],
   client: TaskReader = db,
   timeZone = SERVER_TIME_ZONE,
 ) {
@@ -55,7 +55,9 @@ export async function countActiveTasksForToday(
   };
 
   if (excludeTaskId) {
-    where.id = { not: excludeTaskId };
+    where.id = Array.isArray(excludeTaskId)
+      ? { notIn: excludeTaskId }
+      : { not: excludeTaskId };
   }
 
   return client.task.count({ where });

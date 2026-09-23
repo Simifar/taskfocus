@@ -5,6 +5,7 @@ import {
   tasksApi,
   type CreateTaskInput,
   type CreateSubtaskInput,
+  type BatchTasksInput,
   type ReorderInput,
   type TasksQuery,
   type UpdateTaskInput,
@@ -186,6 +187,14 @@ export function useReorderTasks() {
     },
     onError: (_err, _vars, ctx) => rollback(qc, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: taskKeys.all }),
+  });
+}
+
+export function useBatchTasks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: BatchTasksInput) => tasksApi.batch(input),
+    onSuccess: () => invalidateTasks(qc),
   });
 }
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useUpdateTask } from "@/features/tasks/hooks";
-import { ApiError } from "@/shared/lib/fetcher";
+import { describeTaskError } from "@/features/tasks/errors";
 import type { Task } from "@/shared/types";
 import {
   Dialog,
@@ -74,8 +74,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
       toast.success("Задача обновлена");
       onOpenChange(false);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Ошибка соединения";
-      toast.error(message);
+      toast.error(describeTaskError(err, "Ошибка соединения"));
     }
   };
 
