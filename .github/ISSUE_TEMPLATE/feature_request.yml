@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest a focused improvement to TaskFocus.
+title: "[Idea]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        TaskFocus is a personal planning tool with a deliberately focused scope. Please avoid including personal data, credentials, or production records.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation and who is affected.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+      description: Explain the smallest useful behavior or change.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Is there an existing workflow or workaround?
+    validations:
+      required: false

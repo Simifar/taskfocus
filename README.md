@@ -10,6 +10,7 @@
     <a href="docs/ARCHITECTURE.md">Architecture</a>
   </p>
   <p>
+    <a href="https://github.com/Simifar/taskfocus/actions/workflows/ci.yml"><img src="https://github.com/Simifar/taskfocus/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status for main" /></a>
     <img src="https://img.shields.io/badge/Node.js-%E2%89%A520.9-43853D?logo=node.js&logoColor=white" alt="Node.js 20.9 or newer" />
     <img src="https://img.shields.io/badge/license-MIT-2f855a.svg" alt="MIT License" />
     <img src="https://img.shields.io/badge/interface-Russian-6b7280.svg" alt="Russian-language interface" />

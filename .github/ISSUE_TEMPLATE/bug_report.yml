@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a reproducible problem in TaskFocus.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, search existing issues. **Do not include passwords, tokens, database URLs, personal data, or production records.** For a suspected security vulnerability, follow [SECURITY.md](https://github.com/Simifar/taskfocus/blob/main/SECURITY.md) and do not disclose technical details here.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+      placeholder: A short, factual description.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest sequence that reproduces the issue.
+      placeholder: |
+        1. Open...
+        2. Choose...
+        3. See...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include versions and viewport where relevant; do not include account or device identifiers.
+      placeholder: "OS, browser, Node.js version, screen size"
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Remove tokens, URLs with credentials, personal data, and private records before sharing.
+      render: text
+    validations:
+      required: false

@@ -1,5 +1,6 @@
 {
-  "name": "nextjs_tailwind_shadcn_ts",
+  "name": "taskfocus",
+  "description": "A calmer, full-stack task planner with a focused daily plan and flexible dates.",
   "version": "0.2.0",
   "license": "MIT",
   "private": true,
