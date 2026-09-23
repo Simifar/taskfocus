@@ -224,6 +224,8 @@ export function CalendarView({
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100"
+                      aria-label={`Добавить задачу на ${format(day, "d MMMM", { locale: ru })}`}
+                      title={`Добавить задачу на ${format(day, "d MMMM", { locale: ru })}`}
                       onClick={() => onCreateTask?.(day)}
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -274,13 +276,9 @@ export function CalendarView({
                       )}
                     </div>
                   ) : (
-                    <button
-                      type="button"
-                      className="hidden h-[72px] w-full rounded-xl border border-dashed border-transparent text-xs text-muted-foreground/70 transition-colors hover:border-brand/40 hover:bg-brand/5 hover:text-brand md:block"
-                      onClick={() => onCreateTask?.(day)}
-                    >
-                      Добавить
-                    </button>
+                    <div className="hidden h-[72px] w-full items-center justify-center text-xs text-muted-foreground/60 md:flex">
+                      Нет задач
+                    </div>
                   )}
                 </div>
               );

@@ -108,55 +108,60 @@ export function WeekView({
                 isDayPast && dayTasks.length === 0 && "opacity-60",
               )}
             >
-              <button
-                type="button"
-                className={cn(
-                  "w-full px-4 py-4 text-left transition-colors",
-                  isToday
-                    ? "bg-brand text-brand-foreground"
-                    : "bg-muted/45 hover:bg-muted",
-                )}
-                onClick={() => onSelectDay?.(date)}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold leading-none">{dayNum}</span>
-                      <span className={cn("text-xs uppercase", isToday ? "text-brand-foreground/75" : "text-muted-foreground")}>
-                        {monthLabel}
+              <div className={cn("flex", isToday ? "bg-brand text-brand-foreground" : "bg-muted/45")}>
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 px-4 py-4 text-left transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                  onClick={() => onSelectDay?.(date)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold leading-none">{dayNum}</span>
+                        <span className={cn("text-xs uppercase", isToday ? "text-brand-foreground/75" : "text-muted-foreground")}>
+                          {monthLabel}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm font-semibold capitalize">{dayLabel}</p>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2">
+                      {isToday && (
+                        <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">
+                          сегодня
+                        </span>
+                      )}
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-semibold",
+                          isToday ? "bg-white/20" : "bg-background text-foreground",
+                        )}
+                      >
+                        {dayTasks.length}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm font-semibold capitalize">{dayLabel}</p>
                   </div>
+                </button>
 
-                  <div className="flex flex-col items-end gap-2">
-                    {isToday && (
-                      <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">
-                        сегодня
-                      </span>
-                    )}
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-xs font-semibold",
-                        isToday ? "bg-white/20" : "bg-background text-foreground",
-                      )}
-                    >
-                      {dayTasks.length}
-                    </span>
-                  </div>
-                </div>
-              </button>
-
-              <CardContent className="space-y-3 p-3">
                 <Button
-                  variant="outline"
-                  className="h-9 w-full justify-center gap-2 border-dashed text-muted-foreground hover:border-brand hover:text-brand"
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-auto w-11 shrink-0 rounded-none border-l border-border/60",
+                    isToday
+                      ? "text-brand-foreground hover:bg-white/10 hover:text-brand-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                  aria-label={`Добавить задачу на ${format(date, "d MMMM", { locale: ru })}`}
+                  title={`Добавить задачу на ${format(date, "d MMMM", { locale: ru })}`}
                   onClick={() => onCreateTask?.(date)}
                 >
                   <Plus className="h-4 w-4" />
-                  Добавить задачу
                 </Button>
+              </div>
 
+              <CardContent className="space-y-3 p-3">
                 {dayTasks.length > 0 ? (
                   <SimpleSortableTasksList
                     tasks={dayTasks}
@@ -175,21 +180,17 @@ export function WeekView({
                     )}
                   </SimpleSortableTasksList>
                 ) : (
-                  <button
-                    type="button"
-                    className="flex min-h-[150px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 px-4 text-center transition-colors hover:border-brand/50 hover:bg-brand/5"
-                    onClick={() => onCreateTask?.(date)}
-                  >
+                  <div className="flex min-h-[150px] w-full flex-col items-center justify-center rounded-2xl bg-muted/20 px-4 text-center">
                     <CheckCircle2 className="mb-2 h-6 w-6 text-muted-foreground/50" />
                     <span className="text-sm font-medium text-muted-foreground">
                       {isDayPast ? "Нет задач" : "Свободный день"}
                     </span>
                     {!isDayPast && (
                       <span className="mt-1 text-xs text-muted-foreground/70">
-                        Нажмите, чтобы запланировать дело
+                        Добавьте задачу через кнопку «+» в заголовке дня
                       </span>
                     )}
-                  </button>
+                  </div>
                 )}
               </CardContent>
             </Card>
