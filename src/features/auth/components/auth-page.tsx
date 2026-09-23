@@ -3,16 +3,21 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { Eye, EyeOff, Loader2, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { toast } from "sonner";
+
+import { AuthShell, type AuthMode } from "@/features/auth/components/auth-shell";
 import { useLogin, useRegister } from "@/features/auth/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { AlertCircle, Brain, CheckCircle, Loader2, Zap } from "lucide-react";
-import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/shared/ui/alert";
+
+interface AuthPageProps {
+  mode: AuthMode;
+  googleEnabled: boolean;
+}
 
 function describe(error: unknown, fallback: string) {
   if (error instanceof ApiError) return error.message;
@@ -27,284 +32,181 @@ function describeOAuthError(code: string | null): string | null {
     case "OAuthCallback":
     case "OAuthCreateAccount":
     case "Callback":
-      return "Не удалось завершить вход через Google. Проверьте callback URL и настройки OAuth.";
+      return "Не удалось завершить вход через Google. Попробуйте ещё раз.";
     case "AccessDenied":
-      return "Вход через Google был отменен или отклонен.";
+      return "Вход через Google был отменён или отклонён.";
     case "Configuration":
-      return "Google OAuth настроен не полностью. Проверьте NEXTAUTH_URL, NEXTAUTH_SECRET и ключи Google.";
+      return "Вход через Google временно недоступен.";
     default:
-      return "Ошибка входа через Google. Попробуйте еще раз.";
+      return "Не удалось выполнить вход через Google.";
   }
 }
 
-export function AuthPage() {
+export function AuthPage({ mode, googleEnabled }: AuthPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
-  const [error, setError] = useState<string | null>(null);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
+  const isLogin = mode === "login";
   const login = useLogin();
   const register = useRegister();
 
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-
-  const [registerEmail, setRegisterEmail] = useState("");
-  const [registerUsername, setRegisterUsername] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [registerName, setRegisterName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const visibleError = error ?? describeOAuthError(searchParams.get("error"));
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    try {
-      await login.mutateAsync({ email: loginEmail, password: loginPassword });
-      toast.success("Добро пожаловать!");
-      router.replace("/");
-    } catch (err) {
-      setError(describe(err, "Ошибка соединения"));
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    try {
-      await register.mutateAsync({
-        email: registerEmail,
-        username: registerUsername,
-        password: registerPassword,
-        name: registerName,
-      });
-      toast.success("Аккаунт создан! Добро пожаловать!");
-      router.replace("/");
-    } catch (err) {
-      setError(describe(err, "Ошибка соединения"));
-    }
-  };
-
   const isLoading = login.isPending || register.isPending || isGoogleLoading;
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+
+    try {
+      if (isLogin) {
+        await login.mutateAsync({ email, password });
+        toast.success("Добро пожаловать!");
+      } else {
+        await register.mutateAsync({ email, username, password, name });
+        toast.success("Аккаунт создан. Добро пожаловать!");
+      }
+      router.replace("/");
+    } catch (err) {
+      setError(describe(err, "Не удалось выполнить запрос. Попробуйте ещё раз."));
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setError(null);
     setIsGoogleLoading(true);
-    await signIn("google", { callbackUrl: "/" });
+
+    try {
+      await signIn("google", { callbackUrl: "/" });
+    } catch (err) {
+      setError(describe(err, "Не удалось выполнить вход через Google."));
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      <div className="lg:w-1/2 bg-brand p-8 lg:p-16 flex flex-col justify-center text-brand-foreground">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 bg-white/20 rounded-xl">
-              <Brain className="h-10 w-10" />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">TaskFocus</h1>
+    <AuthShell
+      mode={mode}
+      googleEnabled={googleEnabled}
+      isGoogleLoading={isGoogleLoading}
+      isBusy={isLoading}
+      onGoogleSignIn={handleGoogleSignIn}
+    >
+      <form onSubmit={handleSubmit} className="space-y-5" aria-label={isLogin ? "Вход в TaskFocus" : "Регистрация в TaskFocus"}>
+        {visibleError && (
+          <Alert variant="destructive" role="alert" aria-live="polite" className="rounded-xl">
+            <AlertDescription>{visibleError}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="space-y-2">
+          <Label htmlFor={`${mode}-email`} className="text-sm font-semibold">
+            Email
+          </Label>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id={`${mode}-email`}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="h-12 rounded-xl pl-10"
+              required
+            />
           </div>
-
-          <h2 className="text-lg font-medium leading-snug mb-6">
-            Менеджер задач с фокусом на небольшом плане на сегодня
-          </h2>
-
-          <div className="space-y-4 mb-8">
-            <div className="flex items-start gap-3">
-              <div className="p-1.5 bg-white/20 rounded-lg mt-0.5">
-                <CheckCircle className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-body-large font-medium">Фокус на главном</p>
-                <p className="text-body-small text-brand-foreground/80">Структурируйте задачи так, как удобно вам</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="p-1.5 bg-white/20 rounded-lg mt-0.5">
-                <Zap className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-body-large font-medium">Учёт уровня энергии</p>
-                <p className="text-body-small text-brand-foreground/80">Выбирайте задачи по своим силам прямо сейчас</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="p-1.5 bg-white/20 rounded-lg mt-0.5">
-                <Brain className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-body-large font-medium">Мягкие дедлайны</p>
-                <p className="text-body-small text-brand-foreground/80">Диапазон дат вместо точного срока — меньше стресса</p>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-body-small text-brand-foreground/70">
-            Настройте рабочий ритм под текущую нагрузку и доступное внимание
-          </p>
         </div>
-      </div>
 
-      <div className="lg:w-1/2 p-8 lg:p-16 flex items-center justify-center bg-background">
-        <div className="w-full max-w-md">
-          {/* Google OAuth */}
-          <Button
-            variant="outline"
-            className="w-full mb-4 gap-2"
-            onClick={handleGoogleSignIn}
-            disabled={isLoading}
-          >
-            {isGoogleLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-              </svg>
-            )}
-            Войти через Google
-          </Button>
-
-          <div className="relative mb-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+        {!isLogin && (
+          <div className="space-y-2">
+            <Label htmlFor="register-username" className="text-sm font-semibold">
+              Имя пользователя
+            </Label>
+            <div className="relative">
+              <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="register-username"
+                type="text"
+                autoComplete="username"
+                placeholder="например, focused-user"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                className="h-12 rounded-xl pl-10"
+                minLength={3}
+                required
+              />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">или</span>
+            <p className="text-xs leading-5 text-muted-foreground">Минимум 3 символа. Это имя будет видно в профиле.</p>
+          </div>
+        )}
+
+        {!isLogin && (
+          <div className="space-y-2">
+            <Label htmlFor="register-name" className="text-sm font-semibold">
+              Как к вам обращаться <span className="font-normal text-muted-foreground">— необязательно</span>
+            </Label>
+            <div className="relative">
+              <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="register-name"
+                type="text"
+                autoComplete="name"
+                placeholder="Иван"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                className="h-12 rounded-xl pl-10"
+              />
             </div>
           </div>
+        )}
 
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Вход</TabsTrigger>
-              <TabsTrigger value="register">Регистрация</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="login">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Войти в аккаунт</CardTitle>
-                  <CardDescription>Введите свои данные для входа</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleLogin}>
-                  <CardContent className="space-y-4 pb-6">
-                    {visibleError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{visibleError}</AlertDescription>
-                      </Alert>
-                    )}
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="user@example.com"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="login-password">Пароль</Label>
-                        <span className="text-caption text-muted-foreground">
-                          Минимум 8 символов
-                        </span>
-                      </div>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button className="w-full" type="submit" disabled={isLoading}>
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Войти
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="register">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Создать аккаунт</CardTitle>
-                  <CardDescription>Зарегистрируйтесь бесплатно</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleRegister}>
-                  <CardContent className="space-y-4 pb-6">
-                    {visibleError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{visibleError}</AlertDescription>
-                      </Alert>
-                    )}
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email">Email</Label>
-                      <Input
-                        id="register-email"
-                        type="email"
-                        placeholder="user@example.com"
-                        value={registerEmail}
-                        onChange={(e) => setRegisterEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-username">Имя пользователя</Label>
-                      <Input
-                        id="register-username"
-                        type="text"
-                        placeholder="username"
-                        value={registerUsername}
-                        onChange={(e) => setRegisterUsername(e.target.value)}
-                        required
-                        minLength={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-name">Имя (опционально)</Label>
-                      <Input
-                        id="register-name"
-                        type="text"
-                        placeholder="Иван Иванов"
-                        value={registerName}
-                        onChange={(e) => setRegisterName(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-password">Пароль</Label>
-                      <Input
-                        id="register-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={registerPassword}
-                        onChange={(e) => setRegisterPassword(e.target.value)}
-                        required
-                        minLength={8}
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button className="w-full" type="submit" disabled={isLoading}>
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Зарегистрироваться
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
-          </Tabs>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor={`${mode}-password`} className="text-sm font-semibold">
+              Пароль
+            </Label>
+            <span className="text-xs text-muted-foreground">Минимум 8 символов</span>
+          </div>
+          <div className="relative">
+            <LockKeyhole className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id={`${mode}-password`}
+              type={showPassword ? "text" : "password"}
+              autoComplete={isLogin ? "current-password" : "new-password"}
+              placeholder="Введите пароль"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="h-12 rounded-xl pl-10 pr-12"
+              minLength={8}
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none"
+              onClick={() => setShowPassword((value) => !value)}
+              aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <Button
+          type="submit"
+          className="h-12 w-full rounded-xl bg-brand text-sm font-semibold text-brand-foreground shadow-[0_12px_24px_-12px_var(--brand)] transition-transform hover:bg-brand/90 active:scale-[0.99]"
+          disabled={isLoading}
+        >
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isLogin ? "Войти в TaskFocus" : "Создать аккаунт"}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }
