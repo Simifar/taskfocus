@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Menu, Brain } from "lucide-react";
+import { Loader2, Brain } from "lucide-react";
 
 import type { Task } from "@/shared/types";
-import { Button } from "@/shared/ui/button";
 import { useCurrentUser, useLogout } from "@/features/auth/hooks";
 import { useStats } from "@/features/stats/hooks";
 import { useTasks } from "@/features/tasks/hooks";
@@ -16,6 +15,7 @@ import { toDateOnly } from "@/shared/lib/dates/date-only";
 import { useDashboardActions } from "@/features/dashboard/hooks/use-dashboard-actions";
 
 import { DashboardSidebar } from "./dashboard-sidebar";
+import { MobileNavigation } from "./mobile-navigation";
 import { TodayView } from "./today-view";
 import { InboxView } from "./inbox-view";
 import { WeekView } from "./week-view";
@@ -77,14 +77,7 @@ export function DashboardLayout() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [dayReturnView, setDayReturnView] = useState<"today" | "week" | "calendar">("today");
-
-  const handleSidebarClose = useCallback(() => {
-    setSidebarOpen(false);
-    requestAnimationFrame(() => menuButtonRef.current?.focus());
-  }, []);
 
   // Wait for auth to finish loading before deciding to redirect
   useEffect(() => {
@@ -150,37 +143,16 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {/* backdrop — always in DOM, transitions opacity so it syncs with sidebar slide */}
-      <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        aria-hidden="true"
-        onClick={handleSidebarClose}
-      />
-
+    <div className="flex h-dvh overflow-hidden bg-background">
       <DashboardSidebar
         user={user ?? null}
         stats={stats}
         tasks={tasks}
         onLogout={handleLogout}
-        isOpen={sidebarOpen}
-        onClose={handleSidebarClose}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="md:hidden flex items-center gap-3 p-4 border-b border-border shrink-0">
-          <Button
-            ref={menuButtonRef}
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10"
-            onClick={() => setSidebarOpen(true)}
-            aria-expanded={sidebarOpen}
-            aria-controls="dashboard-navigation"
-            aria-label="Открыть навигацию"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+        <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3 md:hidden">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-brand rounded-lg">
               <Brain className="h-4 w-4 text-brand-foreground" />
@@ -189,7 +161,7 @@ export function DashboardLayout() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-4 md:p-8">
+        <div className="min-h-0 flex-1 overflow-auto p-4 md:p-8">
           {currentView === "today" && (
             <TodayView
               tasks={tasks}
@@ -317,6 +289,15 @@ export function DashboardLayout() {
             />
           )}
         </div>
+        <MobileNavigation
+          currentView={currentView}
+          dayReturnView={dayReturnView}
+          stats={stats}
+          onNavigate={setView}
+          onAddTask={handleAddTask}
+          onProfile={() => router.push("/profile")}
+          onLogout={() => void handleLogout()}
+        />
       </div>
 
       <CreateTaskDialog

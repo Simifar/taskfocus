@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { Task, User, StatsResponse } from "@/shared/types";
 import { useDashboardStore, type DashboardView } from "@/features/dashboard/store";
 import { Button } from "@/shared/ui/button";
@@ -16,7 +16,6 @@ import {
   Inbox,
   LogOut,
   Settings,
-  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
@@ -26,23 +25,15 @@ interface DashboardSidebarProps {
   stats: StatsResponse | null;
   tasks: Task[];
   onLogout: () => void;
-  isOpen?: boolean;
-  onClose?: () => void;
 }
-
-const focusableSelector =
-  'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])';
 
 export function DashboardSidebar({
   user,
   stats,
   tasks,
   onLogout,
-  isOpen = false,
-  onClose,
 }: DashboardSidebarProps) {
   const router = useRouter();
-  const navigationRef = useRef<HTMLElement>(null);
   const currentView = useDashboardStore((s) => s.currentView);
   const setView = useDashboardStore((s) => s.setView);
   const [moreOpen, setMoreOpen] = useState<boolean | null>(null);
@@ -53,61 +44,19 @@ export function DashboardSidebar({
 
   const isMoreOpen = moreOpen ?? isAdvancedView;
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const panel = navigationRef.current;
-    if (!panel) return;
-
-    const focusables = () => Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector));
-    focusables()[0]?.focus();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose?.();
-        return;
-      }
-      if (event.key !== "Tab") return;
-
-      const items = focusables();
-      if (items.length === 0) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
   const handleNavClick = (view: DashboardView) => {
     setView(view);
-    onClose?.();
   };
 
   const goToProfile = () => {
     router.push("/profile");
-    onClose?.();
   };
 
   return (
     <aside
       id="dashboard-navigation"
-      ref={navigationRef}
       aria-label="Основная навигация"
-      className={cn(
-        "w-64 shrink-0 bg-sidebar border-r border-border flex flex-col overscroll-contain",
-        "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
-        "md:relative md:z-auto md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full",
-      )}
+      className="hidden w-64 shrink-0 flex-col overscroll-contain border-r border-border bg-sidebar md:flex"
     >
       <div className="p-4 md:p-6 border-b border-border">
         <div className="flex items-center justify-between gap-2">
@@ -127,15 +76,6 @@ export function DashboardSidebar({
               </p>
             </div>
           </button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-10 w-10 shrink-0"
-            onClick={onClose}
-            aria-label="Закрыть навигацию"
-          >
-            <X className="h-5 w-5" />
-          </Button>
         </div>
       </div>
 
