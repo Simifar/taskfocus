@@ -53,6 +53,7 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
     credentials: "include",
     signal: controller.signal,
     headers: {
+      "x-time-zone": Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       ...headers,
     },

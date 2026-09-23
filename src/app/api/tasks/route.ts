@@ -11,12 +11,29 @@ import {
   MAX_ENERGY_LEVEL,
   MIN_ENERGY_LEVEL,
 } from "@/server/task-scheduling";
+import {
+  normalisePlannedRange,
+  parseDateQuery,
+  parseTaskDateInput,
+  scheduledBetweenWhere,
+  TaskDatePolicyError,
+  getRequestTimeZone,
+} from "@/server/tasks/date-policy";
+import {
+  endOfMonthDateOnly,
+  endOfWeekDateOnly,
+  startOfMonthDateOnly,
+  startOfWeekDateOnly,
+  isValidDateInput,
+  type DateOnly,
+} from "@/shared/lib/dates/date-only";
 import type { TaskStatus } from "@/shared/types";
 
 type TasksView = "today" | "inbox" | "week" | "day" | "calendar" | "archive";
 
 const VALID_STATUSES: TaskStatus[] = ["active", "completed", "archived"];
 const VALID_VIEWS: TasksView[] = ["today", "inbox", "week", "day", "calendar", "archive"];
+const taskDateSchema = z.string().refine(isValidDateInput, "Некорректная дата");
 
 const createTaskSchema = z.object({
   title: z.string().trim().min(1, "Название обязательно").max(200),
@@ -24,50 +41,10 @@ const createTaskSchema = z.object({
   important: z.boolean().default(false),
   urgent: z.boolean().default(false),
   energyLevel: z.number().int().min(MIN_ENERGY_LEVEL).max(MAX_ENERGY_LEVEL).default(DEFAULT_ENERGY_LEVEL),
-  dueDateStart: z.string().datetime().nullish(),
-  dueDateEnd: z.string().datetime().nullish(),
+  dueDateStart: taskDateSchema.nullish(),
+  dueDateEnd: taskDateSchema.nullish(),
   parentTaskId: z.string().nullish(),
 });
-
-function startOfDay(date: Date) {
-  const next = new Date(date);
-  next.setHours(0, 0, 0, 0);
-  return next;
-}
-
-function endOfDay(date: Date) {
-  const next = new Date(date);
-  next.setHours(23, 59, 59, 999);
-  return next;
-}
-
-function startOfWeek(date: Date) {
-  const next = startOfDay(date);
-  const day = next.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  next.setDate(next.getDate() + diff);
-  return next;
-}
-
-function endOfWeek(date: Date) {
-  const next = startOfWeek(date);
-  next.setDate(next.getDate() + 6);
-  return endOfDay(next);
-}
-
-function startOfMonth(date: Date) {
-  return startOfDay(new Date(date.getFullYear(), date.getMonth(), 1));
-}
-
-function endOfMonth(date: Date) {
-  return endOfDay(new Date(date.getFullYear(), date.getMonth() + 1, 0));
-}
-
-function parseDateParam(value: string | null) {
-  if (!value) return new Date();
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? new Date() : date;
-}
 
 function addAnd(where: Prisma.TaskWhereInput, condition: Prisma.TaskWhereInput) {
   const current = where.AND;
@@ -75,26 +52,7 @@ function addAnd(where: Prisma.TaskWhereInput, condition: Prisma.TaskWhereInput) 
   where.AND = [...items, condition];
 }
 
-function scheduledBetween(start: Date, end: Date): Prisma.TaskWhereInput {
-  return {
-    AND: [
-      {
-        OR: [
-          { dueDateStart: { lte: end } },
-          { dueDateStart: null, dueDateEnd: { lte: end } },
-        ],
-      },
-      {
-        OR: [
-          { dueDateEnd: { gte: start } },
-          { dueDateEnd: null, dueDateStart: { gte: start } },
-        ],
-      },
-    ],
-  };
-}
-
-function applyViewFilter(where: Prisma.TaskWhereInput, view: TasksView | null, date: Date) {
+function applyViewFilter(where: Prisma.TaskWhereInput, view: TasksView | null, date: DateOnly) {
   if (!view) return;
 
   if (view === "archive") {
@@ -105,10 +63,8 @@ function applyViewFilter(where: Prisma.TaskWhereInput, view: TasksView | null, d
   if (view === "inbox") {
     where.status = "active";
     addAnd(where, {
-      OR: [
-        { dueDateStart: null },
-        { dueDateStart: { gt: endOfDay(date) } },
-      ],
+      dueDateStart: null,
+      dueDateEnd: null,
     });
     return;
   }
@@ -116,17 +72,17 @@ function applyViewFilter(where: Prisma.TaskWhereInput, view: TasksView | null, d
   where.status = { in: ["active", "completed"] };
 
   if (view === "today" || view === "day") {
-    addAnd(where, scheduledBetween(startOfDay(date), endOfDay(date)));
+    addAnd(where, scheduledBetweenWhere(date, date));
     return;
   }
 
   if (view === "week") {
-    addAnd(where, scheduledBetween(startOfWeek(date), endOfWeek(date)));
+    addAnd(where, scheduledBetweenWhere(startOfWeekDateOnly(date), endOfWeekDateOnly(date)));
     return;
   }
 
   if (view === "calendar") {
-    addAnd(where, scheduledBetween(startOfMonth(date), endOfMonth(date)));
+    addAnd(where, scheduledBetweenWhere(startOfMonthDateOnly(date), endOfMonthDateOnly(date)));
   }
 }
 
@@ -139,7 +95,8 @@ export const GET = withAuth(async (request, { user }) => {
   const view = VALID_VIEWS.includes(requestedView as TasksView)
     ? (requestedView as TasksView)
     : null;
-  const date = parseDateParam(searchParams.get("date"));
+  const timeZone = getRequestTimeZone(request);
+  const date = parseDateQuery(searchParams.get("date"), new Date(), timeZone);
 
   const where: Prisma.TaskWhereInput = {
     userId: user.id,
@@ -166,7 +123,7 @@ export const GET = withAuth(async (request, { user }) => {
     });
   }
 
-  const [tasks, activeCount] = await Promise.all([
+  const [tasks, activeCount, todayActiveCount] = await Promise.all([
     db.task.findMany({
       where,
       include: {
@@ -177,12 +134,14 @@ export const GET = withAuth(async (request, { user }) => {
     db.task.count({
       where: { userId: user.id, status: "active", parentTaskId: null },
     }),
+    countActiveTasksForToday(user.id, undefined, db, timeZone),
   ]);
 
   return ok({
     items: tasks,
     totalCount: tasks.length,
     activeCount,
+    todayActiveCount,
   });
 });
 
@@ -190,13 +149,11 @@ export const POST = withAuth(async (request, { user }) => {
   try {
     const body = await request.json();
     const parsed = createTaskSchema.parse(body);
-    const dueDateStart = parsed.dueDateStart ? new Date(parsed.dueDateStart) : null;
-    const dueDateEnd = parsed.dueDateEnd ? new Date(parsed.dueDateEnd) : null;
+    const timeZone = getRequestTimeZone(request);
+    const plannedRange = normalisePlannedRange(parsed.dueDateStart, parsed.dueDateEnd, timeZone);
+    const dueDateStart = parseTaskDateInput(plannedRange.start, timeZone);
+    const dueDateEnd = parseTaskDateInput(plannedRange.end, timeZone);
     const parentTaskId = parsed.parentTaskId ?? null;
-
-    if (dueDateStart && dueDateEnd && dueDateStart > dueDateEnd) {
-      return err("VALIDATION_ERROR", "Дата окончания не может быть раньше даты начала", 400);
-    }
 
     if (parentTaskId) {
       const parent = await db.task.findFirst({
@@ -217,9 +174,9 @@ export const POST = withAuth(async (request, { user }) => {
             dueDateEnd,
             status: "active",
             parentTaskId,
-          })
+          }, new Date(), timeZone)
         ) {
-          const todayActiveCount = await countActiveTasksForToday(user.id, undefined, tx);
+          const todayActiveCount = await countActiveTasksForToday(user.id, undefined, tx, timeZone);
           if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
             throw new Error("TODAY_LIMIT_REACHED");
           }
@@ -253,6 +210,9 @@ export const POST = withAuth(async (request, { user }) => {
 
     return ok(task, { status: 201 });
   } catch (error) {
+    if (error instanceof TaskDatePolicyError) {
+      return err("VALIDATION_ERROR", error.message, 400);
+    }
     if (error instanceof Error && error.message === "TODAY_LIMIT_REACHED") {
       return err(
         "TODAY_LIMIT_REACHED",

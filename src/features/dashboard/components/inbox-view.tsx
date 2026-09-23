@@ -36,6 +36,7 @@ import {
   getEisenhowerQuadrant,
 } from "@/features/tasks/lib/eisenhower";
 import type { EisenhowerQuadrant } from "@/shared/types";
+import { classifyInboxTask } from "@/shared/lib/dates/task-date-policy";
 
 interface InboxViewProps {
   tasks: Task[];
@@ -88,17 +89,7 @@ export function InboxView({
   const [viewMode, setViewMode] = useState<"compact" | "detailed">("detailed");
 
   const inboxTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      if (task.status !== "active") return false;
-      if (!task.dueDateStart) return true;
-
-      const startDate = new Date(task.dueDateStart);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      startDate.setHours(0, 0, 0, 0);
-
-      return startDate.getTime() > today.getTime();
-    });
+    return tasks.filter((task) => classifyInboxTask(task));
   }, [tasks]);
 
   const filteredTasks = useMemo(() => {

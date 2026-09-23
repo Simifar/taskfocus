@@ -12,6 +12,7 @@ import { useStats } from "@/features/stats/hooks";
 import { useTasks } from "@/features/tasks/hooks";
 import type { TasksQuery } from "@/features/tasks/api";
 import { useDashboardStore, useSelectedDate } from "@/features/dashboard/store";
+import { toDateOnly } from "@/shared/lib/dates/date-only";
 import { useDashboardActions } from "@/features/dashboard/hooks/use-dashboard-actions";
 
 import { DashboardSidebar } from "./dashboard-sidebar";
@@ -40,13 +41,14 @@ export function DashboardLayout() {
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
   const tasksQueryInput = useMemo<TasksQuery>(() => {
-    const selectedDateIso = selectedDate?.toISOString();
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    const selectedDateOnly = selectedDate ? toDateOnly(selectedDate, timeZone) : undefined;
 
     if (currentView === "today") return { view: "today" };
     if (currentView === "inbox") return { view: "inbox" };
     if (currentView === "week") return { view: "week" };
-    if (currentView === "calendar") return { view: "calendar", date: calendarMonth.toISOString() };
-    if (currentView === "day") return { view: "day", date: selectedDateIso };
+    if (currentView === "calendar") return { view: "calendar", date: toDateOnly(calendarMonth, timeZone) };
+    if (currentView === "day") return { view: "day", date: selectedDateOnly };
     if (currentView === "archive") return { view: "archive" };
     if (currentView === "matrix") return { status: "active" };
 
@@ -187,6 +189,7 @@ export function DashboardLayout() {
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
+              todayActiveCount={tasksQuery.data?.todayActiveCount}
               onAddTask={handleAddTask}
               onReorder={handleReorder}
               showCompleted={showCompleted}

@@ -1,41 +1,67 @@
-import { addDays, endOfDay, endOfMonth, isWithinInterval, startOfDay, startOfMonth, startOfWeek } from "date-fns";
-
 import type { Task } from "@/shared/types";
+import {
+  dateOnlyToLocalDate,
+  endOfMonthDateOnly,
+  endOfWeekDateOnly,
+  getTodayDateOnly,
+  startOfMonthDateOnly,
+  startOfWeekDateOnly,
+  toDateOnly,
+  type DateOnly,
+} from "@/shared/lib/dates/date-only";
+import {
+  isScheduledForDate,
+  normalisePlannedRange,
+} from "@/shared/lib/dates/task-date-policy";
 
-export function getCurrentWeekRange() {
-  const start = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const end = endOfDay(addDays(start, 6));
+function getBrowserTimeZone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
 
-  return { start, end };
+function endOfLocalDay(date: Date) {
+  const result = new Date(date);
+  result.setHours(23, 59, 59, 999);
+  return result;
+}
+
+function localDateRange(start: DateOnly, end: DateOnly) {
+  return {
+    start: dateOnlyToLocalDate(start),
+    end: endOfLocalDay(dateOnlyToLocalDate(end)),
+  };
+}
+
+export function getCurrentWeekRange(now = new Date()) {
+  const timeZone = getBrowserTimeZone();
+  const today = getTodayDateOnly(now, timeZone);
+  return localDateRange(startOfWeekDateOnly(today), endOfWeekDateOnly(today));
 }
 
 export function getMonthRange(date: Date) {
-  return {
-    start: startOfMonth(date),
-    end: endOfDay(endOfMonth(date)),
-  };
+  const timeZone = getBrowserTimeZone();
+  const dateOnly = toDateOnly(date, timeZone);
+  return localDateRange(startOfMonthDateOnly(dateOnly), endOfMonthDateOnly(dateOnly));
 }
 
-function getTaskDateRange(task: Task) {
-  const start = task.dueDateStart ? startOfDay(new Date(task.dueDateStart)) : null;
-  const end = task.dueDateEnd ? endOfDay(new Date(task.dueDateEnd)) : start;
+function getTaskDateRange(task: Task, timeZone = getBrowserTimeZone()) {
+  try {
+    const range = normalisePlannedRange(task.dueDateStart, task.dueDateEnd, timeZone);
+    if (!range.start) return null;
 
-  if (!start && !end) return null;
-
-  return {
-    start: start ?? startOfDay(end!),
-    end: end ?? endOfDay(start!),
-  };
+    const end = range.end ?? range.start;
+    return localDateRange(range.start, end);
+  } catch {
+    return null;
+  }
 }
 
 export function isTaskScheduledForDay(task: Task, day: Date) {
-  const range = getTaskDateRange(task);
-  if (!range) return false;
-
-  return isWithinInterval(day, {
-    start: range.start,
-    end: range.end,
-  });
+  const timeZone = getBrowserTimeZone();
+  try {
+    return isScheduledForDate(task, day, timeZone);
+  } catch {
+    return false;
+  }
 }
 
 export function isTaskScheduledForCurrentWeek(task: Task) {
@@ -43,7 +69,6 @@ export function isTaskScheduledForCurrentWeek(task: Task) {
   if (!taskRange) return false;
 
   const weekRange = getCurrentWeekRange();
-
   return taskRange.start <= weekRange.end && taskRange.end >= weekRange.start;
 }
 
@@ -52,6 +77,5 @@ export function isTaskScheduledForMonth(task: Task, month: Date) {
   if (!taskRange) return false;
 
   const monthRange = getMonthRange(month);
-
   return taskRange.start <= monthRange.end && taskRange.end >= monthRange.start;
 }

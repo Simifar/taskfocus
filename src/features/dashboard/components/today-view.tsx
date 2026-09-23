@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { isTaskScheduledForDay } from "@/features/dashboard/lib/task-date-filters";
 
 interface TodayViewProps {
   tasks: Task[];
@@ -49,6 +50,7 @@ interface TodayViewProps {
   onAddSubtask?: (parentId: string, title: string) => void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
+  todayActiveCount?: number;
   isLoading?: boolean;
 }
 
@@ -89,6 +91,7 @@ export function TodayView({
   onAddSubtask,
   onEditSubtask,
   onDeleteSubtask,
+  todayActiveCount,
   isLoading = false,
 }: TodayViewProps) {
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
@@ -96,27 +99,13 @@ export function TodayView({
   const [focusSessionKey, setFocusSessionKey] = useState(0);
 
   // Filter tasks for today
-  const todayTasks = tasks.filter((task) => {
-    if (task.status !== "active" && task.status !== "completed") return false;
-    if (!task.dueDateStart && !task.dueDateEnd) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const start = task.dueDateStart ? new Date(task.dueDateStart) : null;
-    const end = task.dueDateEnd ? new Date(task.dueDateEnd) : null;
-
-    if (start) start.setHours(0, 0, 0, 0);
-    if (end) end.setHours(0, 0, 0, 0);
-
-    if (start && end) {
-      return start <= today && today <= end;
-    }
-    if (start) {
-      return start.getTime() === today.getTime();
-    }
-    return false;
-  });
+  const todayTasks = tasks.filter(
+    (task) =>
+      (task.status === "active" || task.status === "completed") &&
+      isTaskScheduledForDay(task, new Date()),
+  );
+  const todayActiveTasks = todayTasks.filter((task) => task.status === "active");
+  const todayCompletedTasks = todayTasks.filter((task) => task.status === "completed");
 
   // Apply energy filter
   const filteredTasks = currentEnergy
@@ -128,9 +117,10 @@ export function TodayView({
   const completedTasks = filteredTasks.filter((t) => t.status === "completed");
 
   const maxActive = 5;
-  const canAddMore = activeTasks.length < maxActive;
-  const progressPercent = todayTasks.length > 0 
-    ? (completedTasks.length / todayTasks.length) * 100 
+  const activeTodayCount = todayActiveCount ?? todayActiveTasks.length;
+  const canAddMore = activeTodayCount < maxActive;
+  const progressPercent = todayTasks.length > 0
+    ? (todayCompletedTasks.length / todayTasks.length) * 100
     : 0;
   const hasTasksButFiltered = currentEnergy !== null && activeTasks.length === 0 && filteredTasks.length > 0;
   const selectedFocusTask = activeTasks.find((task) => task.id === focusTaskId) ?? activeTasks[0] ?? null;
@@ -212,7 +202,7 @@ export function TodayView({
                 </Button>
               )}
               <Badge className="h-8 px-2 md:px-3 text-xs md:text-sm font-semibold bg-muted text-muted-foreground border border-border">
-                {activeTasks.length}/{maxActive}
+                {activeTodayCount}/{maxActive}
               </Badge>
             </div>
           </div>
@@ -228,7 +218,7 @@ export function TodayView({
                 <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all"
-                    style={{ width: `${(activeTasks.length / maxActive) * 100}%` }}
+                    style={{ width: `${(activeTodayCount / maxActive) * 100}%` }}
                   />
                 </div>
                 {activeTasks.length > 0 && (
@@ -360,7 +350,7 @@ export function TodayView({
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold">Завершено задач</span>
                     <span className="text-2xl font-bold text-brand">
-                      {completedTasks.length}/{todayTasks.length}
+                      {todayCompletedTasks.length}/{todayTasks.length}
                     </span>
                   </div>
                   <Progress value={progressPercent} className="h-3 rounded-full" />

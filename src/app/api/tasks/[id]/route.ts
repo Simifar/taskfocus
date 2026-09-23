@@ -8,6 +8,13 @@ import {
   MIN_ENERGY_LEVEL,
   MAX_ENERGY_LEVEL,
 } from "@/server/task-scheduling";
+import {
+  normalisePlannedRange,
+  parseTaskDateInput,
+  getRequestTimeZone,
+  TaskDatePolicyError,
+} from "@/server/tasks/date-policy";
+import { isValidDateInput } from "@/shared/lib/dates/date-only";
 import type { TaskStatus } from "@/shared/types";
 
 const updateTaskSchema = z.object({
@@ -17,8 +24,8 @@ const updateTaskSchema = z.object({
   urgent: z.boolean().optional(),
   energyLevel: z.number().int().min(MIN_ENERGY_LEVEL).max(MAX_ENERGY_LEVEL).optional(),
   status: z.enum(["active", "completed", "archived"]).optional(),
-  dueDateStart: z.string().datetime().nullish(),
-  dueDateEnd: z.string().datetime().nullish(),
+  dueDateStart: z.string().refine(isValidDateInput, "Некорректная дата").nullish(),
+  dueDateEnd: z.string().refine(isValidDateInput, "Некорректная дата").nullish(),
 });
 
 type RouteCtx = { params: Promise<{ id: string }> };
@@ -59,23 +66,15 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
     const body = await request.json();
     const parsed = updateTaskSchema.parse(body);
 
-    const nextDueDateStart =
-      parsed.dueDateStart !== undefined
-        ? parsed.dueDateStart
-          ? new Date(parsed.dueDateStart)
-          : null
-        : existing.dueDateStart;
-    const nextDueDateEnd =
-      parsed.dueDateEnd !== undefined
-        ? parsed.dueDateEnd
-          ? new Date(parsed.dueDateEnd)
-          : null
-        : existing.dueDateEnd;
+    const timeZone = getRequestTimeZone(request);
+    const plannedRange = normalisePlannedRange(
+      parsed.dueDateStart !== undefined ? parsed.dueDateStart : existing.dueDateStart,
+      parsed.dueDateEnd !== undefined ? parsed.dueDateEnd : existing.dueDateEnd,
+      timeZone,
+    );
+    const nextDueDateStart = parseTaskDateInput(plannedRange.start, timeZone);
+    const nextDueDateEnd = parseTaskDateInput(plannedRange.end, timeZone);
     const nextStatus: TaskStatus = (parsed.status ?? existing.status) as TaskStatus;
-
-    if (nextDueDateStart && nextDueDateEnd && nextDueDateStart > nextDueDateEnd) {
-      return err("VALIDATION_ERROR", "Дата окончания не может быть раньше даты начала", 400);
-    }
 
     const data: Record<string, unknown> = {};
     if (parsed.title !== undefined) data.title = parsed.title;
@@ -98,9 +97,14 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
             dueDateEnd: nextDueDateEnd,
             status: nextStatus,
             parentTaskId: existing.parentTaskId,
-          })
+          }, new Date(), timeZone)
         ) {
-          const todayActiveCount = await countActiveTasksForToday(user.id, existing.id, tx);
+          const todayActiveCount = await countActiveTasksForToday(
+            user.id,
+            existing.id,
+            tx,
+            timeZone,
+          );
           if (todayActiveCount >= MAX_ACTIVE_TASKS_PER_DAY) {
             throw new Error("TODAY_LIMIT_REACHED");
           }
@@ -117,6 +121,9 @@ export const PUT = withAuth<RouteCtx>(async (request, { params, user }) => {
 
     return ok(task);
   } catch (error) {
+    if (error instanceof TaskDatePolicyError) {
+      return err("VALIDATION_ERROR", error.message, 400);
+    }
     if (error instanceof Error && error.message === "TODAY_LIMIT_REACHED") {
       return err(
         "TODAY_LIMIT_REACHED",

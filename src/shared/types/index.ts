@@ -40,6 +40,7 @@ export interface TasksListResponse {
   items: Task[];
   totalCount: number;
   activeCount: number;
+  todayActiveCount: number;
 }
 
 export interface StatsResponse {
