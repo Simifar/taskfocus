@@ -55,7 +55,7 @@ docs/              проектная и дипломная документац
 
 - `src/app/layout.tsx` остается серверным layout;
 - `src/app/page.tsx` выполняет server-side проверку NextAuth session и защищает dashboard;
-- `src/app/login/page.tsx` является public client route для login/register;
+- `src/app/login/page.tsx` и `src/app/register/page.tsx` — отдельные public routes, использующие общий `AuthPage` и визуальный `AuthShell`;
 - dashboard получает данные через TanStack Query и `/api/*`;
 - API route handlers выполняют серверную валидацию, авторизацию и работу с БД.
 
@@ -153,7 +153,7 @@ TanStack Query используется для кэширования, invalidat
 
 ## Проверки
 
-Основной локальный gate состоит из `npm run lint`, `npm run typecheck`, `npm test` и `npm run build`. В репозитории есть domain/unit tests для date policy, auth policy, task service, plan views, Inbox capture, Today recommendation и focus timer. Автоматического E2E/browser harness пока нет; authenticated mobile verification требует доступной тестовой PostgreSQL database и browser session.
+Основной локальный gate состоит из `npm run lint`, `npm run typecheck`, `npm test` и `npm run build`. В репозитории есть domain/unit tests для date policy, auth policy, task service, plan views, Inbox capture, Today recommendation и focus timer. Автоматического authenticated E2E/browser harness пока нет; интеграционный сценарий dashboard требует тестовой PostgreSQL database и browser session.
 
 ## Безопасность
 
@@ -184,7 +184,7 @@ TanStack Query используется для кэширования, invalidat
 - Dashboard actions вынесены в отдельный hook, но `dashboard-layout.tsx` все еще отвечает за композицию всех представлений.
 - Некоторые UI-компоненты крупные и требуют декомпозиции.
 - Migration design для новых date-only полей и `archivedAt` ещё не применён к базе.
-- Unit/domain tests есть, но автоматического E2E/browser harness пока нет.
+- Unit/domain tests есть, но автоматического authenticated E2E/browser harness пока нет.
 - ESLint настроен мягко и часть правил отключена.
 
 ## Рекомендуемые следующие шаги
