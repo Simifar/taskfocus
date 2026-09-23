@@ -2,9 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Task } from "@/shared/types";
-import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
-import { Badge } from "@/shared/ui/badge";
 import {
   DndContext,
   closestCenter,
@@ -23,32 +21,11 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  CheckCircle2,
-  Circle,
-  GripVertical,
-  Trash2,
-  Edit2,
-  Archive,
-  Battery,
-  BatteryMedium,
-  BatteryLow,
-  BatteryFull,
-  Plus,
-  MoreVertical,
-} from "lucide-react";
+import { Circle, GripVertical } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/shared/lib/utils";
 import { TaskWithSubtasks } from "./task-with-subtasks";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
-import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+import { TaskRow } from "./task-row";
 
 // Wrapper component to make TaskWithSubtasks draggable
 function SortableTaskWithSubtasks({
@@ -136,127 +113,28 @@ function SortableTaskItem({
     opacity: isSortableDragging ? 0.5 : 1,
   };
 
-  const getEnergyIcon = (level: number) => {
-    if (level <= 1) return <BatteryLow className="h-4 w-4 text-green-500" />;
-    if (level <= 2) return <BatteryMedium className="h-4 w-4 text-lime-500" />;
-    if (level <= 3) return <Battery className="h-4 w-4 text-yellow-500" />;
-    if (level <= 4) return <BatteryFull className="h-4 w-4 text-orange-500" />;
-    return <BatteryFull className="h-4 w-4 text-red-500" />;
-  };
-
-  const getEnergyColor = (level: number) => {
-    if (level <= 2) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-    if (level <= 3) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-  };
-
-  const quadrantMeta = EISENHOWER_META[getEisenhowerQuadrant(task)];
-
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className={cn(
-        "transition-all hover:shadow-md border-l-4 border-l-border",
-        quadrantMeta.border,
-        task.status === "completed" && "opacity-60 bg-muted/40",
-        isSortableDragging && "shadow-lg ring-2 ring-brand/50"
-      )}>
-        <CardContent className="p-4">
-          {/* Main Row */}
-          <div className="flex items-start gap-3">
-            {/* Drag Handle */}
-            <button
-              className="cursor-grab active:cursor-grabbing flex-shrink-0 mt-1 h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent touch-manipulation"
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-            </button>
-
-            {/* Complete Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "flex-shrink-0 h-9 w-9",
-                task.status === "completed" ? "text-brand hover:text-brand/80" : "text-muted-foreground hover:text-brand"
-              )}
-              onClick={() => onComplete(task)}
-            >
-              {task.status === "completed" ? (
-                <CheckCircle2 className="h-5 w-5" />
-              ) : (
-                <Circle className="h-5 w-5" />
-              )}
-            </Button>
-
-            {/* Task Content */}
-            <div className="flex-1 min-w-0">
-              <h3 className={cn(
-                "text-body-large font-semibold leading-tight",
-                task.status === "completed" && "line-through text-muted-foreground"
-              )}>
-                {task.title}
-              </h3>
-              {task.description && (
-                <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">
-                  {task.description}
-                </p>
-              )}
-              {/* Badges Row */}
-              <div className="flex flex-wrap gap-2.5 mt-3">
-                <Badge variant="secondary" className={cn("gap-1", getEnergyColor(task.energyLevel))}>
-                  {getEnergyIcon(task.energyLevel)}
-                  <span className="text-xs font-semibold">{task.energyLevel}</span>
-                </Badge>
-                <Badge variant="outline" className={cn("text-xs font-semibold", quadrantMeta.badge)}>
-                  {quadrantMeta.action}
-                </Badge>
-                {task.subtasks && task.subtasks.length > 0 && (
-                  <Badge variant="secondary" className="bg-brand/15 text-brand text-xs font-semibold gap-1">
-                    📋 {task.subtasks.filter(s => s.status === "completed").length}/{task.subtasks.length}
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex-shrink-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {task.status === "active" && (
-                    <>
-                      {onAddSubtask && (
-                        <DropdownMenuItem onClick={() => onOpenSubtaskDialog?.(task)}>
-                          <Plus className="h-4 w-4" />
-                          Добавить подзадачу
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem onClick={() => onEdit(task)}>
-                        <Edit2 className="h-4 w-4" />
-                        Редактировать
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onArchive(task.id)}>
-                        <Archive className="h-4 w-4" />
-                        В архив
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem variant="destructive" onClick={() => onDelete(task.id)}>
-                    <Trash2 className="h-4 w-4" />
-                    Удалить
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <TaskRow
+        task={task}
+        dragHandle={
+          <button
+            type="button"
+            className="mt-0.5 flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-accent active:cursor-grabbing touch-manipulation"
+            aria-label={`Перетащить задачу «${task.title}»`}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        }
+        onComplete={onComplete}
+        onEdit={onEdit}
+        onArchive={onArchive}
+        onDelete={onDelete}
+        onAddSubtask={onAddSubtask ? onOpenSubtaskDialog : undefined}
+        isDragging={isSortableDragging}
+      />
     </div>
   );
 }

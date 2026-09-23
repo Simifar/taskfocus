@@ -2,22 +2,15 @@
 
 import { useState } from "react";
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
-import { Task } from "@/shared/types";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Badge } from "@/shared/ui/badge";
-import { Card, CardContent } from "@/shared/ui/card";
-import { Plus, ChevronDown, ChevronRight, CheckCircle2, Circle, Edit2, Trash2, Archive, GripVertical, BatteryLow, BatteryMedium, Battery, BatteryFull, MoreVertical, X } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
+import { ChevronDown, ChevronRight, Circle, Edit2, GripVertical, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
-import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
+
+import type { Task } from "@/shared/types";
+import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
+import { Input } from "@/shared/ui/input";
+import { TaskRow } from "./task-row";
 
 interface TaskWithSubtasksProps {
   task: Task;
@@ -30,24 +23,9 @@ interface TaskWithSubtasksProps {
   onComplete: (task: Task) => void;
   onArchive: (taskId: string) => void;
   onDelete: (taskId: string) => void;
-  // Drag & Drop
   attributes?: DraggableAttributes;
   listeners?: DraggableSyntheticListeners;
   isDragging?: boolean;
-}
-
-function getEnergyIcon(level: number) {
-  if (level <= 1) return <BatteryLow className="h-4 w-4 text-green-500" />;
-  if (level <= 2) return <BatteryMedium className="h-4 w-4 text-lime-500" />;
-  if (level <= 3) return <Battery className="h-4 w-4 text-yellow-500" />;
-  if (level <= 4) return <BatteryFull className="h-4 w-4 text-orange-500" />;
-  return <BatteryFull className="h-4 w-4 text-red-500" />;
-}
-
-function getEnergyColor(level: number) {
-  if (level <= 2) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-  if (level <= 3) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-  return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
 }
 
 export function TaskWithSubtasks({
@@ -68,11 +46,8 @@ export function TaskWithSubtasks({
   const [isExpanded, setIsExpanded] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
-
-  const completedSubtasks = subtasks.filter(st => st.status === "completed").length;
-  const totalSubtasks = subtasks.length;
-  const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
-  const quadrantMeta = EISENHOWER_META[getEisenhowerQuadrant(task)];
+  const completedSubtasks = subtasks.filter((subtask) => subtask.status === "completed").length;
+  const progress = subtasks.length > 0 ? (completedSubtasks / subtasks.length) * 100 : 0;
 
   const handleAddSubtask = async () => {
     if (!newSubtaskTitle.trim()) return;
@@ -81,263 +56,148 @@ export function TaskWithSubtasks({
       await onAddSubtask(task.id, newSubtaskTitle.trim());
       setNewSubtaskTitle("");
       setIsAddingSubtask(false);
-      toast.success("Подзадача добавлена!");
-    } catch (error) {
+      toast.success("Подзадача добавлена");
+    } catch {
       toast.error("Ошибка при добавлении подзадачи");
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleAddSubtask();
-    } else if (e.key === "Escape") {
-      setIsAddingSubtask(false);
-      setNewSubtaskTitle("");
-    }
-  };
-
   return (
-    <Card className={cn(
-      "transition-all border-l-4 shadow-sm hover:shadow-md",
-      quadrantMeta.border,
-      task.status === "completed" && "opacity-60 bg-muted/40",
-      isDragging && "shadow-lg ring-2 ring-brand/50"
-    )}>
-      <CardContent className="p-4 space-y-3">
-        {/* Main Task Header */}
-        <div className="flex items-start gap-3">
-          {/* Drag Handle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="cursor-grab active:cursor-grabbing flex-shrink-0 mt-1"
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </Button>
-
-          {/* Complete Checkbox */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "flex-shrink-0 mt-0.5",
-              task.status === "completed" ? "text-brand hover:text-brand/80" : "text-muted-foreground hover:text-brand"
-            )}
-            onClick={() => onComplete(task)}
-          >
-            {task.status === "completed" ? (
-              <CheckCircle2 className="h-5 w-5" />
-            ) : (
-              <Circle className="h-5 w-5" />
-            )}
-          </Button>
-
-          {/* Task Content */}
-          <div className="flex-1 min-w-0">
-            <button
-              type="button"
-              className="flex items-center gap-2 flex-wrap w-full text-left group/title"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              )}
-              <h4 className={cn(
-                "text-body-large font-semibold leading-tight group-hover/title:text-brand transition-colors",
-                task.status === "completed" && "line-through text-muted-foreground"
-              )}>
-                {task.title}
-              </h4>
-              {totalSubtasks > 0 && (
-                <Badge className="bg-brand/15 text-brand dark:bg-brand/20 text-xs font-semibold">
-                  {completedSubtasks}/{totalSubtasks} подзадач
-                </Badge>
-              )}
-            </button>
-            {task.description && (
-              <p className="text-body-small text-muted-foreground mt-1.5 line-clamp-2">{task.description}</p>
-            )}
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2.5 mt-3">
-              <Badge variant="secondary" className={cn("gap-1", getEnergyColor(task.energyLevel))}>
-                {getEnergyIcon(task.energyLevel)}
-                <span className="text-xs font-semibold">{task.energyLevel}</span>
-              </Badge>
-              <Badge variant="outline" className={cn("text-xs font-semibold", quadrantMeta.badge)}>
-                {quadrantMeta.action}
-              </Badge>
-            </div>
+    <TaskRow
+      task={task}
+      dragHandle={
+        <button
+          type="button"
+          className="mt-0.5 flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-accent active:cursor-grabbing touch-manipulation"
+          aria-label={`Перетащить задачу «${task.title}»`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      }
+      onComplete={onComplete}
+      onEdit={onEditTask}
+      onArchive={onArchive}
+      onDelete={onDelete}
+      onAddSubtask={() => setIsAddingSubtask(true)}
+      isDragging={isDragging}
+    >
+      {subtasks.length > 0 && (
+        <div className="mt-3 space-y-1.5 border-t border-border/70 pt-3">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Подзадачи</span>
+            <span className="font-medium text-brand">{Math.round(progress)}%</span>
           </div>
-
-          {/* Actions */}
-          <div className="flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {task.status === "active" && (
-                  <>
-                    <DropdownMenuItem onClick={() => setIsAddingSubtask(true)}>
-                      <Plus className="h-4 w-4" />
-                      Добавить подзадачу
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEditTask(task)}>
-                      <Edit2 className="h-4 w-4" />
-                      Редактировать
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onArchive(task.id)}>
-                      <Archive className="h-4 w-4" />
-                      В архив
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem variant="destructive" onClick={() => onDelete(task.id)}>
-                  <Trash2 className="h-4 w-4" />
-                  Удалить
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
           </div>
         </div>
+      )}
 
-        {/* Progress Bar */}
-        {totalSubtasks > 0 && (
-          <div className="space-y-1.5 pl-4 md:pl-8">
-            <div className="flex justify-between">
-              <span className="text-caption text-muted-foreground">Прогресс подзадач</span>
-              <span className="text-caption text-brand font-semibold">{Math.round(progress)}%</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
-              <div
-                className="bg-brand h-2.5 rounded-full transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        )}
+      <button
+        type="button"
+        className="mt-3 flex min-h-9 items-center gap-2 text-sm font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-expanded={isExpanded}
+        onClick={() => setIsExpanded((expanded) => !expanded)}
+      >
+        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        {isExpanded ? "Скрыть подзадачи" : "Показать подзадачи"}
+      </button>
 
-        {/* Subtasks List */}
-        {isExpanded && subtasks.length > 0 && (
-          <div className="space-y-2 pl-4 md:pl-8 border-l-2 border-brand/25">
-            {subtasks.map((subtask) => (
+      {isExpanded && (
+        <div className="mt-2 space-y-2 border-l-2 border-brand/25 pl-3 sm:pl-4">
+          {subtasks.length === 0 ? (
+            <p className="py-3 text-sm text-muted-foreground">Подзадач пока нет.</p>
+          ) : (
+            subtasks.map((subtask) => (
               <div
                 key={subtask.id}
                 className={cn(
-                  "flex items-center gap-2 px-2 py-2 rounded-lg transition-colors",
-                  subtask.status === "completed"
-                    ? "bg-brand/5"
-                    : "bg-muted/30 hover:bg-muted/60"
+                  "flex items-center gap-2 rounded-lg px-2 py-1.5",
+                  subtask.status === "completed" ? "bg-brand/5" : "bg-muted/30",
                 )}
               >
-                {/* Checkbox */}
                 <Button
+                  type="button"
                   variant="ghost"
-                  size="sm"
-                  onClick={() => onToggleSubtask(subtask)}
-                  className={cn(
-                    "flex-shrink-0 h-8 w-8",
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-brand"
+                  aria-label={
                     subtask.status === "completed"
-                      ? "text-brand hover:text-brand/80"
-                      : "text-muted-foreground hover:text-brand"
-                  )}
+                      ? `Вернуть подзадачу «${subtask.title}» в активные`
+                      : `Отметить подзадачу «${subtask.title}» выполненной`
+                  }
+                  onClick={() => onToggleSubtask(subtask)}
                 >
-                  {subtask.status === "completed" ? (
-                    <CheckCircle2 className="h-4 w-4" />
-                  ) : (
-                    <Circle className="h-4 w-4" />
-                  )}
+                  {subtask.status === "completed" ? <span className="text-brand">✓</span> : <Circle className="h-4 w-4" />}
                 </Button>
-
-                {/* Subtask Title */}
                 <span
                   className={cn(
-                    "flex-1 text-body-small font-medium min-w-0 truncate",
-                    subtask.status === "completed" && "line-through text-muted-foreground"
+                    "min-w-0 flex-1 truncate text-sm",
+                    subtask.status === "completed" && "text-muted-foreground line-through",
                   )}
                 >
                   {subtask.title}
                 </span>
-
-                {/* Energy Badge — hidden on mobile to save space */}
-                <Badge variant="outline" className="hidden sm:inline-flex text-xs font-semibold text-muted-foreground flex-shrink-0">
-                  E{subtask.energyLevel}
-                </Badge>
-
-                {/* Actions */}
-                <div className="flex-shrink-0">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-3.5 w-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEditSubtask(subtask)}>
-                        <Edit2 className="h-4 w-4" />
-                        Редактировать
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem variant="destructive" onClick={() => onDeleteSubtask(subtask.id)}>
-                        <Trash2 className="h-4 w-4" />
-                        Удалить
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`Действия для подзадачи «${subtask.title}»`}>
+                      <span aria-hidden="true">⋯</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEditSubtask(subtask)}>
+                      <Edit2 className="h-4 w-4" />
+                      Редактировать
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onClick={() => onDeleteSubtask(subtask.id)}>
+                      <Trash2 className="h-4 w-4" />
+                      Удалить
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
+      )}
 
-        {/* Empty state for subtasks */}
-        {isExpanded && subtasks.length === 0 && (
-          <div className="pl-4 md:pl-8 py-6 text-center text-muted-foreground text-sm">
-            Нет подзадач. Нажмите кнопку выше, чтобы добавить первую.
-          </div>
-        )}
-
-        {/* Add Subtask Input */}
-        {isAddingSubtask && (
-          <div className="pl-4 md:pl-8 space-y-2">
-            <div className="flex gap-2 p-3 rounded-lg bg-brand/5 border border-brand/20">
-              <Input
-                value={newSubtaskTitle}
-                onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Название подзадачи..."
-                className="flex-1 text-sm"
-                autoFocus
-              />
-              <Button 
-                size="sm" 
-                onClick={handleAddSubtask}
-                className="bg-brand hover:bg-brand/90 text-brand-foreground"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setIsAddingSubtask(false);
-                  setNewSubtaskTitle("");
-                }}
-                className="text-muted-foreground"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {isAddingSubtask && (
+        <div className="mt-3 flex gap-2 border-t border-border/70 pt-3">
+          <Input
+            value={newSubtaskTitle}
+            onChange={(event) => setNewSubtaskTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void handleAddSubtask();
+              if (event.key === "Escape") {
+                setIsAddingSubtask(false);
+                setNewSubtaskTitle("");
+              }
+            }}
+            placeholder="Название подзадачи"
+            aria-label="Название новой подзадачи"
+            autoFocus
+            className="min-w-0 flex-1"
+          />
+          <Button type="button" size="icon" aria-label="Добавить подзадачу" onClick={() => void handleAddSubtask()}>
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            aria-label="Отменить добавление подзадачи"
+            onClick={() => {
+              setIsAddingSubtask(false);
+              setNewSubtaskTitle("");
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </TaskRow>
   );
 }

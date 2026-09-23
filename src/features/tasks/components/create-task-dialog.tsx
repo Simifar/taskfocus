@@ -9,6 +9,8 @@ import {
   BatteryLow,
   BatteryMedium,
   Calendar as CalendarIcon,
+  ChevronDown,
+  ChevronUp,
   Loader2,
   X,
 } from "lucide-react";
@@ -50,11 +52,12 @@ export function CreateTaskDialog({
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [important, setImportant] = useState(true);
+  const [important, setImportant] = useState(false);
   const [urgent, setUrgent] = useState(false);
   const [energyLevel, setEnergyLevel] = useState(defaultEnergy ?? 3);
   const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate);
   const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate);
+  const [detailsOpen, setDetailsOpen] = useState(Boolean(preSelectedDate || defaultEnergy));
 
   const quadrant = getEisenhowerQuadrant({ important, urgent });
   const quadrantMeta = EISENHOWER_META[quadrant];
@@ -138,7 +141,19 @@ export function CreateTaskDialog({
               />
             </div>
 
-            <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-between"
+              aria-expanded={detailsOpen}
+              onClick={() => setDetailsOpen((open) => !open)}
+            >
+              {detailsOpen ? "Скрыть детали" : "Добавить детали"}
+              {detailsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+
+            {detailsOpen && <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-3">
+              <div className="space-y-2">
               <Label htmlFor="description">Описание</Label>
               <Textarea
                 id="description"
@@ -148,9 +163,9 @@ export function CreateTaskDialog({
                 maxLength={2000}
                 rows={2}
               />
-            </div>
+              </div>
 
-            <div className="space-y-2">
+              <div className="space-y-2">
               <Label>Энергия</Label>
               <div className="grid grid-cols-5 gap-2">
                 {[1, 2, 3, 4, 5].map((level) => (
@@ -175,9 +190,9 @@ export function CreateTaskDialog({
                 {energyLevel === 3 && "Средняя задача без тяжёлой подготовки"}
                 {energyLevel >= 4 && "Задача, которой нужна концентрация"}
               </p>
-            </div>
+              </div>
 
-            <div className="space-y-2">
+              <div className="space-y-2">
               <Label>Матрица Эйзенхауэра</Label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -209,7 +224,7 @@ export function CreateTaskDialog({
                 <div className="font-semibold">{quadrantMeta.action}</div>
                 <p className="text-xs text-muted-foreground">{quadrantMeta.description}</p>
               </div>
-            </div>
+              </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
@@ -315,7 +330,8 @@ export function CreateTaskDialog({
                   </Popover>
                 </div>
               </div>
-            </div>
+              </div>
+            </div>}
           </div>
 
           <DialogFooter>

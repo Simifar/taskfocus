@@ -20,15 +20,14 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { CreateSubtaskDialog } from "@/features/tasks/components/create-subtask-dialog";
 import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { TaskRow } from "@/features/tasks/components/task-row";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { cn } from "@/shared/lib/utils";
 import {
-  Plus, Inbox, Calendar, Loader2, MoreHorizontal, Edit, Archive, Trash2,
-  Filter, Clock, Zap, ChevronDown, CheckCircle2, Circle
+  Plus, Inbox, Calendar, Loader2, Filter, ChevronDown, Zap, Clock, Circle, Archive, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { addDays, format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { addDays } from "date-fns";
 import {
   compareByEisenhower,
   EISENHOWER_META,
@@ -86,7 +85,6 @@ export function InboxView({
   const [filterQuadrant, setFilterQuadrant] = useState<EisenhowerQuadrant | "all">("all");
   const [filterEnergy, setFilterEnergy] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("position");
-  const [viewMode, setViewMode] = useState<"compact" | "detailed">("detailed");
 
   const inboxTasks = useMemo(() => {
     return tasks.filter((task) => classifyInboxTask(task));
@@ -214,14 +212,6 @@ export function InboxView({
               </div>
             )}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 self-start"
-            onClick={() => setViewMode(viewMode === "compact" ? "detailed" : "compact")}
-          >
-            {viewMode === "compact" ? "Детально" : "Компактно"}
-          </Button>
         </div>
 
         <Card className="border-brand/30">
@@ -454,133 +444,26 @@ export function InboxView({
             }}
             className="space-y-3"
           >
-            {(task, dragHandle) => {
-              const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
-
-              return (
-              <Card
-                className={cn(
-                  "hover:shadow-md transition-all duration-200",
-                  selectedTasks.has(task.id) && "ring-2 ring-brand/60 bg-brand/5",
-                  viewMode === "compact" && "p-3"
-                )}
-              >
-                <CardContent className={cn(
-                  "p-4",
-                  viewMode === "compact" && "p-3"
-                )}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1">
-                      {dragHandle}
-                      <Checkbox
-                        checked={selectedTasks.has(task.id)}
-                        onCheckedChange={() => toggleTaskSelection(task.id)}
-                        className="mt-0.5"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          {task.status === "completed" ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <Circle className="h-4 w-4 text-gray-400" />
-                          )}
-                          <h3
-                            className={cn(
-                              "font-medium truncate",
-                              task.status === "completed" && "line-through text-muted-foreground",
-                            )}
-                          >
-                            {task.title}
-                          </h3>
-                          <Badge variant="outline" className={cn("text-xs", quadrant.badge)}>
-                            {quadrant.shortTitle}
-                          </Badge>
-                          <div className="flex items-center gap-1">
-                            {getEnergyIcon(task.energyLevel)}
-                            <span className="text-xs text-muted-foreground">{task.energyLevel}</span>
-                          </div>
-                          {task.subtasks && task.subtasks.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {task.subtasks.filter(st => st.status === "completed").length}/{task.subtasks.length}
-                            </Badge>
-                          )}
-                        </div>
-                        {viewMode === "detailed" && task.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-                        )}
-                        {viewMode === "detailed" && (
-                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                            <span>Создано: {format(new Date(task.createdAt), "d MMM yyyy", { locale: ru })}</span>
-                            {task.updatedAt && task.updatedAt !== task.createdAt && (
-                              <span>Обновлено: {format(new Date(task.updatedAt), "d MMM yyyy", { locale: ru })}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => onComplete?.(task)}>
-                          {task.status === "completed" ? (
-                            <><Circle className="h-4 w-4 mr-2" />Отметить как активную</>
-                          ) : (
-                            <><CheckCircle2 className="h-4 w-4 mr-2" />Выполнить</>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit?.(task)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Редактировать
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onAssignToToday?.(task.id)}>
-                          <Calendar className="h-4 w-4 mr-2" />
-                          На сегодня
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onAssignToWeek?.(task.id)}>
-                          <Calendar className="h-4 w-4 mr-2" />
-                          На неделю
-                        </DropdownMenuItem>
-                        {onAddSubtask && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setParentTaskForSubtask(task);
-                                setSubtaskDialogOpen(true);
-                              }}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Подзадача
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => onArchive?.(task.id)}
-                          className="text-orange-600"
-                        >
-                          <Archive className="h-4 w-4 mr-2" />
-                          В архив
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onDelete?.(task.id)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Удалить
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
-            )}}
+            {(task, dragHandle) => (
+              <TaskRow
+                task={task}
+                dragHandle={dragHandle}
+                onComplete={onComplete}
+                onEdit={onEdit}
+                onArchive={onArchive}
+                onDelete={onDelete}
+                onAssignToToday={onAssignToToday}
+                onAssignToWeek={onAssignToWeek}
+                onAddSubtask={onAddSubtask ? (parentTask) => {
+                  setParentTaskForSubtask(parentTask);
+                  setSubtaskDialogOpen(true);
+                } : undefined}
+                selection={{
+                  checked: selectedTasks.has(task.id),
+                  onChange: () => toggleTaskSelection(task.id),
+                }}
+              />
+            )}
           </SimpleSortableTasksList>
         ) : (
           <Card className="border-dashed">

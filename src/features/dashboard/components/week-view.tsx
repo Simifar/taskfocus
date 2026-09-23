@@ -6,14 +6,12 @@ import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
 import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
+import { TaskRow } from "@/features/tasks/components/task-row";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import {
-  Archive,
   CalendarDays,
   CheckCircle2,
-  Edit2,
   Plus,
-  Trash2,
 } from "lucide-react";
 import { addDays, endOfDay, format, isPast, isSameDay } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -22,7 +20,6 @@ import {
   isTaskScheduledForCurrentWeek,
   isTaskScheduledForDay,
 } from "@/features/dashboard/lib/task-date-filters";
-import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 
 interface WeekViewProps {
   tasks: Task[];
@@ -167,77 +164,16 @@ export function WeekView({
                     onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
                     className="space-y-2"
                   >
-                    {(task, dragHandle) => {
-                      const quadrant = EISENHOWER_META[getEisenhowerQuadrant(task)];
-
-                      return (
-                      <div
-                        className="group rounded-2xl border border-border bg-background p-3 shadow-sm transition-colors hover:border-brand/40"
-                      >
-                        <div className="flex items-start gap-2">
-                          {dragHandle}
-                          <button
-                            type="button"
-                            className="block min-w-0 flex-1 text-left"
-                            onClick={() => onEdit?.(task)}
-                          >
-                            <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", quadrant.dot)} />
-                            <div className="min-w-0">
-                              <p className="line-clamp-2 text-sm font-semibold leading-snug">
-                                {task.title}
-                              </p>
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-                                <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px]">
-                                  {quadrant.shortTitle}
-                                </Badge>
-                                <Badge variant="outline" className="h-5 rounded-full px-2 text-[11px]">
-                                  энергия {task.energyLevel}
-                                </Badge>
-                              </div>
-                            </div>
-                          </button>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-brand"
-                            title="Выполнить"
-                            onClick={() => onComplete?.(task)}
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-brand"
-                            title="Редактировать"
-                            onClick={() => onEdit?.(task)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-brand"
-                            title="В архив"
-                            onClick={() => onArchive?.(task.id)}
-                          >
-                            <Archive className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            title="Удалить"
-                            onClick={() => onDelete?.(task.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}}
+                    {(task, dragHandle) => (
+                      <TaskRow
+                        task={task}
+                        dragHandle={dragHandle}
+                        onComplete={onComplete}
+                        onEdit={onEdit}
+                        onArchive={onArchive}
+                        onDelete={onDelete}
+                      />
+                    )}
                   </SimpleSortableTasksList>
                 ) : (
                   <button
