@@ -27,17 +27,26 @@ TaskFocus — полнофункциональный планировщик за
 
 ## Как это выглядит
 
-Ниже — настоящие снимки актуальных экранов входа и регистрации. Скриншот dashboard не добавлен: безопасного демо-окружения сейчас нет.
+В галерее показаны основные рабочие экраны: «Сегодня», быстрый сбор задач во «Входящих», недельное планирование и календарь. Нажмите на изображение, чтобы открыть его в полном размере.
 
-<p align="center">
-  <img src="docs/images/sign-in.png" alt="Страница входа в TaskFocus на компьютере" width="100%" />
-</p>
-<p align="center"><sub>Вход · компьютер</sub></p>
+<table>
+  <tr>
+    <td align="center"><a href="docs/images/dashboard-today.png"><img src="docs/images/dashboard-today.png" alt="Экран TaskFocus «Сегодня» с рекомендованной задачей и планом дня" width="100%" /></a><br /><sub>Сегодня · небольшой план на день</sub></td>
+    <td align="center"><a href="docs/images/dashboard-inbox.png"><img src="docs/images/dashboard-inbox.png" alt="Входящие в TaskFocus: быстрое добавление и задачи без срока" width="100%" /></a><br /><sub>Входящие · быстрый сбор задач</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/images/plan-week.png"><img src="docs/images/plan-week.png" alt="Недельный план TaskFocus с задачами, распределёнными по дням" width="100%" /></a><br /><sub>Неделя · планирование по дням</sub></td>
+    <td align="center"><a href="docs/images/plan-calendar.png"><img src="docs/images/plan-calendar.png" alt="Календарь TaskFocus с задачами, назначенными на разные дни месяца" width="100%" /></a><br /><sub>Календарь · задачи по датам</sub></td>
+  </tr>
+</table>
 
-<p align="center">
-  <img src="docs/images/sign-up-mobile.png" alt="Страница регистрации TaskFocus на мобильном экране" width="340" />
-</p>
-<p align="center"><sub>Создание аккаунта · мобильный экран</sub></p>
+<details>
+  <summary>Экраны входа и регистрации</summary>
+  <p align="center"><img src="docs/images/sign-in.png" alt="Страница входа в TaskFocus на компьютере" width="100%" /></p>
+  <p align="center"><sub>Вход · компьютер</sub></p>
+  <p align="center"><img src="docs/images/sign-up-mobile.png" alt="Страница регистрации TaskFocus на мобильном экране" width="340" /></p>
+  <p align="center"><sub>Создание аккаунта · мобильный экран</sub></p>
+</details>
 
 ## Возможности
 

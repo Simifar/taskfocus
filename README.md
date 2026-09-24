@@ -27,17 +27,26 @@ The application interface is currently in Russian. There is no hosted demo link:
 
 ## A look inside
 
-The screenshots below are real captures of the current sign-in and registration screens. Dashboard screenshots are omitted because no safe demo environment is currently available.
+The dashboard gallery covers Today, Inbox capture, weekly planning, and the calendar. Select an image to view it at full size.
 
-<p align="center">
-  <img src="docs/images/sign-in.png" alt="TaskFocus sign-in page on desktop" width="100%" />
-</p>
-<p align="center"><sub>Sign in · desktop</sub></p>
+<table>
+  <tr>
+    <td align="center"><a href="docs/images/dashboard-today.png"><img src="docs/images/dashboard-today.png" alt="TaskFocus Today dashboard with the recommended task and daily list" width="100%" /></a><br /><sub>Today · a short daily plan</sub></td>
+    <td align="center"><a href="docs/images/dashboard-inbox.png"><img src="docs/images/dashboard-inbox.png" alt="TaskFocus Inbox with quick capture and unscheduled tasks" width="100%" /></a><br /><sub>Inbox · quick capture</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/images/plan-week.png"><img src="docs/images/plan-week.png" alt="TaskFocus weekly planning board with tasks arranged by day" width="100%" /></a><br /><sub>Week · plan tasks by day</sub></td>
+    <td align="center"><a href="docs/images/plan-calendar.png"><img src="docs/images/plan-calendar.png" alt="TaskFocus calendar with scheduled tasks across the month" width="100%" /></a><br /><sub>Calendar · see scheduled tasks by date</sub></td>
+  </tr>
+</table>
 
-<p align="center">
-  <img src="docs/images/sign-up-mobile.png" alt="TaskFocus registration page on a mobile screen" width="340" />
-</p>
-<p align="center"><sub>Create an account · mobile</sub></p>
+<details>
+  <summary>Sign-in and registration screens</summary>
+  <p align="center"><img src="docs/images/sign-in.png" alt="TaskFocus sign-in page on desktop" width="100%" /></p>
+  <p align="center"><sub>Sign in · desktop</sub></p>
+  <p align="center"><img src="docs/images/sign-up-mobile.png" alt="TaskFocus registration page on a mobile screen" width="340" /></p>
+  <p align="center"><sub>Create an account · mobile</sub></p>
+</details>
 
 ## Features
 
