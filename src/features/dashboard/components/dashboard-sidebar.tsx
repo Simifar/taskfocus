@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Task, User, StatsResponse } from "@/shared/types";
+import type { User, StatsResponse } from "@/shared/types";
 import { useDashboardStore, type DashboardView } from "@/features/dashboard/store";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
@@ -15,6 +15,7 @@ import {
   Grid2X2,
   Inbox,
   LogOut,
+  Search,
   Settings,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -23,22 +24,20 @@ import { cn } from "@/shared/lib/utils";
 interface DashboardSidebarProps {
   user: User | null;
   stats: StatsResponse | null;
-  tasks: Task[];
+  onSearch: () => void;
   onLogout: () => void;
 }
 
 export function DashboardSidebar({
   user,
   stats,
-  tasks,
+  onSearch,
   onLogout,
 }: DashboardSidebarProps) {
   const router = useRouter();
   const currentView = useDashboardStore((s) => s.currentView);
   const setView = useDashboardStore((s) => s.setView);
   const [moreOpen, setMoreOpen] = useState<boolean | null>(null);
-
-  void tasks;
 
   const isAdvancedView = ["calendar", "matrix", "day", "archive"].includes(currentView);
 
@@ -63,8 +62,8 @@ export function DashboardSidebar({
           <button
             type="button"
             className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition min-w-0 text-left rounded-md"
-            onClick={goToProfile}
-            aria-label="Открыть профиль"
+            onClick={() => handleNavClick("today")}
+            aria-label="К задачам на сегодня"
           >
             <div className="p-2 bg-brand rounded-xl shrink-0">
               <Brain className="h-5 w-5 text-white" />
@@ -80,6 +79,15 @@ export function DashboardSidebar({
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Разделы TaskFocus">
+        <Button
+          variant="outline"
+          className="mb-4 h-10 w-full justify-start gap-2 bg-background/70 text-sm text-muted-foreground"
+          onClick={onSearch}
+        >
+          <Search className="size-4" aria-hidden="true" />
+          <span className="flex-1 text-left">Найти задачу</span>
+          <kbd className="rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium">Ctrl K</kbd>
+        </Button>
         <div className="space-y-2">
           <Button
             variant={currentView === "today" ? "default" : "ghost"}

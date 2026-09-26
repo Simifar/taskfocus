@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Archive, CalendarDays, Check, Circle, Edit2, MoreVertical, Plus, Trash2 } from "lucide-react";
 
 import { formatTaskRowSchedule } from "@/features/tasks/lib/task-row";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 import type { Task } from "@/shared/types";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
@@ -68,6 +69,9 @@ export function TaskRow({
 }: TaskRowProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const scheduleLabel = formatTaskRowSchedule(task);
+  const priorityLabel = task.important || task.urgent
+    ? EISENHOWER_META[getEisenhowerQuadrant(task)].title
+    : "Без отметки";
   const completedSubtasks = task.subtasks?.filter((subtask) => subtask.status === "completed").length ?? 0;
   const totalSubtasks = task.subtasks?.length ?? 0;
   const hasMenu = Boolean(
@@ -137,14 +141,19 @@ export function TaskRow({
               </p>
             )}
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               {scheduleLabel && (
                 <span className="inline-flex items-center gap-1">
                   <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
                   {scheduleLabel}
                 </span>
               )}
-              <span>Энергия {task.energyLevel}</span>
+              <Badge variant="outline" className="h-5 rounded-full px-2 text-[11px] font-normal">
+                {priorityLabel}
+              </Badge>
+              <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px] font-normal">
+                Энергия {task.energyLevel}/5
+              </Badge>
               {totalSubtasks > 0 && (
                 <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px]">
                   Подзадачи {completedSubtasks}/{totalSubtasks}

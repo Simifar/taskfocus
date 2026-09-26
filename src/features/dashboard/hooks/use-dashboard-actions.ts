@@ -31,8 +31,10 @@ export function useDashboardActions() {
         completed: task.status !== "completed",
       });
       toast.success(task.status === "completed" ? "Задача снова активна" : "Задача выполнена");
+      return true;
     } catch (err) {
       reportError(err, "Не удалось обновить задачу");
+      return false;
     }
   };
 

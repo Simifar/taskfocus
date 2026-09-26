@@ -1,6 +1,7 @@
 import { TaskDomainError } from "@/server/tasks/errors";
+import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 
-export const MAX_ACTIVE_TASKS_PER_DAY = 5;
+export { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 export const MIN_ENERGY_LEVEL = 1;
 export const MAX_ENERGY_LEVEL = 5;
 export const DEFAULT_ENERGY_LEVEL = 3;

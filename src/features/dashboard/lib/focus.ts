@@ -11,3 +11,7 @@ export function getFocusProgress(remainingSeconds: number) {
   const elapsed = FOCUS_DURATION_SECONDS - Math.max(0, remainingSeconds);
   return Math.min(100, Math.max(0, (elapsed / FOCUS_DURATION_SECONDS) * 100));
 }
+
+export function getFocusRemainingSeconds(deadlineMs: number, nowMs: number) {
+  return Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000));
+}

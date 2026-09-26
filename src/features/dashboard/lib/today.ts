@@ -1,5 +1,6 @@
 import { isTaskScheduledForDay } from "./task-date-filters";
 import { normalisePlannedRange } from "@/shared/lib/dates/task-date-policy";
+import { compareByEisenhower } from "@/features/tasks/lib/eisenhower";
 
 type TodayTask = {
   id: string;
@@ -7,6 +8,8 @@ type TodayTask = {
   parentTaskId?: string | null;
   dueDateStart?: string | null;
   dueDateEnd?: string | null;
+  important: boolean;
+  urgent: boolean;
   energyLevel: number;
   position: number;
   createdAt: string;
@@ -24,6 +27,9 @@ function plannedRangeEnd(task: TodayTask) {
 function compareTodayTasks(a: TodayTask, b: TodayTask, useCapacity: boolean) {
   const endComparison = plannedRangeEnd(a).localeCompare(plannedRangeEnd(b));
   if (endComparison !== 0) return endComparison;
+
+  const priorityComparison = compareByEisenhower(a, b);
+  if (priorityComparison !== 0) return priorityComparison;
 
   if (useCapacity && a.energyLevel !== b.energyLevel) {
     return a.energyLevel - b.energyLevel;

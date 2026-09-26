@@ -18,6 +18,7 @@ import {
   scheduledBetweenWhere,
 } from "@/server/tasks/date-policy";
 import type { TaskStatus } from "@/shared/types";
+import { buildTaskSearchFilter } from "@/server/tasks/search";
 import {
   TaskDomainError,
   TASK_ERROR_MESSAGES,
@@ -123,13 +124,8 @@ export async function listTasks(ctx: TaskServiceContext, query: ListTasksInput) 
   if (query.energy !== undefined && query.energy >= MIN_ENERGY_LEVEL && query.energy <= MAX_ENERGY_LEVEL) {
     where.energyLevel = query.energy;
   }
-  if (query.search) {
-    addAnd(where, {
-      OR: [
-        { title: { contains: query.search, mode: "insensitive" } },
-        { description: { contains: query.search, mode: "insensitive" } },
-      ],
-    });
+  if (query.search?.trim()) {
+    addAnd(where, buildTaskSearchFilter(query.search, ctx.userId));
   }
 
   const [tasks, activeCount, todayActiveCount] = await Promise.all([

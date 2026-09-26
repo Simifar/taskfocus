@@ -14,13 +14,13 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 import { Progress } from "@/shared/ui/progress";
-import { FOCUS_DURATION_SECONDS, formatFocusTime, getFocusProgress } from "@/features/dashboard/lib/focus";
+import { FOCUS_DURATION_SECONDS, formatFocusTime, getFocusProgress, getFocusRemainingSeconds } from "@/features/dashboard/lib/focus";
 
 interface FocusModeDialogProps {
   open: boolean;
   task: Task | null;
   onOpenChange: (open: boolean) => void;
-  onComplete: (task: Task) => void;
+  onComplete: (task: Task) => Promise<boolean>;
 }
 
 export function FocusModeDialog({
@@ -30,47 +30,43 @@ export function FocusModeDialog({
   onComplete,
 }: FocusModeDialogProps) {
   const [remainingSeconds, setRemainingSeconds] = useState(FOCUS_DURATION_SECONDS);
-  const [isRunning, setIsRunning] = useState(false);
+  const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
   const [completedSessions, setCompletedSessions] = useState(0);
+  const isRunning = deadlineMs !== null;
 
   useEffect(() => {
-    if (!open || !isRunning) return;
+    if (!open || deadlineMs === null) return;
 
     const intervalId = window.setInterval(() => {
-      setRemainingSeconds((seconds) => {
-        if (seconds <= 1) {
-          window.clearInterval(intervalId);
-          setIsRunning(false);
-          setCompletedSessions((count) => count + 1);
-          toast.success("Фокус-сессия завершена");
-          return 0;
-        }
-
-        return seconds - 1;
-      });
-    }, 1000);
+      const nextSeconds = getFocusRemainingSeconds(deadlineMs, Date.now());
+      setRemainingSeconds(nextSeconds);
+      if (nextSeconds === 0) {
+        setDeadlineMs(null);
+        setCompletedSessions((count) => count + 1);
+        toast.success("Фокус-сессия завершена");
+      }
+    }, 250);
 
     return () => window.clearInterval(intervalId);
-  }, [isRunning, open]);
+  }, [deadlineMs, open]);
 
   const progress = getFocusProgress(remainingSeconds);
 
   const handleReset = () => {
     setRemainingSeconds(FOCUS_DURATION_SECONDS);
-    setIsRunning(false);
+    setDeadlineMs(null);
   };
 
-  const handleCompleteTask = () => {
+  const handleCompleteTask = async () => {
     if (!task) return;
 
-    onComplete(task);
-    toast.success("Задача завершена");
-    onOpenChange(false);
+    if (await onComplete(task)) handleOpenChange(false);
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      setIsRunning(false);
+    if (!nextOpen && deadlineMs !== null) {
+      setRemainingSeconds(getFocusRemainingSeconds(deadlineMs, Date.now()));
+      setDeadlineMs(null);
     }
 
     onOpenChange(nextOpen);
@@ -104,7 +100,7 @@ export function FocusModeDialog({
           <div className="space-y-7 px-5 py-7">
             <div className="space-y-2 text-center">
               <p className="text-sm font-medium text-muted-foreground">Текущая задача</p>
-              <h2 className="text-2xl font-bold leading-tight">{task?.title ?? "Задача не выбрана"}</h2>
+              <h2 className="break-words text-2xl font-bold leading-tight">{task?.title ?? "Задача не выбрана"}</h2>
               {task?.description && (
                 <p className="mx-auto max-w-md text-sm text-muted-foreground line-clamp-3">
                   {task.description}
@@ -113,7 +109,7 @@ export function FocusModeDialog({
             </div>
 
             <div className="space-y-4">
-              <div className="text-center text-6xl font-bold tabular-nums tracking-normal">
+              <div role="timer" aria-label={`Осталось ${formatFocusTime(remainingSeconds)}`} className="text-center text-6xl font-bold tabular-nums tracking-normal">
                 {formatFocusTime(remainingSeconds)}
               </div>
               <Progress value={progress} className="h-3" />
@@ -126,7 +122,14 @@ export function FocusModeDialog({
             <div className="grid grid-cols-3 gap-2 sm:flex sm:justify-center">
               <Button
                 className="h-11 gap-2 bg-brand text-brand-foreground hover:bg-brand/90"
-                onClick={() => setIsRunning((value) => !value)}
+                onClick={() => {
+                  if (isRunning && deadlineMs !== null) {
+                    setRemainingSeconds(getFocusRemainingSeconds(deadlineMs, Date.now()));
+                    setDeadlineMs(null);
+                  } else {
+                    setDeadlineMs(Date.now() + remainingSeconds * 1000);
+                  }
+                }}
                 disabled={!task || remainingSeconds === 0}
               >
                 {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

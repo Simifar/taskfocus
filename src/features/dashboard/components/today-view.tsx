@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Calendar, CheckCircle2, Plus, Timer } from "lucide-react";
 
-import type { StatsResponse, Task } from "@/shared/types";
+import type { Task } from "@/shared/types";
+import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Card, CardContent } from "@/shared/ui/card";
 import {
   Select,
   SelectContent,
@@ -22,18 +22,17 @@ import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-li
 import { TaskRow } from "@/features/tasks/components/task-row";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 
-import { FocusModeDialog } from "./focus-mode-dialog";
 
 interface TodayViewProps {
   tasks: Task[];
-  stats?: StatsResponse | null;
   currentEnergy: number | null;
   onEnergyChange: (level: number | null) => void;
   onEdit: (task: Task) => void;
   onArchive: (taskId: string) => void;
   onComplete: (task: Task) => void;
   onDelete: (taskId: string) => void;
-  onAddTask: () => void;
+  onAddTask: (target?: "today" | "inbox") => void;
+  onStartFocus: (task: Task) => void;
   onReorder?: (tasks: Task[]) => void;
   showCompleted: boolean;
   onShowCompletedChange: (show: boolean) => void;
@@ -44,8 +43,6 @@ interface TodayViewProps {
   todayActiveCount?: number;
   isLoading?: boolean;
 }
-
-const MAX_ACTIVE_TASKS_PER_DAY = 5;
 
 function getToday() {
   return format(new Date(), "EEEE, MMMM d", { locale: ru });
@@ -60,6 +57,7 @@ export function TodayView({
   onComplete,
   onDelete,
   onAddTask,
+  onStartFocus,
   onReorder,
   showCompleted,
   onShowCompletedChange,
@@ -70,9 +68,6 @@ export function TodayView({
   todayActiveCount,
   isLoading = false,
 }: TodayViewProps) {
-  const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
-  const [focusModeOpen, setFocusModeOpen] = useState(false);
-  const [focusSessionKey, setFocusSessionKey] = useState(0);
   const today = new Date();
 
   const todayTasks = tasks.filter(
@@ -94,13 +89,6 @@ export function TodayView({
   const activeTodayCount = todayActiveCount ?? todayActiveTasks.length;
   const canAddMore = activeTodayCount < MAX_ACTIVE_TASKS_PER_DAY;
   const hasTasksButFiltered = currentEnergy !== null && todayActiveTasks.length > 0 && activeTasks.length === 0;
-  const selectedFocusTask = activeTasks.find((task) => task.id === focusTaskId) ?? recommendation ?? activeTasks[0] ?? null;
-
-  const handleOpenFocusMode = () => {
-    if (!selectedFocusTask) return;
-    setFocusSessionKey((key) => key + 1);
-    setFocusModeOpen(true);
-  };
 
   const handleReorder = (reorderedActiveTasks: Task[]) => {
     onReorder?.(mergeReorderedTasks(tasks, reorderedActiveTasks));
@@ -123,12 +111,12 @@ export function TodayView({
             </p>
           </div>
           <Button
-            onClick={onAddTask}
-            disabled={isLoading || !canAddMore}
+            onClick={() => onAddTask(canAddMore ? "today" : "inbox")}
+            disabled={isLoading}
             className="w-full rounded-lg bg-brand px-4 text-brand-foreground hover:bg-brand/90 sm:w-auto"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Добавить задачу
+            {canAddMore ? "Добавить задачу" : "Записать во Входящие"}
           </Button>
         </header>
 
@@ -157,26 +145,26 @@ export function TodayView({
         </div>
 
         {recommendation && (
-          <Card className="border-brand/30 bg-brand/5">
-            <CardHeader className="gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <section className="border-l-2 border-brand py-1 pl-4 sm:pl-5">
+            <div className="flex flex-wrap items-start justify-between gap-3 pb-3">
               <div>
-                <CardTitle className="text-title">Следующая задача</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">Выбрана по дате, ёмкости и порядку</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand">Начните отсюда</p>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight">Один следующий шаг</h2>
+                <p className="mt-1 text-xs text-muted-foreground">Срок и приоритет помогут выбрать, с чего начать.</p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">Рекомендовано</Badge>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleOpenFocusMode}
+                  onClick={() => onStartFocus(recommendation)}
                   className="gap-1.5"
                 >
                   <Timer className="h-3.5 w-3.5" />
-                  Фокус
+                  Сосредоточиться
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
+            </div>
+            <div>
               <TaskRow
                 task={recommendation}
                 onComplete={onComplete}
@@ -184,8 +172,8 @@ export function TodayView({
                 onArchive={onArchive}
                 onDelete={onDelete}
               />
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         )}
 
         <section aria-labelledby="today-tasks-title" className="space-y-3">
@@ -215,6 +203,9 @@ export function TodayView({
               <CardContent className="py-10 text-center">
                 <p className="font-medium">Нет задач для выбранной ёмкости</p>
                 <p className="mt-1 text-sm text-muted-foreground">Выберите более высокий уровень или сбросьте фильтр.</p>
+                <Button variant="outline" size="sm" className="mt-4" onClick={() => onEnergyChange(null)}>
+                  Показать все уровни
+                </Button>
               </CardContent>
             </Card>
           ) : todayActiveTasks.length === 0 ? (
@@ -268,13 +259,6 @@ export function TodayView({
         )}
       </div>
 
-      <FocusModeDialog
-        key={focusSessionKey}
-        open={focusModeOpen}
-        task={selectedFocusTask}
-        onOpenChange={setFocusModeOpen}
-        onComplete={onComplete}
-      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Task, StatsResponse } from "@/shared/types";
+import type { Task } from "@/shared/types";
 import { useCreateTask } from "@/features/tasks/hooks";
 import { ApiError } from "@/shared/lib/fetcher";
 import { classifyInboxTask } from "@/shared/lib/dates/task-date-policy";
@@ -20,7 +20,6 @@ import { Input } from "@/shared/ui/input";
 
 interface InboxViewProps {
   tasks: Task[];
-  stats: StatsResponse | null;
   onEdit?: (task: Task) => void;
   onComplete?: (task: Task) => void;
   onArchive?: (taskId: string) => void;
@@ -41,7 +40,6 @@ interface InboxViewProps {
 
 export function InboxView({
   tasks,
-  stats,
   onEdit,
   onComplete,
   onArchive,
@@ -52,7 +50,6 @@ export function InboxView({
   onAddSubtask,
   onReorder,
 }: InboxViewProps) {
-  void stats;
   const createTask = useCreateTask();
   const [quickAddTitle, setQuickAddTitle] = useState("");
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);

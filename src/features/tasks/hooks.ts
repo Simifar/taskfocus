@@ -49,10 +49,11 @@ function recalcActiveCount(items: TasksListResponse["items"]): number {
 
 // ─── Queries ────────────────────────────────────────────────────────────────
 
-export function useTasks(query: TasksQuery = {}) {
+export function useTasks(query: TasksQuery = {}, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: taskKeys.list(query),
     queryFn: () => tasksApi.list(query),
+    enabled: options.enabled,
   });
 }
 

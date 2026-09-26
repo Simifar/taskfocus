@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Brain } from "lucide-react";
+import { AlertCircle, Loader2, Brain, Search } from "lucide-react";
 
 import type { Task } from "@/shared/types";
 import { useCurrentUser, useLogout } from "@/features/auth/hooks";
@@ -12,6 +12,7 @@ import { useTasks } from "@/features/tasks/hooks";
 import type { TasksQuery } from "@/features/tasks/api";
 import { useDashboardStore, useSelectedDate } from "@/features/dashboard/store";
 import { toDateOnly } from "@/shared/lib/dates/date-only";
+import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 import { useDashboardActions } from "@/features/dashboard/hooks/use-dashboard-actions";
 
 import { DashboardSidebar } from "./dashboard-sidebar";
@@ -23,6 +24,8 @@ import { CalendarView } from "./calendar-view";
 import { EisenhowerMatrixView } from "./eisenhower-matrix-view";
 import { DayView } from "./day-view";
 import { ArchiveView } from "./archive-view";
+import { FocusModeDialog } from "./focus-mode-dialog";
+import { TaskSearchDialog } from "./task-search-dialog";
 import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
 import { EditTaskDialog } from "@/features/tasks/components/edit-task-dialog";
 
@@ -78,17 +81,29 @@ export function DashboardLayout() {
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [dayReturnView, setDayReturnView] = useState<"today" | "week" | "calendar">("today");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [focusOpen, setFocusOpen] = useState(false);
+  const [focusTask, setFocusTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    if (currentView === "day" && !selectedDate) setView("today");
+  }, [currentView, selectedDate, setView]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   // Wait for auth to finish loading before deciding to redirect
   useEffect(() => {
     if (!isAuthLoading && (isAuthError || !user)) router.push("/login");
   }, [user, isAuthLoading, isAuthError, router]);
-
-  useEffect(() => {
-    if (tasksQuery.isError) {
-      toast.error("Не удалось загрузить задачи. Обновите страницу.");
-    }
-  }, [tasksQuery.isError]);
 
   const tasks = tasksQuery.data?.items ?? [];
   const stats = statsQuery.data ?? null;
@@ -122,9 +137,15 @@ export function DashboardLayout() {
     setView(dayReturnView);
   };
 
-  const handleAddTask = () => {
-    if (currentView === "inbox") {
+  const handleAddTask = (target?: "today" | "inbox") => {
+    const limitReached = (tasksQuery.data?.todayActiveCount ?? 0) >= MAX_ACTIVE_TASKS_PER_DAY;
+    if (
+      target === "inbox" ||
+      (target === undefined && (currentView === "inbox" || (currentView === "today" && limitReached)))
+    ) {
       setPreSelectedDate(undefined);
+    } else if (target === "today") {
+      setPreSelectedDate(new Date());
     } else if (currentView === "day" && selectedDate) {
       setPreSelectedDate(selectedDate);
     } else {
@@ -147,25 +168,46 @@ export function DashboardLayout() {
       <DashboardSidebar
         user={user ?? null}
         stats={stats}
-        tasks={tasks}
+        onSearch={() => setSearchOpen(true)}
         onLogout={handleLogout}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3 md:hidden">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 md:hidden">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-brand rounded-lg">
               <Brain className="h-4 w-4 text-brand-foreground" />
             </div>
             <span className="font-bold text-base">TaskFocus</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="flex size-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand"
+            aria-label="Найти задачу"
+          >
+            <Search className="size-5" aria-hidden="true" />
+          </button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto p-4 md:p-8">
+          {tasksQuery.isError && tasksQuery.data && (
+            <div role="status" className="mx-auto mb-4 flex max-w-5xl items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm">
+              <span>Не удалось обновить список. Показаны сохранённые данные.</span>
+              <button type="button" className="shrink-0 font-medium underline underline-offset-4" onClick={() => void tasksQuery.refetch()}>Повторить</button>
+            </div>
+          )}
+          {tasksQuery.isError && !tasksQuery.data ? (
+            <section role="alert" className="mx-auto mt-10 max-w-lg rounded-2xl border border-border bg-card px-5 py-8 text-center">
+              <AlertCircle className="mx-auto size-8 text-destructive" aria-hidden="true" />
+              <h1 className="mt-4 text-xl font-semibold">Не удалось загрузить задачи</h1>
+              <p className="mt-2 text-sm text-muted-foreground">Проверьте соединение и попробуйте ещё раз. Список не был заменён пустым состоянием.</p>
+              <button type="button" className="mt-5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand/90" onClick={() => void tasksQuery.refetch()}>Повторить загрузку</button>
+            </section>
+          ) : <>
           {currentView === "today" && (
             <TodayView
               tasks={tasks}
-              stats={stats}
               currentEnergy={currentEnergy}
               onEnergyChange={setEnergy}
               onEdit={setEditingTask}
@@ -182,13 +224,16 @@ export function DashboardLayout() {
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
               isLoading={isLoading}
+              onStartFocus={(task) => {
+                setFocusTask(task);
+                setFocusOpen(true);
+              }}
             />
           )}
 
           {currentView === "inbox" && (
             <InboxView
               tasks={tasks}
-              stats={stats}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
@@ -288,6 +333,7 @@ export function DashboardLayout() {
               onDelete={handleDeleteTask}
             />
           )}
+          </>}
         </div>
         <MobileNavigation
           currentView={currentView}
@@ -321,6 +367,20 @@ export function DashboardLayout() {
           onOpenChange={(open) => !open && setEditingTask(null)}
         />
       )}
+      <TaskSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onEdit={setEditingTask}
+        onComplete={handleToggleCompleteTask}
+        onArchive={handleArchiveTask}
+        onDelete={handleDeleteTask}
+      />
+      <FocusModeDialog
+        open={focusOpen}
+        task={focusTask}
+        onOpenChange={setFocusOpen}
+        onComplete={handleToggleCompleteTask}
+      />
     </div>
   );
 }

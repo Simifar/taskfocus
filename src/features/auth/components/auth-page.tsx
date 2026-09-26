@@ -200,7 +200,7 @@ export function AuthPage({ mode, googleEnabled }: AuthPageProps) {
 
         <Button
           type="submit"
-          className="h-12 w-full rounded-xl bg-brand text-sm font-semibold text-brand-foreground shadow-[0_12px_24px_-12px_var(--brand)] transition-transform hover:bg-brand/90 active:scale-[0.99]"
+          className="h-12 w-full rounded-xl bg-brand text-sm font-semibold text-brand-foreground shadow-none transition-colors hover:bg-brand/90"
           disabled={isLoading}
         >
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

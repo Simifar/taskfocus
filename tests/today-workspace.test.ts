@@ -44,6 +44,17 @@ test("uses lower effort only when a capacity filter is active", () => {
   assert.equal(getTodayTaskRecommendation(tasks, TODAY, 3)?.id, "low-effort");
 });
 
+test("uses Eisenhower priority before effort and manual position when dates tie", () => {
+  const tasks = [
+    task({ id: "ordinary-first", position: 0, energyLevel: 1 }),
+    task({ id: "urgent-only", position: 1, urgent: true, energyLevel: 1 }),
+    task({ id: "important", position: 2, important: true, energyLevel: 5 }),
+    task({ id: "do-first", position: 3, important: true, urgent: true, energyLevel: 5 }),
+  ];
+
+  assert.equal(getTodayTaskRecommendation(tasks, TODAY, 5)?.id, "do-first");
+});
+
 test("uses position and creation time as stable tie breakers", () => {
   const tasks = [
     task({ id: "newer", position: 2, createdAt: "2026-09-23T09:00:00.000Z" }),

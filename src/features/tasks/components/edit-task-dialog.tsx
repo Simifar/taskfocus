@@ -118,6 +118,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
+                    aria-pressed={important}
                     onClick={() => setImportant((value) => !value)}
                     className={cn(
                       "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
@@ -130,6 +131,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
                   </button>
                   <button
                     type="button"
+                    aria-pressed={urgent}
                     onClick={() => setUrgent((value) => !value)}
                     className={cn(
                       "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
