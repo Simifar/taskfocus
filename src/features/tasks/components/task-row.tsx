@@ -9,7 +9,6 @@ import type { Task } from "@/shared/types";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent } from "@/shared/ui/card";
 import { Checkbox } from "@/shared/ui/checkbox";
 import {
   AlertDialog,
@@ -43,6 +42,7 @@ interface TaskRowProps {
     checked: boolean;
     onChange: () => void;
   };
+  compact?: boolean;
   isDragging?: boolean;
   children?: ReactNode;
 }
@@ -64,6 +64,7 @@ export function TaskRow({
   onAssignToToday,
   onAssignToWeek,
   selection,
+  compact = false,
   isDragging = false,
   children,
 }: TaskRowProps) {
@@ -80,14 +81,13 @@ export function TaskRow({
 
   return (
     <>
-      <Card
+      <article
       className={cn(
-        "border-border/80 transition-colors hover:border-brand/40",
+        "rounded-xl border border-border/70 bg-card/80 p-3 transition-colors hover:border-brand/35 hover:bg-card",
         task.status === "completed" && "bg-muted/30",
         isDragging && "shadow-lg ring-2 ring-brand/50",
       )}
       >
-        <CardContent className="p-3 sm:p-4">
         <div className="flex items-start gap-2.5 sm:gap-3">
           {dragHandle}
 
@@ -123,7 +123,8 @@ export function TaskRow({
               <button
                 type="button"
                 className={cn(
-                  "block max-w-full text-left text-sm font-semibold leading-snug hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-base",
+                  "block max-w-full text-left font-semibold leading-snug hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  compact ? "text-sm" : "text-sm sm:text-base",
                   task.status === "completed" && "text-muted-foreground line-through",
                 )}
                 onClick={() => onEdit(task)}
@@ -133,7 +134,7 @@ export function TaskRow({
             ) : (
               <p
                 className={cn(
-                  "text-sm font-semibold leading-snug sm:text-base",
+                  compact ? "text-sm font-semibold leading-snug" : "text-sm font-semibold leading-snug sm:text-base",
                   task.status === "completed" && "text-muted-foreground line-through",
                 )}
               >
@@ -141,8 +142,8 @@ export function TaskRow({
               </p>
             )}
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-              {scheduleLabel && (
+            <div className={cn("flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground", compact ? "mt-1" : "mt-1.5")}>
+              {!compact && scheduleLabel && (
                 <span className="inline-flex items-center gap-1">
                   <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
                   {scheduleLabel}
@@ -151,9 +152,11 @@ export function TaskRow({
               <Badge variant="outline" className="h-5 rounded-full px-2 text-[11px] font-normal">
                 {priorityLabel}
               </Badge>
-              <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px] font-normal">
-                Энергия {task.energyLevel}/5
-              </Badge>
+              {!compact && (
+                <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px] font-normal">
+                  Энергия {task.energyLevel}/5
+                </Badge>
+              )}
               {totalSubtasks > 0 && (
                 <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px]">
                   Подзадачи {completedSubtasks}/{totalSubtasks}
@@ -161,7 +164,7 @@ export function TaskRow({
               )}
             </div>
 
-            {task.description && (
+            {!compact && task.description && (
               <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground sm:text-sm">{task.description}</p>
             )}
           </div>
@@ -230,8 +233,7 @@ export function TaskRow({
         </div>
 
         {children}
-        </CardContent>
-      </Card>
+      </article>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>

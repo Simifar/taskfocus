@@ -11,12 +11,23 @@ import { CreateSubtaskDialog } from "@/features/tasks/components/create-subtask-
 import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
 import { TaskRow } from "@/features/tasks/components/task-row";
 import { toast } from "sonner";
-import { Inbox, Loader2, Plus } from "lucide-react";
+import { Archive, CalendarDays, Inbox, Loader2, Plus, Trash2, X } from "lucide-react";
 
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
+import { Checkbox } from "@/shared/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 
 interface InboxViewProps {
   tasks: Task[];
@@ -31,10 +42,10 @@ interface InboxViewProps {
   onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
-  onBatchArchive?: (taskIds: string[]) => void;
-  onBatchDelete?: (taskIds: string[]) => void;
-  onBatchAssignToToday?: (taskIds: string[]) => void;
-  onBatchAssignToWeek?: (taskIds: string[]) => void;
+  onBatchArchive?: (taskIds: string[]) => Promise<boolean | void> | boolean | void;
+  onBatchDelete?: (taskIds: string[]) => Promise<boolean | void> | boolean | void;
+  onBatchAssignToToday?: (taskIds: string[]) => Promise<boolean | void> | boolean | void;
+  onBatchAssignToWeek?: (taskIds: string[]) => Promise<boolean | void> | boolean | void;
   onReorder?: (tasks: Task[]) => void;
 }
 
@@ -46,6 +57,10 @@ export function InboxView({
   onDelete,
   onAssignToToday,
   onAssignToWeek,
+  onBatchArchive,
+  onBatchDelete,
+  onBatchAssignToToday,
+  onBatchAssignToWeek,
   onAddTask,
   onAddSubtask,
   onReorder,
@@ -54,8 +69,18 @@ export function InboxView({
   const [quickAddTitle, setQuickAddTitle] = useState("");
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
   const [parentTaskForSubtask, setParentTaskForSubtask] = useState<Task | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteSelectedOpen, setDeleteSelectedOpen] = useState(false);
 
   const inboxTasks = tasks.filter((task) => classifyInboxTask(task));
+  const selectedTaskIds = inboxTasks.filter((task) => selectedIds.includes(task.id)).map((task) => task.id);
+  const allSelected = inboxTasks.length > 0 && selectedTaskIds.length === inboxTasks.length;
+
+  const runBatch = async (action?: (taskIds: string[]) => Promise<boolean | void> | boolean | void) => {
+    if (!action || selectedTaskIds.length === 0) return;
+    const succeeded = await action(selectedTaskIds);
+    if (succeeded !== false) setSelectedIds([]);
+  };
 
   const handleQuickAdd = async (event?: React.FormEvent) => {
     event?.preventDefault();
@@ -78,8 +103,9 @@ export function InboxView({
 
   return (
     <>
-      <div className="mx-auto max-w-3xl space-y-5">
-        <header className="space-y-1">
+      <div className="mx-auto max-w-4xl space-y-4">
+        <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
           <div className="flex items-center gap-2">
             <Inbox className="h-5 w-5 text-brand" aria-hidden="true" />
             <h1 className="text-title">Входящие</h1>
@@ -88,9 +114,10 @@ export function InboxView({
           <p className="text-sm text-muted-foreground">
             Быстро сохраните мысль. Дату и остальные детали можно добавить позже.
           </p>
+          </div>
         </header>
 
-        <Card className="border-brand/30 shadow-sm">
+        <Card className="border-brand/25 shadow-sm">
           <CardContent className="p-3 sm:p-4">
             <form className="flex items-center gap-2" onSubmit={(event) => void handleQuickAdd(event)}>
               <Input
@@ -112,7 +139,7 @@ export function InboxView({
                 {createTask.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               </Button>
             </form>
-            <p className="mt-2 text-xs text-muted-foreground">Нажмите Enter. Планирование доступно в меню задачи.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Enter сохраняет мысль. Планируйте её позже через меню задачи.</p>
           </CardContent>
         </Card>
 
@@ -134,11 +161,38 @@ export function InboxView({
           </Card>
         ) : (
           <section aria-labelledby="inbox-queue-heading" className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h2 id="inbox-queue-heading" className="text-sm font-semibold text-muted-foreground">
-                Очередь захвата
-              </h2>
-              <span className="text-xs text-muted-foreground">{inboxTasks.length} без даты</span>
+            <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/60 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={(checked) => setSelectedIds(checked ? inboxTasks.map((task) => task.id) : [])}
+                  aria-label={allSelected ? "Снять выделение со всех задач" : "Выбрать все входящие задачи"}
+                />
+                <h2 id="inbox-queue-heading" className="text-sm font-semibold">
+                  {selectedTaskIds.length > 0 ? `Выбрано: ${selectedTaskIds.length}` : "Разобрать входящие"}
+                </h2>
+              </div>
+              {selectedTaskIds.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => void runBatch(onBatchAssignToToday)} disabled={!onBatchAssignToToday}>
+                    <CalendarDays className="mr-1.5 h-4 w-4" /> Сегодня
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => void runBatch(onBatchAssignToWeek)} disabled={!onBatchAssignToWeek}>
+                    <CalendarDays className="mr-1.5 h-4 w-4" /> На неделю
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => void runBatch(onBatchArchive)} disabled={!onBatchArchive}>
+                    <Archive className="mr-1.5 h-4 w-4" /> В архив
+                  </Button>
+                  <Button type="button" size="sm" variant="destructive" onClick={() => setDeleteSelectedOpen(true)} disabled={!onBatchDelete}>
+                    <Trash2 className="mr-1.5 h-4 w-4" /> Удалить
+                  </Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-9 w-9" aria-label="Снять выделение" onClick={() => setSelectedIds([])}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground">Выберите задачи, чтобы распределить их вместе</span>
+              )}
             </div>
             <SimpleSortableTasksList
               tasks={inboxTasks}
@@ -153,6 +207,12 @@ export function InboxView({
                   onEdit={onEdit}
                   onArchive={onArchive}
                   onDelete={onDelete}
+                  selection={{
+                    checked: selectedTaskIds.includes(task.id),
+                    onChange: () => setSelectedIds((current) => current.includes(task.id)
+                      ? current.filter((id) => id !== task.id)
+                      : [...current, task.id]),
+                  }}
                   onAssignToToday={onAssignToToday}
                   onAssignToWeek={onAssignToWeek}
                   onAddSubtask={onAddSubtask ? openSubtaskDialog : undefined}
@@ -172,6 +232,26 @@ export function InboxView({
           onSubmit={(parentId, title) => onAddSubtask?.(parentId, title)}
         />
       )}
+
+      <AlertDialog open={deleteSelectedOpen} onOpenChange={setDeleteSelectedOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить выбранные задачи?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Будет удалено задач: {selectedTaskIds.length}. Вместе с ними удалятся подзадачи; восстановить их нельзя.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отменить</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void runBatch(onBatchDelete)}
+            >
+              Удалить {selectedTaskIds.length}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

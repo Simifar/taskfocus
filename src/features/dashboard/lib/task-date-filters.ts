@@ -67,12 +67,16 @@ export function isTaskScheduledForDay(
   }
 }
 
-export function isTaskScheduledForCurrentWeek(task: Task) {
+export function isTaskScheduledForWeek(task: Task, anchor: Date) {
   const taskRange = getTaskDateRange(task);
   if (!taskRange) return false;
 
-  const weekRange = getCurrentWeekRange();
+  const weekRange = getCurrentWeekRange(anchor);
   return taskRange.start <= weekRange.end && taskRange.end >= weekRange.start;
+}
+
+export function isTaskScheduledForCurrentWeek(task: Task) {
+  return isTaskScheduledForWeek(task, new Date());
 }
 
 export function isTaskScheduledForMonth(task: Task, month: Date) {

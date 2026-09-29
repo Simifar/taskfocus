@@ -1,8 +1,8 @@
-import { addDays } from "date-fns";
 import { toast } from "sonner";
 
 import type { Task } from "@/shared/types";
 import { describeTaskError } from "@/features/tasks/errors";
+import { getCurrentWeekRange } from "@/features/dashboard/lib/task-date-filters";
 import {
   useCreateSubtask,
   useBatchTasks,
@@ -83,13 +83,12 @@ export function useDashboardActions() {
 
   const handleAssignToWeek = async (taskId: string) => {
     try {
-      const today = new Date();
-      const weekEnd = addDays(today, 7);
+      const { start, end } = getCurrentWeekRange();
       await updateTask.mutateAsync({
         id: taskId,
         input: {
-          dueDateStart: today.toISOString(),
-          dueDateEnd: weekEnd.toISOString(),
+          dueDateStart: start.toISOString(),
+          dueDateEnd: end.toISOString(),
         },
       });
       toast.success("Задача назначена на неделю");
@@ -127,8 +126,10 @@ export function useDashboardActions() {
     try {
       await batchTasks.mutateAsync({ action: "archive", taskIds });
       toast.success(`${taskIds.length} задач отправлено в архив`);
+      return true;
     } catch (err) {
       reportError(err, "Не удалось архивировать задачи");
+      return false;
     }
   };
 
@@ -136,8 +137,10 @@ export function useDashboardActions() {
     try {
       await batchTasks.mutateAsync({ action: "delete", taskIds });
       toast.success(`${taskIds.length} задач удалено`);
+      return true;
     } catch (err) {
       reportError(err, "Не удалось удалить задачи");
+      return false;
     }
   };
 
@@ -151,24 +154,27 @@ export function useDashboardActions() {
         dueDateEnd: today.toISOString(),
       });
       toast.success(`${taskIds.length} задач назначено на сегодня`);
+      return true;
     } catch (err) {
       reportError(err, "Не удалось назначить задачи");
+      return false;
     }
   };
 
   const handleBatchAssignToWeek = async (taskIds: string[]) => {
     try {
-      const today = new Date();
-      const weekEnd = addDays(today, 7);
+      const { start, end } = getCurrentWeekRange();
       await batchTasks.mutateAsync({
         action: "assign-range",
         taskIds,
-        dueDateStart: today.toISOString(),
-        dueDateEnd: weekEnd.toISOString(),
+        dueDateStart: start.toISOString(),
+        dueDateEnd: end.toISOString(),
       });
       toast.success(`${taskIds.length} задач назначено на неделю`);
+      return true;
     } catch (err) {
       reportError(err, "Не удалось назначить задачи");
+      return false;
     }
   };
 

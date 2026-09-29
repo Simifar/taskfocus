@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { Task } from "@/shared/types";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -8,6 +8,16 @@ import { Card, CardContent } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
 import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 import {
   Archive,
   CalendarCheck,
@@ -46,7 +56,10 @@ function MatrixTaskCard({
   onAssignToToday,
   onAssignToWeek,
 }: EisenhowerMatrixViewProps & { task: Task; dragHandle?: ReactNode }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
   return (
+    <>
     <Card className="border-l-4 border-l-border bg-background/95 shadow-sm transition-colors hover:border-brand/40">
       <CardContent className="p-3">
         <div className="flex items-start justify-between gap-2">
@@ -77,6 +90,7 @@ function MatrixTaskCard({
             size="icon"
             className="h-7 w-7 shrink-0 text-muted-foreground hover:text-brand"
             title="Выполнить"
+            aria-label={`Отметить задачу «${task.title}» выполненной`}
             onClick={() => onComplete?.(task)}
           >
             <CheckCircle2 className="h-4 w-4" />
@@ -89,6 +103,7 @@ function MatrixTaskCard({
             size="icon"
             className="h-7 w-7 text-muted-foreground hover:text-brand"
             title="Сегодня"
+            aria-label={`Назначить «${task.title}» на сегодня`}
             onClick={() => onAssignToToday?.(task.id)}
           >
             <CalendarCheck className="h-4 w-4" />
@@ -98,6 +113,7 @@ function MatrixTaskCard({
             size="icon"
             className="h-7 w-7 text-muted-foreground hover:text-brand"
             title="На неделю"
+            aria-label={`Назначить «${task.title}» на эту неделю`}
             onClick={() => onAssignToWeek?.(task.id)}
           >
             <Plus className="h-4 w-4" />
@@ -107,6 +123,7 @@ function MatrixTaskCard({
             size="icon"
             className="h-7 w-7 text-muted-foreground hover:text-brand"
             title="Редактировать"
+            aria-label={`Редактировать «${task.title}»`}
             onClick={() => onEdit?.(task)}
           >
             <Edit2 className="h-4 w-4" />
@@ -116,6 +133,7 @@ function MatrixTaskCard({
             size="icon"
             className="h-7 w-7 text-muted-foreground hover:text-orange-600"
             title="В архив"
+            aria-label={`Архивировать «${task.title}»`}
             onClick={() => onArchive?.(task.id)}
           >
             <Archive className="h-4 w-4" />
@@ -125,13 +143,37 @@ function MatrixTaskCard({
             size="icon"
             className="h-7 w-7 text-muted-foreground hover:text-destructive"
             title="Удалить"
-            onClick={() => onDelete?.(task.id)}
+            aria-label={`Удалить «${task.title}»`}
+            onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </CardContent>
     </Card>
+    <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Удалить задачу?</AlertDialogTitle>
+          <AlertDialogDescription>
+            «{task.title}» и её подзадачи будут удалены без возможности восстановления.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Отменить</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => {
+              onDelete?.(task.id);
+              setDeleteOpen(false);
+            }}
+          >
+            Удалить
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 

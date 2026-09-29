@@ -96,7 +96,7 @@ export function TodayView({
 
   return (
     <div className="min-h-full">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-6xl space-y-5">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
@@ -106,9 +106,16 @@ export function TodayView({
                 <h1 className="text-headline">Сегодня</h1>
               </div>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {activeTodayCount} активных задач из {MAX_ACTIVE_TASKS_PER_DAY} доступных слотов
-            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <p className="text-sm text-muted-foreground">
+                {activeTodayCount} из {MAX_ACTIVE_TASKS_PER_DAY} задач в плане
+              </p>
+              <div className="flex gap-1" aria-hidden="true">
+                {Array.from({ length: MAX_ACTIVE_TASKS_PER_DAY }, (_, index) => (
+                  <span key={index} className={`h-1.5 w-5 rounded-full ${index < activeTodayCount ? "bg-brand" : "bg-muted"}`} />
+                ))}
+              </div>
+            </div>
           </div>
           <Button
             onClick={() => onAddTask(canAddMore ? "today" : "inbox")}
@@ -120,10 +127,10 @@ export function TodayView({
           </Button>
         </header>
 
-        <div className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-card/60 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium">Показать задачи по ёмкости</p>
-            <p className="text-xs text-muted-foreground">Фильтр меняет только этот список, не лимит дня</p>
+            <p className="text-sm font-medium">Подходящая энергия</p>
+            <p className="text-xs text-muted-foreground">Список и следующий шаг подстраиваются под ваш ресурс.</p>
           </div>
           <Select
             value={currentEnergy === null ? "all" : String(currentEnergy)}
@@ -150,7 +157,7 @@ export function TodayView({
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand">Начните отсюда</p>
                 <h2 className="mt-1 text-xl font-semibold tracking-tight">Один следующий шаг</h2>
-                <p className="mt-1 text-xs text-muted-foreground">Срок и приоритет помогут выбрать, с чего начать.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Выбрана подходящая задача по сроку, важности и энергии.</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -179,8 +186,10 @@ export function TodayView({
         <section aria-labelledby="today-tasks-title" className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 id="today-tasks-title" className="text-title">Остальные задачи</h2>
-              <p className="text-sm text-muted-foreground">Активные задачи на сегодня</p>
+              <h2 id="today-tasks-title" className="text-title">{recommendation ? "Дальше по плану" : "План на сегодня"}</h2>
+              <p className="text-sm text-muted-foreground">
+                {recommendation ? `В плане осталось задач: ${remainingActiveTasks.length}.` : "Активные задачи, запланированные на этот день."}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               {completedTasks.length > 0 && (
@@ -210,19 +219,15 @@ export function TodayView({
             </Card>
           ) : todayActiveTasks.length === 0 ? (
             <Card>
-              <CardContent className="py-10 text-center">
+              <CardContent className="py-8 text-center">
                 <CheckCircle2 className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden="true" />
-                <p className="mt-3 font-medium">На сегодня активных задач нет</p>
-                <p className="mt-1 text-sm text-muted-foreground">Добавьте задачу, чтобы начать день.</p>
+                <p className="mt-3 font-medium">{completedTasks.length > 0 ? "План на сегодня выполнен" : "На сегодня задач пока нет"}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {completedTasks.length > 0 ? `Готово задач: ${completedTasks.length}.` : "Добавьте задачу, когда будете готовы выбрать следующий шаг."}
+                </p>
               </CardContent>
             </Card>
-          ) : remainingActiveTasks.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                Все подходящие активные задачи показаны выше.
-              </CardContent>
-            </Card>
-          ) : (
+          ) : remainingActiveTasks.length > 0 ? (
             <SortableTasksList
               tasks={remainingActiveTasks}
               onEdit={onEdit}
@@ -235,7 +240,7 @@ export function TodayView({
               onEditSubtask={onEditSubtask}
               onDeleteSubtask={onDeleteSubtask}
             />
-          )}
+          ) : null}
         </section>
 
         {completedTasks.length > 0 && showCompleted && (

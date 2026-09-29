@@ -1,20 +1,20 @@
 "use client";
 
-import { Task, StatsResponse } from "@/shared/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import type { Task } from "@/shared/types";
+import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
-import { ChevronLeft, Calendar, Loader2 } from "lucide-react";
+import { ChevronLeft, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { isTaskScheduledForDay } from "@/features/dashboard/lib/task-date-filters";
 import { getPlannedRootTasks } from "@/features/dashboard/lib/plan";
+import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 
 interface DayViewProps {
   tasks: Task[];
-  stats: StatsResponse | null;
   selectedDate: Date;
   onBack: () => void;
   onEdit?: (task: Task) => void;
@@ -32,7 +32,6 @@ interface DayViewProps {
 
 export function DayView({
   tasks,
-  stats,
   selectedDate,
   onBack,
   onEdit,
@@ -53,92 +52,34 @@ export function DayView({
   const activeTasks = dayTasks.filter((t) => t.status === "active");
   const completedTasks = dayTasks.filter((t) => t.status === "completed");
 
-  // Calculate completion rate
-  const completionRate =
-    dayTasks.length > 0
-      ? Math.round((completedTasks.length / dayTasks.length) * 100)
-      : 0;
-
-  // Average energy
-  const avgEnergy =
-    activeTasks.length > 0
-      ? Math.round(activeTasks.reduce((sum, t) => sum + t.energyLevel, 0) / activeTasks.length)
-      : 0;
-
   const dayName = format(selectedDate, "EEEE", { locale: ru });
   const dateStr = format(selectedDate, "d MMMM yyyy", { locale: ru });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-2 flex items-center gap-3">
+          <Button variant="ghost" size="icon" aria-label="Вернуться к плану" onClick={onBack}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold capitalize tracking-tight">
             <Calendar className="h-6 w-6 text-brand" />
             {dayName}
-          </h2>
+          </h1>
+          </div>
+          <p className="pl-11 text-sm capitalize text-muted-foreground">{dateStr}</p>
         </div>
-        <p className="text-muted-foreground pl-11">{dateStr}</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Всего задач</p>
-            <p className="text-3xl font-bold">{dayTasks.length}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Активных</p>
-            <p className="text-3xl font-bold">{activeTasks.length}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Выполнено</p>
-            <p className="text-3xl font-bold">{completedTasks.length}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Средняя энергия</p>
-            <p className="text-3xl font-bold">{avgEnergy}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Completion Progress */}
-      {dayTasks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Прогресс дня</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Выполнено задач</span>
-                <span className="font-semibold">
-                  {completedTasks.length}/{dayTasks.length} ({completionRate}%)
-                </span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div
-                  className="bg-brand h-2 rounded-full transition-all"
-                  style={{ width: `${completionRate}%` }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+          <div className="rounded-xl border border-border/70 bg-card/70 px-3 py-2">
+            <p className="text-sm font-medium tabular-nums">{activeTasks.length}/{MAX_ACTIVE_TASKS_PER_DAY} активных</p>
+            <p className="text-xs text-muted-foreground">{completedTasks.length} выполнено</p>
+          </div>
+          <Button type="button" onClick={onAddTask}>
+            <Calendar className="mr-2 h-4 w-4" /> Добавить задачу
+          </Button>
+        </div>
+      </header>
 
       {/* Active Tasks Section */}
       {activeTasks.length > 0 ? (
@@ -165,10 +106,10 @@ export function DayView({
       ) : (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">Нет активных задач</p>
-            <Button onClick={onAddTask} className="mt-4">
-              + Добавить задачу
-            </Button>
+            <p className="font-medium">{completedTasks.length > 0 ? "На этот день всё готово" : "В этот день пока нет задач"}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {completedTasks.length > 0 ? `Выполнено: ${completedTasks.length}.` : "Добавьте задачу, чтобы запланировать её на этот день."}
+            </p>
           </CardContent>
         </Card>
       )}

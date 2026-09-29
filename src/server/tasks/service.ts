@@ -3,7 +3,6 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { db } from "@/server/db";
 import {
   countActiveTasksForToday,
-  isScheduledForToday,
 } from "@/server/task-scheduling";
 import {
   endOfMonthDateOnly,
@@ -26,10 +25,9 @@ import {
 import {
   assertReorderOwnership,
   assertUniqueTaskIds,
-  assertTodayCapacity,
+  assertTaskRangeCapacity,
   DEFAULT_ENERGY_LEVEL,
   DEFAULT_SUBTASK_ENERGY_LEVEL,
-  MAX_ACTIVE_TASKS_PER_DAY,
   MAX_ENERGY_LEVEL,
   MIN_ENERGY_LEVEL,
   withTransactionRetry,
@@ -73,6 +71,39 @@ export type ListTasksInput = {
 
 function clientFor(ctx: TaskServiceContext): PrismaClient {
   return ctx.client ?? db;
+}
+
+async function assertTaskRangeCapacityInDatabase(
+  client: TaskDb,
+  userId: string,
+  range: ReturnType<typeof normalisePlannedRange>,
+  additionalTaskCount: number,
+  excludeIds: string[] = [],
+  timeZone = "UTC",
+) {
+  if (!range.start || additionalTaskCount < 1) return;
+
+  const end = range.end ?? range.start;
+  const where: Prisma.TaskWhereInput = {
+    userId,
+    status: "active",
+    parentTaskId: null,
+    ...scheduledBetweenWhere(range.start, end),
+  };
+  if (excludeIds.length > 0) where.id = { notIn: excludeIds };
+
+  const overlappingTasks = await client.task.findMany({
+    where,
+    select: { dueDateStart: true, dueDateEnd: true },
+  });
+
+  assertTaskRangeCapacity(
+    range,
+    overlappingTasks.map((task) =>
+      normalisePlannedRange(task.dueDateStart, task.dueDateEnd, timeZone),
+    ),
+    additionalTaskCount,
+  );
 }
 
 function addAnd(where: Prisma.TaskWhereInput, condition: Prisma.TaskWhereInput) {
@@ -160,20 +191,8 @@ async function assertParentCanReceiveSubtask(client: TaskDb, userId: string, par
   return parent;
 }
 
-function assertTodayCapacityForTask(
-  count: number,
-  input: { dueDateStart: Date | null; dueDateEnd: Date | null; status: TaskStatus; parentTaskId: string | null },
-  now: Date,
-  timeZone: string,
-) {
-  if (isScheduledForToday(input, now, timeZone)) {
-    assertTodayCapacity(count, MAX_ACTIVE_TASKS_PER_DAY);
-  }
-}
-
 export async function createTask(ctx: TaskServiceContext, input: CreateTaskInput) {
   const client = clientFor(ctx);
-  const now = ctx.now ?? new Date();
 
   return withTransactionRetry(() =>
     client.$transaction(
@@ -190,23 +209,16 @@ export async function createTask(ctx: TaskServiceContext, input: CreateTaskInput
         const dueDateStart = parseTaskDateInput(plannedRange.start, ctx.timeZone);
         const dueDateEnd = parseTaskDateInput(plannedRange.end, ctx.timeZone);
 
-        const todayCount = await countActiveTasksForToday(
-          ctx.userId,
-          undefined,
-          tx,
-          ctx.timeZone,
-        );
-        assertTodayCapacityForTask(
-          todayCount,
-          {
-            dueDateStart,
-            dueDateEnd,
-            status: "active",
-            parentTaskId: input.parentTaskId ?? null,
-          },
-          now,
-          ctx.timeZone,
-        );
+        if (!input.parentTaskId) {
+          await assertTaskRangeCapacityInDatabase(
+            tx,
+            ctx.userId,
+            plannedRange,
+            1,
+            [],
+            ctx.timeZone,
+          );
+        }
 
         const maxPosition = await findMaxPosition(tx, ctx.userId, input.parentTaskId ?? null);
         return createTaskRecord(tx, {
@@ -261,18 +273,23 @@ export async function updateTask(ctx: TaskServiceContext, id: string, input: Upd
         if (input.dueDateStart !== undefined) data.dueDateStart = nextDueDateStart;
         if (input.dueDateEnd !== undefined) data.dueDateEnd = nextDueDateEnd;
 
-        const todayCount = await countActiveTasksForToday(ctx.userId, id, tx, ctx.timeZone);
-        assertTodayCapacityForTask(
-          todayCount,
-          {
-            dueDateStart: nextDueDateStart,
-            dueDateEnd: nextDueDateEnd,
-            status: nextStatus,
-            parentTaskId: existing.parentTaskId,
-          },
-          now,
-          ctx.timeZone,
-        );
+        const scheduleChanged =
+          input.dueDateStart !== undefined || input.dueDateEnd !== undefined;
+        const taskBecomesActive = existing.status !== "active" && nextStatus === "active";
+        if (
+          nextStatus === "active" &&
+          !existing.parentTaskId &&
+          (scheduleChanged || taskBecomesActive)
+        ) {
+          await assertTaskRangeCapacityInDatabase(
+            tx,
+            ctx.userId,
+            plannedRange,
+            1,
+            [id],
+            ctx.timeZone,
+          );
+        }
 
         return updateTaskRecord(tx, id, data);
       },
@@ -384,24 +401,14 @@ export async function batchTasks(ctx: TaskServiceContext, input: BatchTaskInput)
         const activeRootCount = records.filter(
           (record) => record.status === "active" && record.parentTaskId === null,
         ).length;
-        const currentCount = await countActiveTasksForToday(
-          ctx.userId,
-          input.taskIds,
+        await assertTaskRangeCapacityInDatabase(
           tx,
+          ctx.userId,
+          plannedRange,
+          activeRootCount,
+          input.taskIds,
           ctx.timeZone,
         );
-        if (isScheduledForToday(
-          {
-            dueDateStart,
-            dueDateEnd,
-            status: "active",
-            parentTaskId: null,
-          },
-          ctx.now ?? new Date(),
-          ctx.timeZone,
-        )) {
-          assertTodayCapacity(currentCount + activeRootCount, MAX_ACTIVE_TASKS_PER_DAY);
-        }
 
         await Promise.all(
           input.taskIds.map((id) =>

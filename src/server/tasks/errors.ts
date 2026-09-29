@@ -29,7 +29,7 @@ export const TASK_ERROR_MESSAGES = {
   INVALID_REORDER: "Некорректный порядок задач",
   SUBTASK_LEVEL_UNSUPPORTED: "Подзадачи второго уровня не поддерживаются",
   ARCHIVED_PARENT: "Нельзя добавить подзадачу в архивную задачу",
-  TODAY_LIMIT_REACHED: "На сегодня уже запланировано 5 активных задач",
+  TODAY_LIMIT_REACHED: "На одну дату можно запланировать не более 5 активных задач",
 } as const;
 
 export function taskErrorResponse(label: string, error: unknown) {

@@ -1,7 +1,7 @@
 import { ApiError } from "@/shared/lib/fetcher";
 
 const TASK_ERROR_MESSAGES: Record<string, string> = {
-  TODAY_LIMIT_REACHED: "На сегодня уже запланировано 5 активных задач",
+  TODAY_LIMIT_REACHED: "На одну дату можно запланировать не более 5 активных задач",
   TASK_NOT_FOUND: "Задача больше не существует",
   PARENT_NOT_FOUND: "Родительская задача не найдена",
   FOREIGN_TASK: "Одна или несколько задач недоступны",

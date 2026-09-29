@@ -59,7 +59,7 @@ export function AuthShell({
             <span className="hidden text-xs text-muted-foreground sm:block">Ваши задачи — в вашем ритме</span>
           </header>
 
-          <div className="flex flex-1 items-center justify-center py-8 lg:py-12">
+          <div className="flex flex-1 items-start justify-center py-8 sm:items-center lg:py-12">
             <section className="w-full max-w-[440px]">
               <div className="mb-6 space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">

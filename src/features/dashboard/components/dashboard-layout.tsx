@@ -42,6 +42,7 @@ export function DashboardLayout() {
   const setView = useDashboardStore((s) => s.setView);
   const selectedDate = useSelectedDate();
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+  const [weekDate, setWeekDate] = useState(() => new Date());
 
   const tasksQueryInput = useMemo<TasksQuery>(() => {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -49,14 +50,14 @@ export function DashboardLayout() {
 
     if (currentView === "today") return { view: "today" };
     if (currentView === "inbox") return { view: "inbox" };
-    if (currentView === "week") return { view: "week" };
+    if (currentView === "week") return { view: "week", date: toDateOnly(weekDate) };
     if (currentView === "calendar") return { view: "calendar", date: toDateOnly(calendarMonth, timeZone) };
     if (currentView === "day") return { view: "day", date: selectedDateOnly };
     if (currentView === "archive") return { view: "archive" };
     if (currentView === "matrix") return { status: "active" };
 
     return {};
-  }, [calendarMonth, currentView, selectedDate]);
+  }, [calendarMonth, currentView, selectedDate, weekDate]);
 
   const tasksQuery = useTasks(tasksQueryInput);
   const statsQuery = useStats();
@@ -190,7 +191,7 @@ export function DashboardLayout() {
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto p-4 md:p-8">
+        <div className="min-h-0 flex-1 overflow-auto p-4 pb-28 md:p-6 md:pb-6 xl:p-8">
           {tasksQuery.isError && tasksQuery.data && (
             <div role="status" className="mx-auto mb-4 flex max-w-5xl items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm">
               <span>Не удалось обновить список. Показаны сохранённые данные.</span>
@@ -256,7 +257,8 @@ export function DashboardLayout() {
           {currentView === "week" && (
             <WeekView
               tasks={tasks}
-              stats={stats}
+              weekDate={weekDate}
+              onWeekChange={setWeekDate}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
@@ -274,7 +276,6 @@ export function DashboardLayout() {
           {currentView === "calendar" && (
             <CalendarView
               tasks={tasks}
-              stats={stats}
               currentMonth={calendarMonth}
               onMonthChange={setCalendarMonth}
               onEdit={setEditingTask}
@@ -294,11 +295,11 @@ export function DashboardLayout() {
           {currentView === "matrix" && (
             <EisenhowerMatrixView
               tasks={tasks}
+              onAddTask={handleAddTask}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
-              onAddTask={handleAddTask}
               onAssignToToday={handleAssignToToday}
               onAssignToWeek={handleAssignToWeek}
               onReorder={handleReorder}
@@ -308,7 +309,6 @@ export function DashboardLayout() {
           {currentView === "day" && selectedDate && (
             <DayView
               tasks={tasks}
-              stats={stats}
               selectedDate={selectedDate}
               onBack={handleBackFromDay}
               onEdit={setEditingTask}

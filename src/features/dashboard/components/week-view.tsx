@@ -1,6 +1,6 @@
 "use client";
 
-import { Task, StatsResponse } from "@/shared/types";
+import type { Task } from "@/shared/types";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent } from "@/shared/ui/card";
@@ -9,6 +9,8 @@ import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sort
 import { TaskRow } from "@/features/tasks/components/task-row";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import {
+  ChevronLeft,
+  ChevronRight,
   CalendarDays,
   CheckCircle2,
   Plus,
@@ -17,14 +19,16 @@ import { addDays, endOfDay, format, isPast, isSameDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   getCurrentWeekRange,
-  isTaskScheduledForCurrentWeek,
+  isTaskScheduledForWeek,
   isTaskScheduledForDay,
 } from "@/features/dashboard/lib/task-date-filters";
 import { getPlannedRootTasks } from "@/features/dashboard/lib/plan";
+import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 
 interface WeekViewProps {
   tasks: Task[];
-  stats: StatsResponse | null;
+  weekDate: Date;
+  onWeekChange?: (date: Date) => void;
   onEdit?: (task: Task) => void;
   onComplete?: (task: Task) => void;
   onArchive?: (taskId: string) => void;
@@ -40,6 +44,8 @@ interface WeekViewProps {
 
 export function WeekView({
   tasks,
+  weekDate,
+  onWeekChange,
   onEdit,
   onComplete,
   onArchive,
@@ -48,11 +54,11 @@ export function WeekView({
   onSelectDay,
   onReorder,
 }: WeekViewProps) {
-  const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
+  const { start: weekStart, end: weekEnd } = getCurrentWeekRange(weekDate);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const today = new Date();
 
-  const weekTasks = getPlannedRootTasks(tasks, isTaskScheduledForCurrentWeek);
+  const weekTasks = getPlannedRootTasks(tasks, (task) => isTaskScheduledForWeek(task, weekDate));
 
   const tasksByDay = weekDays.map((day) => ({
     date: day,
@@ -73,28 +79,35 @@ export function WeekView({
               Недельный фокус
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Эта неделя</h2>
+              <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+                {isSameDay(weekStart, getCurrentWeekRange().start) ? "Эта неделя" : "Неделя"}
+              </h2>
               <p className="text-sm text-muted-foreground">
                 {format(weekStart, "d MMM", { locale: ru })} — {format(weekEnd, "d MMM yyyy", { locale: ru })}
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:flex">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="justify-center rounded-full px-3 py-1.5">
-              {totalTasks} задач на неделе
+              {totalTasks} задач · {busyDays} дней с планом
             </Badge>
-            <Badge variant="outline" className="justify-center rounded-full bg-background/70 px-3 py-1.5">
-              {busyDays} из 7 дней занято
-            </Badge>
+            <Button variant="outline" size="icon" aria-label="Предыдущая неделя" onClick={() => onWeekChange?.(addDays(weekDate, -7))}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onWeekChange?.(new Date())}>Сегодня</Button>
+            <Button variant="outline" size="icon" aria-label="Следующая неделя" onClick={() => onWeekChange?.(addDays(weekDate, 7))}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex snap-x gap-3 overflow-x-auto pb-3">
+      <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 2xl:grid-cols-4">
         {tasksByDay.map(({ date, tasks: dayTasks }) => {
           const isToday = isSameDay(date, today);
           const isDayPast = isPast(endOfDay(date)) && !isToday;
+          const activeDayCount = dayTasks.filter((task) => task.status === "active").length;
           const dayLabel = format(date, "EEEE", { locale: ru });
           const dayNum = format(date, "d");
           const monthLabel = format(date, "MMM", { locale: ru });
@@ -103,7 +116,7 @@ export function WeekView({
             <Card
               key={date.toISOString()}
               className={cn(
-                "min-h-[330px] w-[286px] shrink-0 snap-start overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-lg",
+                "min-h-[180px] overflow-hidden transition-colors hover:border-brand/35",
                 isToday && "border-brand/60 ring-2 ring-brand/20",
                 isDayPast && dayTasks.length === 0 && "opacity-60",
               )}
@@ -111,13 +124,13 @@ export function WeekView({
               <div className={cn("flex", isToday ? "bg-brand text-brand-foreground" : "bg-muted/45")}>
                 <button
                   type="button"
-                  className="min-w-0 flex-1 px-4 py-4 text-left transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                        className="min-w-0 flex-1 px-3 py-3 text-left transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                   onClick={() => onSelectDay?.(date)}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold leading-none">{dayNum}</span>
+                      <span className="text-2xl font-bold leading-none">{dayNum}</span>
                         <span className={cn("text-xs uppercase", isToday ? "text-brand-foreground/75" : "text-muted-foreground")}>
                           {monthLabel}
                         </span>
@@ -133,11 +146,12 @@ export function WeekView({
                       )}
                       <span
                         className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-semibold",
+                          "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
                           isToday ? "bg-white/20" : "bg-background text-foreground",
                         )}
+                        aria-label={`${activeDayCount} активных из ${MAX_ACTIVE_TASKS_PER_DAY}`}
                       >
-                        {dayTasks.length}
+                        {activeDayCount}/{MAX_ACTIVE_TASKS_PER_DAY}
                       </span>
                     </div>
                   </div>
@@ -161,7 +175,7 @@ export function WeekView({
                 </Button>
               </div>
 
-              <CardContent className="space-y-3 p-3">
+              <CardContent className="space-y-2 p-2">
                 {dayTasks.length > 0 ? (
                   <SimpleSortableTasksList
                     tasks={dayTasks}
@@ -176,11 +190,12 @@ export function WeekView({
                         onEdit={onEdit}
                         onArchive={onArchive}
                         onDelete={onDelete}
+                        compact
                       />
                     )}
                   </SimpleSortableTasksList>
                 ) : (
-                  <div className="flex min-h-[150px] w-full flex-col items-center justify-center rounded-2xl bg-muted/20 px-4 text-center">
+                  <div className="flex min-h-[76px] w-full flex-col items-center justify-center rounded-xl bg-muted/20 px-3 text-center">
                     <CheckCircle2 className="mb-2 h-6 w-6 text-muted-foreground/50" />
                     <span className="text-sm font-medium text-muted-foreground">
                       {isDayPast ? "Нет задач" : "Свободный день"}

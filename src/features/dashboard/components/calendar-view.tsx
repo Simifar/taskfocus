@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Task, StatsResponse } from "@/shared/types";
+import type { Task } from "@/shared/types";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/lib/utils";
 import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
@@ -15,7 +14,6 @@ import {
   Plus,
 } from "lucide-react";
 import {
-  addDays,
   addMonths,
   eachDayOfInterval,
   endOfWeek,
@@ -37,7 +35,6 @@ import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eis
 interface CalendarViewProps {
   tasks: Task[];
   currentMonth: Date;
-  stats: StatsResponse | null;
   onEdit?: (task: Task) => void;
   onComplete?: (task: Task) => void;
   onArchive?: (taskId: string) => void;
@@ -94,13 +91,6 @@ export function CalendarView({
     if (!isSameMonth(day, currentMonth)) return false;
     return (tasksByDay.get(format(day, "yyyy-MM-dd")) ?? []).length > 0;
   }).length;
-  const urgentImportantCount = monthTasks.filter((task) => task.important && task.urgent).length;
-  const averageEnergy =
-    monthTasks.length > 0
-      ? Math.round(monthTasks.reduce((sum, task) => sum + task.energyLevel, 0) / monthTasks.length)
-      : 0;
-  const todayTasks = monthTasks.filter((task) => isTaskScheduledForDay(task, today)).length;
-
   return (
     <div className="space-y-5">
       <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-sky-500/12 via-background to-brand/10 p-5 md:p-6">
@@ -118,7 +108,7 @@ export function CalendarView({
                 {format(currentMonth, "LLLL yyyy", { locale: ru })}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Планируйте мягко: задачи с диапазоном отображаются во всех подходящих днях.
+                {monthTasks.length} задач · {busyDays} дней с планом. Диапазонные задачи видны во всех подходящих днях.
               </p>
             </div>
           </div>
@@ -128,6 +118,7 @@ export function CalendarView({
               variant="outline"
               size="icon"
               className="bg-background/70"
+              aria-label="Предыдущий месяц"
               onClick={() => onMonthChange?.(subMonths(currentMonth, 1))}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -143,39 +134,13 @@ export function CalendarView({
               variant="outline"
               size="icon"
               className="bg-background/70"
+              aria-label="Следующий месяц"
               onClick={() => onMonthChange?.(addMonths(currentMonth, 1))}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Задач в месяце</p>
-            <p className="mt-1 text-3xl font-bold">{monthTasks.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Занятых дней</p>
-            <p className="mt-1 text-3xl font-bold">{busyDays}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Сделать сейчас</p>
-            <p className="mt-1 text-3xl font-bold">{urgentImportantCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Средняя энергия</p>
-            <p className="mt-1 text-3xl font-bold">{averageEnergy}</p>
-          </CardContent>
-        </Card>
       </div>
 
       <Card className="overflow-hidden">
@@ -201,7 +166,7 @@ export function CalendarView({
                 <div
                   key={dateKey}
                   className={cn(
-                    "group min-h-[112px] bg-background p-2 transition-colors md:min-h-[154px] md:p-3",
+                    "group min-h-[64px] bg-background p-1 sm:min-h-[84px] sm:p-1.5 md:min-h-[136px] md:p-2.5",
                     isCurrentMonth ? "hover:bg-muted/30" : "bg-muted/20 text-muted-foreground",
                     isToday && "bg-brand/5 ring-2 ring-inset ring-brand/40",
                   )}
@@ -210,20 +175,24 @@ export function CalendarView({
                     <button
                       type="button"
                       className={cn(
-                        "flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold transition-colors",
+                        "relative flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors md:text-sm",
                         isToday
                           ? "bg-brand text-brand-foreground"
                           : "hover:bg-muted",
                       )}
+                      aria-label={`${format(day, "d MMMM yyyy", { locale: ru })}: ${dayTasks.length} задач`}
                       onClick={() => onSelectDay?.(day)}
                     >
                       {format(day, "d")}
+                      {dayTasks.length > 0 && (
+                        <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-brand ring-2 ring-background md:hidden" />
+                      )}
                     </button>
 
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100"
+                      className="hidden h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 md:inline-flex"
                       aria-label={`Добавить задачу на ${format(day, "d MMMM", { locale: ru })}`}
                       title={`Добавить задачу на ${format(day, "d MMMM", { locale: ru })}`}
                       onClick={() => onCreateTask?.(day)}
@@ -233,7 +202,7 @@ export function CalendarView({
                   </div>
 
                   {dayTasks.length > 0 ? (
-                    <div className="space-y-1.5">
+                    <div className="hidden space-y-1.5 md:block">
                       <SimpleSortableTasksList
                         tasks={dayTasks.slice(0, 3)}
                         onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
@@ -286,22 +255,6 @@ export function CalendarView({
           </div>
         </CardContent>
       </Card>
-
-      {todayTasks > 0 && (
-        <Card className="border-brand/20 bg-brand/5">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-semibold">На сегодня в календаре: {todayTasks}</p>
-              <p className="text-sm text-muted-foreground">
-                Можно перейти в день, чтобы посмотреть детали и подзадачи.
-              </p>
-            </div>
-            <Button variant="outline" onClick={() => onSelectDay?.(today)}>
-              Открыть сегодня
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
       {monthTasks.length === 0 && (
         <Card className="border-dashed">
