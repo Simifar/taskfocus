@@ -66,10 +66,16 @@ The values live in `src/app/globals.css` so components use the shared theme toke
 
 ## Navigation and responsive behavior
 
-- Desktop keeps the existing narrow sidebar. Mobile keeps the established bottom navigation with safe-area padding and a central create action.
-- Today, Inbox, and Plan remain primary. Calendar, Matrix, Archive, and Profile remain secondary.
+- Desktop keeps a narrow sidebar with every task view visible, grouped into Tasks, Planning, and Completed. Profile and Settings are grouped in a separate account area at the bottom.
+- Mobile keeps the bottom shortcuts for Today, Inbox, and Week, plus a central create action. A clearly named Sections sheet contains every task view, Profile, Settings, and sign-out, grouped by purpose.
 - At 320 px, controls wrap without clipping, task titles remain readable, and the bottom navigation does not cover scrollable content.
 - Dialogs use a bounded viewport height with independently scrollable content and a visible action row.
+
+### Profile and settings
+
+- Profile is the home for editable display name, read-only sign-in identifiers, and real task totals.
+- Settings contains the working appearance preference (system, light, or dark), the five-task daily planning rule, sign-in identifiers, and the existing confirmed account-deletion action.
+- Do not expose password recovery or notification controls until those flows are implemented end to end.
 
 ## States and accessibility
 

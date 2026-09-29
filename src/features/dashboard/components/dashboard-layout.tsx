@@ -169,6 +169,8 @@ export function DashboardLayout() {
       <DashboardSidebar
         user={user ?? null}
         stats={stats}
+        currentView={currentView}
+        dayReturnView={dayReturnView}
         onSearch={() => setSearchOpen(true)}
         onLogout={handleLogout}
       />
@@ -342,6 +344,7 @@ export function DashboardLayout() {
           onNavigate={setView}
           onAddTask={handleAddTask}
           onProfile={() => router.push("/profile")}
+          onSettings={() => router.push("/settings")}
           onLogout={() => void handleLogout()}
         />
       </div>

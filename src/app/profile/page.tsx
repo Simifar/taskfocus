@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/server/auth";
 
 export const metadata = {
-  title: "Профиль - TaskFocus",
-  description: "Управление профилем пользователя",
+  title: "Профиль — TaskFocus",
+  description: "Личные данные и сводка задач TaskFocus.",
 };
 
 export default async function Page() {
