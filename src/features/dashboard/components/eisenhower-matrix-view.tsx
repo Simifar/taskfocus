@@ -6,8 +6,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
-import { SimpleSortableTasksList } from "@/features/tasks/components/simple-sortable-tasks-list";
-import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
+import { SortableTasksBoard, type SortableTaskGroup, type TaskGroupMove } from "@/features/tasks/components/sortable-tasks-board";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +43,7 @@ interface EisenhowerMatrixViewProps {
   onAssignToToday?: (taskId: string) => void;
   onAssignToWeek?: (taskId: string) => void;
   onReorder?: (tasks: Task[]) => void;
+  onMoveToQuadrant?: (taskId: string, quadrant: EisenhowerQuadrant) => void;
 }
 
 function MatrixTaskCard({
@@ -55,12 +55,13 @@ function MatrixTaskCard({
   onDelete,
   onAssignToToday,
   onAssignToWeek,
-}: EisenhowerMatrixViewProps & { task: Task; dragHandle?: ReactNode }) {
+  quadrant,
+}: EisenhowerMatrixViewProps & { task: Task; dragHandle?: ReactNode; quadrant: EisenhowerQuadrant }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
     <>
-    <Card className="border-l-4 border-l-border bg-background/95 shadow-sm transition-colors hover:border-brand/40">
+    <Card className={cn("border-l-4 bg-background/95 py-0 shadow-sm transition-colors hover:shadow-md", EISENHOWER_META[quadrant].border)}>
       <CardContent className="p-3">
         <div className="flex items-start justify-between gap-2">
           {dragHandle}
@@ -187,6 +188,7 @@ export function EisenhowerMatrixView({
   onAssignToToday,
   onAssignToWeek,
   onReorder,
+  onMoveToQuadrant,
 }: EisenhowerMatrixViewProps) {
   const activeTasks = tasks.filter((task) => task.status === "active" && !task.parentTaskId);
   const tasksByQuadrant = EISENHOWER_ORDER.reduce(
@@ -199,6 +201,42 @@ export function EisenhowerMatrixView({
 
   const importantCount = activeTasks.filter((task) => task.important).length;
   const urgentCount = activeTasks.filter((task) => task.urgent).length;
+  const groups: SortableTaskGroup[] = EISENHOWER_ORDER.map((quadrant) => {
+    const meta = EISENHOWER_META[quadrant];
+    const quadrantTasks = tasksByQuadrant[quadrant];
+
+    return {
+      id: quadrant,
+      tasks: quadrantTasks,
+      className: cn("min-h-[300px] rounded-xl border p-3", meta.panel),
+      contentClassName: "space-y-2",
+      header: (
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className={cn("size-2.5 rounded-full", meta.dot)} />
+              <h3 className="font-semibold">{meta.title}</h3>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">{meta.description}</p>
+          </div>
+          <Badge variant="secondary" className="shrink-0 tabular-nums">
+            {quadrantTasks.length}
+          </Badge>
+        </div>
+      ),
+      empty: (
+        <div className="flex min-h-[190px] items-center justify-center rounded-lg border border-dashed border-border/80 bg-background/50 px-4 text-center text-sm text-muted-foreground">
+          Перетащите сюда задачу или добавьте новую
+        </div>
+      ),
+    };
+  });
+
+  const handleBoardChange = (nextGroups: SortableTaskGroup[], move?: TaskGroupMove) => {
+    if (move) onMoveToQuadrant?.(move.task.id, move.toGroupId as EisenhowerQuadrant);
+    const reorderedTasks = nextGroups.flatMap((group) => group.tasks);
+    onReorder?.(reorderedTasks);
+  };
 
   return (
     <div className="space-y-5">
@@ -211,7 +249,7 @@ export function EisenhowerMatrixView({
           <div>
             <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Матрица Эйзенхауэра</h2>
             <p className="text-sm text-muted-foreground">
-              Разделение активных задач по важности и срочности.
+              Перетаскивайте задачи между квадрантами, чтобы менять их важность и срочность.
             </p>
           </div>
         </div>
@@ -233,62 +271,25 @@ export function EisenhowerMatrixView({
         </div>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
-        {EISENHOWER_ORDER.map((quadrant) => {
-          const meta = EISENHOWER_META[quadrant];
-          const quadrantTasks = tasksByQuadrant[quadrant];
-
-          return (
-            <section
-              key={quadrant}
-              className={cn("min-h-[300px] rounded-lg border p-3", meta.panel)}
-            >
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={cn("h-2.5 w-2.5 rounded-full", meta.dot)} />
-                    <h3 className="font-semibold">{meta.title}</h3>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{meta.description}</p>
-                </div>
-                <Badge variant="secondary" className="shrink-0">
-                  {quadrantTasks.length}
-                </Badge>
-              </div>
-
-              {quadrantTasks.length > 0 ? (
-                <SimpleSortableTasksList
-                  tasks={quadrantTasks}
-                  onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
-                  className="space-y-2"
-                >
-                  {(task, dragHandle) => (
-                    <MatrixTaskCard
-                      task={task}
-                      dragHandle={dragHandle}
-                      tasks={tasks}
-                      onEdit={onEdit}
-                      onComplete={onComplete}
-                      onArchive={onArchive}
-                      onDelete={onDelete}
-                      onAssignToToday={onAssignToToday}
-                      onAssignToWeek={onAssignToWeek}
-                    />
-                  )}
-                </SimpleSortableTasksList>
-              ) : (
-                <button
-                  type="button"
-                  className="flex min-h-[190px] w-full items-center justify-center rounded-lg border border-dashed border-border bg-background/40 px-4 text-center text-sm text-muted-foreground transition-colors hover:border-brand/40 hover:text-brand"
-                  onClick={onAddTask}
-                >
-                  Нет задач в этом квадранте
-                </button>
-              )}
-            </section>
-          );
-        })}
-      </div>
+      <SortableTasksBoard
+        groups={groups}
+        className="grid gap-3 lg:grid-cols-2"
+        onChange={handleBoardChange}
+        renderTask={(task, dragHandle, groupId) => (
+          <MatrixTaskCard
+            task={task}
+            quadrant={groupId as EisenhowerQuadrant}
+            dragHandle={dragHandle}
+            tasks={tasks}
+            onEdit={onEdit}
+            onComplete={onComplete}
+            onArchive={onArchive}
+            onDelete={onDelete}
+            onAssignToToday={onAssignToToday}
+            onAssignToWeek={onAssignToWeek}
+          />
+        )}
+      />
     </div>
   );
 }

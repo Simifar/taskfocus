@@ -61,12 +61,8 @@ export function useRegister() {
 }
 
 export function useLogout() {
-  const qc = useQueryClient();
   return useMutation({
     mutationFn: authApi.logout,
-    onSuccess: () => {
-      qc.clear();
-    },
   });
 }
 

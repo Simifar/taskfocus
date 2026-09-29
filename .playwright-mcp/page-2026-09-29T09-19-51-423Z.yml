@@ -1,0 +1,58 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e6]:
+    - generic [ref=f3e7]:
+      - generic [ref=f3e8]: TaskFocus
+      - button "Найти задачу" [ref=f3e21]
+    - generic [ref=f3e26]:
+      - banner [ref=f3e27]:
+        - generic [ref=f3e28]:
+          - generic [ref=f3e29]:
+            - heading "Входящие" [level=1] [ref=f3e33]
+            - generic [ref=f3e34]: "2"
+          - paragraph [ref=f3e35]: Быстро сохраните мысль. Дату и остальные детали можно добавить позже.
+      - generic [ref=f3e37]:
+        - generic [ref=f3e38]:
+          - textbox "Название новой задачи" [ref=f3e39]:
+            - /placeholder: Что нужно сохранить?
+          - button "Сохранить задачу во входящие" [disabled]
+        - paragraph [ref=f3e40]: Enter сохраняет мысль. Планируйте её позже через меню задачи.
+      - region [ref=f3e41]:
+        - generic [ref=f3e42]:
+          - generic [ref=f3e43]:
+            - checkbox "Выбрать все входящие задачи" [ref=f3e44]
+            - heading "Разобрать входящие" [level=2] [ref=f3e45]
+          - generic [ref=f3e46]: Выберите задачи, чтобы распределить их вместе
+        - generic [ref=f3e47]:
+          - article [ref=f3e49]:
+            - generic [ref=f3e50]:
+              - button "Перетащить задачу" [ref=f3e51]
+              - checkbox "Выбрать задачу «Разобрать inbox без даты»" [ref=f3e59]
+              - button "Отметить задачу «Разобрать inbox без даты» выполненной" [ref=f3e60]
+              - generic [ref=f3e61]:
+                - button "Разобрать inbox без даты" [ref=f3e62]
+                - generic [ref=f3e63]:
+                  - generic [ref=f3e64]: Без отметки
+                  - generic [ref=f3e65]: Энергия 2/5
+                - paragraph [ref=f3e66]: "Пройтись по накопленным идеям и решить: запланировать, удалить или превратить в подзадачи."
+              - button "Действия для задачи «Разобрать inbox без даты»" [ref=f3e67]
+          - article [ref=f3e69]:
+            - generic [ref=f3e70]:
+              - button "Перетащить задачу" [ref=f3e71]
+              - checkbox "Выбрать задачу «Выбрать музыку для фокус-сессии»" [ref=f3e79]
+              - button "Отметить задачу «Выбрать музыку для фокус-сессии» выполненной" [ref=f3e80]
+              - generic [ref=f3e81]:
+                - button "Выбрать музыку для фокус-сессии" [ref=f3e82]
+                - generic [ref=f3e83]:
+                  - generic [ref=f3e84]: Без отметки
+                  - generic [ref=f3e85]: Энергия 1/5
+              - button "Действия для задачи «Выбрать музыку для фокус-сессии»" [ref=f3e86]
+        - status [ref=f3e87]
+    - navigation "Основная мобильная навигация" [ref=f3e88]:
+      - generic [ref=f3e89]:
+        - button "Сегодня" [ref=f3e90]
+        - button "Входящие" [ref=f3e95]
+        - button "Добавить задачу" [ref=f3e100]
+        - button "Неделя" [ref=f3e103]
+        - button "Разделы" [ref=f3e107]
+  - region "Notifications alt+T"
+  - alert [ref=f3e5]

@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-import type { Task } from "@/shared/types";
+import type { EisenhowerQuadrant, Task } from "@/shared/types";
 import { describeTaskError } from "@/features/tasks/errors";
 import { getCurrentWeekRange } from "@/features/dashboard/lib/task-date-filters";
 import {
@@ -94,6 +94,35 @@ export function useDashboardActions() {
       toast.success("Задача назначена на неделю");
     } catch (err) {
       reportError(err, "Не удалось назначить задачу");
+    }
+  };
+
+  const handleMoveToQuadrant = async (taskId: string, quadrant: EisenhowerQuadrant) => {
+    const important = quadrant === "do" || quadrant === "schedule";
+    const urgent = quadrant === "do" || quadrant === "delegate";
+
+    try {
+      await updateTask.mutateAsync({ id: taskId, input: { important, urgent } });
+      return true;
+    } catch (err) {
+      reportError(err, "Не удалось изменить приоритет задачи");
+      return false;
+    }
+  };
+
+  const handleScheduleTask = async (taskId: string, date: Date) => {
+    const localNoon = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12);
+    const dateIso = localNoon.toISOString();
+
+    try {
+      await updateTask.mutateAsync({
+        id: taskId,
+        input: { dueDateStart: dateIso, dueDateEnd: dateIso },
+      });
+      return true;
+    } catch (err) {
+      reportError(err, "Не удалось перенести задачу на этот день");
+      return false;
     }
   };
 
@@ -199,9 +228,11 @@ export function useDashboardActions() {
     handleBatchDelete,
     handleDeleteSubtask,
     handleDeleteTask,
+    handleMoveToQuadrant,
     handleReorder,
     handleRestoreTask,
     handleToggleCompleteTask,
     handleToggleSubtask,
+    handleScheduleTask,
   };
 }

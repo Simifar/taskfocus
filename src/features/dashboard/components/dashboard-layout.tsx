@@ -14,6 +14,7 @@ import { useDashboardStore, useSelectedDate } from "@/features/dashboard/store";
 import { toDateOnly } from "@/shared/lib/dates/date-only";
 import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 import { useDashboardActions } from "@/features/dashboard/hooks/use-dashboard-actions";
+import { getTaskAddTarget } from "@/features/dashboard/lib/task-add-target";
 
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { MobileNavigation } from "./mobile-navigation";
@@ -72,8 +73,10 @@ export function DashboardLayout() {
     handleBatchDelete,
     handleDeleteSubtask,
     handleDeleteTask,
+    handleMoveToQuadrant,
     handleReorder,
     handleRestoreTask,
+    handleScheduleTask,
     handleToggleCompleteTask,
     handleToggleSubtask,
   } = useDashboardActions();
@@ -113,8 +116,7 @@ export function DashboardLayout() {
   const handleLogout = async () => {
     try {
       await logout.mutateAsync();
-      toast.success("Вы вышли из аккаунта");
-      router.push("/login");
+      window.location.replace("/login");
     } catch {
       toast.error("Не удалось выйти из аккаунта");
     }
@@ -138,14 +140,13 @@ export function DashboardLayout() {
     setView(dayReturnView);
   };
 
-  const handleAddTask = (target?: "today" | "inbox") => {
+  const handleAddTask = (requestedTarget?: unknown) => {
     const limitReached = (tasksQuery.data?.todayActiveCount ?? 0) >= MAX_ACTIVE_TASKS_PER_DAY;
-    if (
-      target === "inbox" ||
-      (target === undefined && (currentView === "inbox" || (currentView === "today" && limitReached)))
-    ) {
+    const target = getTaskAddTarget(requestedTarget, currentView, limitReached);
+
+    if (target === "inbox") {
       setPreSelectedDate(undefined);
-    } else if (target === "today") {
+    } else if (requestedTarget === "today") {
       setPreSelectedDate(new Date());
     } else if (currentView === "day" && selectedDate) {
       setPreSelectedDate(selectedDate);
@@ -241,7 +242,7 @@ export function DashboardLayout() {
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
-              onAddTask={handleAddTask}
+              onAddTask={() => handleAddTask()}
               onAssignToToday={handleAssignToToday}
               onAssignToWeek={handleAssignToWeek}
               onToggleSubtask={handleToggleSubtask}
@@ -271,6 +272,7 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onScheduleTask={handleScheduleTask}
               onReorder={handleReorder}
             />
           )}
@@ -290,6 +292,7 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
+              onScheduleTask={handleScheduleTask}
               onReorder={handleReorder}
             />
           )}
@@ -297,13 +300,14 @@ export function DashboardLayout() {
           {currentView === "matrix" && (
             <EisenhowerMatrixView
               tasks={tasks}
-              onAddTask={handleAddTask}
+              onAddTask={() => handleAddTask()}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
               onAssignToToday={handleAssignToToday}
               onAssignToWeek={handleAssignToWeek}
+              onMoveToQuadrant={handleMoveToQuadrant}
               onReorder={handleReorder}
             />
           )}
@@ -317,7 +321,7 @@ export function DashboardLayout() {
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
-              onAddTask={handleAddTask}
+              onAddTask={() => handleAddTask()}
               onToggleSubtask={handleToggleSubtask}
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
@@ -342,7 +346,7 @@ export function DashboardLayout() {
           dayReturnView={dayReturnView}
           stats={stats}
           onNavigate={setView}
-          onAddTask={handleAddTask}
+          onAddTask={() => handleAddTask()}
           onProfile={() => router.push("/profile")}
           onSettings={() => router.push("/settings")}
           onLogout={() => void handleLogout()}

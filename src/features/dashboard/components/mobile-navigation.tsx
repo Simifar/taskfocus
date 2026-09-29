@@ -148,7 +148,7 @@ export function MobileNavigation({
 
           <button
             type="button"
-            onClick={onAddTask}
+            onClick={() => onAddTask()}
             aria-label="Добавить задачу"
             className="flex min-h-16 items-center justify-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand"
           >

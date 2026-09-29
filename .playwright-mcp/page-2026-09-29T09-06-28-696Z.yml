@@ -1,0 +1,89 @@
+- generic:
+  - generic:
+    - generic:
+      - generic [aria-hidden]:
+        - generic: TaskFocus
+        - button
+      - generic:
+        - generic:
+          - banner [aria-hidden]:
+            - generic:
+              - generic:
+                - heading [level=1]: Входящие
+                - generic: "3"
+              - paragraph: Быстро сохраните мысль. Дату и остальные детали можно добавить позже.
+          - generic [aria-hidden]:
+            - generic:
+              - generic:
+                - textbox:
+                  - /placeholder: Что нужно сохранить?
+                - button [disabled]
+              - paragraph: Enter сохраняет мысль. Планируйте её позже через меню задачи.
+          - region "Разобрать входящие":
+            - generic [aria-hidden]:
+              - generic:
+                - checkbox
+                - heading [level=2]: Разобрать входящие
+              - generic: Выберите задачи, чтобы распределить их вместе
+            - generic [aria-hidden]:
+              - generic:
+                - article:
+                  - generic:
+                    - button
+                    - checkbox
+                    - button
+                    - generic:
+                      - button: Разобрать inbox без даты
+                      - generic:
+                        - generic: Без отметки
+                        - generic: Энергия 2/5
+                      - paragraph: "Пройтись по накопленным идеям и решить: запланировать, удалить или превратить в подзадачи."
+                    - button
+              - generic:
+                - article:
+                  - generic:
+                    - button
+                    - checkbox
+                    - button
+                    - generic:
+                      - button: Выбрать музыку для фокус-сессии
+                      - generic:
+                        - generic: Без отметки
+                        - generic: Энергия 1/5
+                    - button
+              - generic:
+                - article:
+                  - generic:
+                    - button
+                    - checkbox
+                    - button
+                    - generic:
+                      - button: QA · проверка сохранения Inbox
+                      - generic:
+                        - generic: Без отметки
+                        - generic: Энергия 3/5
+                    - button [expanded]
+            - status
+      - navigation [aria-hidden]:
+        - generic:
+          - button:
+            - generic: Сегодня
+          - button:
+            - generic: Входящие
+          - button
+          - button:
+            - generic: Неделя
+          - button:
+            - generic: Разделы
+  - region "Notifications alt+T"
+  - alert
+  - menu "Действия для задачи «QA · проверка сохранения Inbox»" [active] [ref=f2e500]:
+    - menuitem "Выполнить" [ref=f2e501]
+    - menuitem "Редактировать" [ref=f2e502]
+    - menuitem "Добавить подзадачу" [ref=f2e503]
+    - separator [ref=f2e504]
+    - menuitem "На сегодня" [ref=f2e505]
+    - menuitem "На неделю" [ref=f2e506]
+    - separator [ref=f2e507]
+    - menuitem "В архив" [ref=f2e508]
+    - menuitem "Удалить" [ref=f2e509]

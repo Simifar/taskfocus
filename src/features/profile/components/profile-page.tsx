@@ -123,8 +123,9 @@ export function ProfilePage() {
 
   return (
     <AccountShell
+      section="profile"
       title="Профиль"
-      description="Ваши данные и сводка по задачам в TaskFocus."
+      description="Имя, данные аккаунта и актуальная сводка по вашим задачам."
     >
       {userQuery.isError ? (
         <div role="alert" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm">
@@ -146,14 +147,13 @@ export function ProfilePage() {
           ) : (
             <>
               <h2 className="truncate text-lg font-semibold tracking-tight sm:text-xl">{displayName}</h2>
-              <p className="mt-1 truncate text-sm text-muted-foreground">{user?.email ?? ""}</p>
-              {user?.username ? <p className="mt-1 text-xs text-muted-foreground">@{user.username}</p> : null}
+              <p className="mt-1 text-sm text-muted-foreground">Личный профиль TaskFocus</p>
             </>
           )}
         </div>
       </section>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+      <div className="mt-5 grid items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
         <ProfileEditor
           key={user?.id ?? "profile-loading"}
           initialName={user?.name ?? ""}

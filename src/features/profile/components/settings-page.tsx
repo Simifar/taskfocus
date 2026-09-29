@@ -11,6 +11,7 @@ import {
   Check,
   Laptop,
   Loader2,
+  LogOut,
   Mail,
   Moon,
   Sun,
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useCurrentUser, useDeleteAccount } from "@/features/auth/hooks";
+import { useCurrentUser, useDeleteAccount, useLogout } from "@/features/auth/hooks";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import {
@@ -159,6 +160,40 @@ function DailyPlanRule() {
   );
 }
 
+function SessionSettings() {
+  const logout = useLogout();
+  const userQuery = useCurrentUser();
+  const user = userQuery.data;
+
+  const handleLogout = async () => {
+    try {
+      await logout.mutateAsync();
+      window.location.replace("/login");
+    } catch {
+      toast.error("Не удалось завершить сеанс. Попробуйте ещё раз.");
+    }
+  };
+
+  return (
+    <Card className="gap-0 overflow-hidden rounded-2xl shadow-none">
+      <CardHeader className="border-b border-border px-5 py-4 sm:px-6">
+        <CardTitle className="text-base">Текущий сеанс</CardTitle>
+        <p className="text-sm text-muted-foreground">Управляйте доступом к рабочему пространству.</p>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">Вы вошли как</p>
+          <p className="mt-1 break-all text-sm font-medium">{userQuery.isLoading ? "Загрузка…" : user?.email ?? "—"}</p>
+        </div>
+        <Button type="button" variant="outline" className="shrink-0" onClick={() => void handleLogout()} disabled={logout.isPending}>
+          {logout.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <LogOut className="size-4" aria-hidden="true" />}
+          Выйти из аккаунта
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function DeleteAccount() {
   const router = useRouter();
   const deleteAccount = useDeleteAccount();
@@ -226,8 +261,9 @@ function DeleteAccount() {
 export function SettingsPage() {
   return (
     <AccountShell
+      section="settings"
       title="Настройки"
-      description="Настройте внешний вид и управляйте своим аккаунтом."
+      description="Настройте рабочее пространство, проверьте данные аккаунта и управляйте сеансом."
     >
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(290px,0.58fr)]">
         <div className="space-y-5">
@@ -236,6 +272,7 @@ export function SettingsPage() {
         </div>
         <aside className="space-y-5" aria-label="Аккаунт и безопасность">
           <AccountInformation />
+          <SessionSettings />
           <DeleteAccount />
         </aside>
       </div>

@@ -1,0 +1,91 @@
+- generic:
+  - generic:
+    - generic:
+      - generic [aria-hidden]:
+        - generic: TaskFocus
+        - button
+      - generic:
+        - generic:
+          - banner [aria-hidden]:
+            - generic:
+              - generic:
+                - heading [level=1]: Входящие
+                - generic: "2"
+              - paragraph: Быстро сохраните мысль. Дату и остальные детали можно добавить позже.
+          - generic [aria-hidden]:
+            - generic:
+              - generic:
+                - textbox:
+                  - /placeholder: Что нужно сохранить?
+                - button [disabled]
+              - paragraph: Enter сохраняет мысль. Планируйте её позже через меню задачи.
+          - region "Разобрать входящие":
+            - generic [aria-hidden]:
+              - generic:
+                - checkbox
+                - heading [level=2]: Разобрать входящие
+              - generic: Выберите задачи, чтобы распределить их вместе
+            - generic [aria-hidden]:
+              - generic:
+                - article:
+                  - generic:
+                    - button
+                    - checkbox
+                    - button
+                    - generic:
+                      - button: Разобрать inbox без даты
+                      - generic:
+                        - generic: Без отметки
+                        - generic: Энергия 2/5
+                      - paragraph: "Пройтись по накопленным идеям и решить: запланировать, удалить или превратить в подзадачи."
+                    - button
+              - generic:
+                - article:
+                  - generic:
+                    - button
+                    - checkbox
+                    - button
+                    - generic:
+                      - button: Выбрать музыку для фокус-сессии
+                      - generic:
+                        - generic: Без отметки
+                        - generic: Энергия 1/5
+                    - button
+            - status
+      - navigation [aria-hidden]:
+        - generic:
+          - button:
+            - generic: Сегодня
+          - button:
+            - generic: Входящие
+          - button
+          - button:
+            - generic: Неделя
+          - button:
+            - generic: Разделы
+  - region "Notifications alt+T"
+  - alert
+  - dialog [ref=e798]:
+    - generic [ref=e799]:
+      - generic [ref=e800]:
+        - heading "Новая задача" [level=2] [ref=e801]
+        - paragraph [ref=e802]: Сначала зафиксируйте главное. Дату и остальные детали можно добавить позже.
+      - generic [ref=e803]:
+        - generic [ref=e804]:
+          - generic [ref=e805]:
+            - text: Что нужно сделать?
+            - generic [ref=e806]: "*"
+          - textbox "Что нужно сделать? *" [active] [ref=e807]:
+            - /placeholder: Например, подготовить план встречи
+          - generic [ref=e808]: Короткого названия достаточно, чтобы сохранить задачу.
+        - generic [ref=e810]:
+          - generic [ref=e811]: Сегодня
+          - button "Изменить" [ref=e815]
+        - button "Детали и планирование Описание, энергия и важность" [ref=e817]:
+          - generic [ref=e818]:
+            - generic [ref=e819]: Детали и планирование
+            - generic [ref=e820]: Описание, энергия и важность
+      - generic [ref=e823]:
+        - button "Отмена" [ref=e824]
+        - button "Создать задачу" [ref=e825]
+    - button "Close" [ref=e826]

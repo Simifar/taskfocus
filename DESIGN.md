@@ -1,6 +1,6 @@
 # TaskFocus design direction
 
-Updated: 2026-09-26
+Updated: 2026-09-29
 
 ## Product promise
 
@@ -18,26 +18,26 @@ Today is the working surface. Inbox is for capture and later sorting. Week and C
 
 ## Design read
 
-Personal planning product for people who want a calm pace and a clear next action. The visual language is quiet and editorial, built from warm, low-contrast neutrals and a single pine-green accent. Density stays low; motion only confirms a state change or draws attention to the next action.
+Personal planning product for people who want a calm pace and a clear next action. The visual language uses a cool grayscale workspace, crisp text contrast, and small, purposeful color accents for navigation, energy, and task priority. Density is tuned to each surface: Today stays focused, while planning boards use compact columns that make movement and relationships easy to read.
 
 ## Visual system
 
 - Keep Geist Sans for interface text and Geist Mono for timer digits. Use sentence case, moderate heading sizes, and tabular numbers for counts and time.
-- Use a soft neutral canvas with slightly raised surfaces. Let spacing and dividers group ordinary tasks; reserve a filled surface for the recommended next task and modal content.
-- Use pine green for the primary action, keyboard focus, and selected navigation. Use destructive red only for destructive actions and error states. Priority must also be named in text so color never carries the meaning alone.
-- Light and dark themes share the same roles and hierarchy. Dark mode uses tinted charcoal rather than black; the sign-in story panel uses a deeper charcoal surface in dark mode instead of inverting to a bright block.
+- Use a cool-grey canvas with clearly separated raised surfaces, stronger text contrast, and consistent border weight. Let spacing and dividers group ordinary tasks; reserve a filled surface for the recommended next task and modal content.
+- Use blue for primary actions, keyboard focus, and selected navigation. Reserve red, amber, blue, and violet accents for meaningful task states and energy levels; priority must also be named in text so color never carries the meaning alone.
+- Light and dark themes share the same roles and hierarchy. Dark mode uses neutral charcoal rather than green-tinted black; the sign-in story panel uses a deeper charcoal surface in dark mode instead of inverting to a bright block.
 - Avoid decorative grids, glows, unsupported productivity scores, and placeholder task content. Do not add images where task content is clearer without them.
 
 ### Core color roles
 
 | Role | Light theme | Dark theme |
 | --- | --- | --- |
-| Page canvas | soft neutral with a slight green tint | deep tinted charcoal |
+| Page canvas | cool light grey | deep neutral charcoal |
 | Raised surface | near-white | lifted charcoal |
-| Main text | dark green-grey | soft off-white |
-| Secondary text | muted green-grey with readable contrast | light muted green-grey |
-| Brand accent | restrained pine | light sage-pine |
-| Borders | warm-grey green | quiet charcoal-green |
+| Main text | near-black charcoal | soft off-white |
+| Secondary text | mid-grey with readable contrast | light neutral grey |
+| Brand accent | restrained cobalt blue | light cobalt blue |
+| Borders | clear cool grey | visible charcoal-grey |
 
 The values live in `src/app/globals.css` so components use the shared theme tokens instead of local color guesses.
 
@@ -66,7 +66,7 @@ The values live in `src/app/globals.css` so components use the shared theme toke
 
 ## Navigation and responsive behavior
 
-- Desktop keeps a narrow sidebar with every task view visible, grouped into Tasks, Planning, and Completed. Profile and Settings are grouped in a separate account area at the bottom.
+- Desktop keeps a narrow sidebar with every task view visible, grouped into Tasks, Planning, and Completed. Profile and Settings are grouped in a separate account area at the bottom; their pages have distinct purposes and link directly to each other.
 - Mobile keeps the bottom shortcuts for Today, Inbox, and Week, plus a central create action. A clearly named Sections sheet contains every task view, Profile, Settings, and sign-out, grouped by purpose.
 - At 320 px, controls wrap without clipping, task titles remain readable, and the bottom navigation does not cover scrollable content.
 - Dialogs use a bounded viewport height with independently scrollable content and a visible action row.
@@ -74,7 +74,7 @@ The values live in `src/app/globals.css` so components use the shared theme toke
 ### Profile and settings
 
 - Profile is the home for editable display name, read-only sign-in identifiers, and real task totals.
-- Settings contains the working appearance preference (system, light, or dark), the five-task daily planning rule, sign-in identifiers, and the existing confirmed account-deletion action.
+- Settings contains the working appearance preference (system, light, or dark), the five-task daily planning rule, sign-in identifiers, a working sign-out action, and the existing confirmed account-deletion action.
 - Do not expose password recovery or notification controls until those flows are implemented end to end.
 
 ## States and accessibility
@@ -82,6 +82,7 @@ The values live in `src/app/globals.css` so components use the shared theme toke
 - Loading, empty, filtered-empty, and failed requests are different states. A failed task request must never look like an empty plan.
 - Every failed load has a local retry action. Forms keep their values after a failed save.
 - Controls have visible focus, descriptive accessible names, and pressed/current state. State is not communicated with color alone.
+- Drag-and-drop uses one interaction area across every related board: matrix cards move between priority quadrants, and week/calendar cards move between dates. The destination updates the task's saved fields; a day rejects transfers that would exceed five active tasks. Empty columns remain valid targets, and keyboard sorting is supported.
 - Respect reduced-motion preferences and keep interactions usable by keyboard.
 
 ## Scope boundaries

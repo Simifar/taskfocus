@@ -11,7 +11,6 @@ import {
   Calendar as CalendarIcon,
   ChevronDown,
   Loader2,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,6 +56,8 @@ export function CreateTaskDialog({
   const [dueDateStart, setDueDateStart] = useState<Date | undefined>(preSelectedDate);
   const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>(preSelectedDate);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState<"day" | "range">("day");
 
   const quadrant = getEisenhowerQuadrant({ important, urgent });
   const quadrantMeta = EISENHOWER_META[quadrant];
@@ -92,7 +93,7 @@ export function CreateTaskDialog({
     );
 
   const getDateSummary = () => {
-    if (!dueDateStart) return "Без даты · попадёт во «Входящие»";
+    if (!dueDateStart) return "Без даты";
 
     const start = isSameDay(dueDateStart, new Date())
       ? "Сегодня"
@@ -163,28 +164,159 @@ export function CreateTaskDialog({
                 className="h-12 border-border/80 text-base shadow-none placeholder:text-muted-foreground/65 focus-visible:ring-2"
               />
               <div className="flex min-h-5 items-center justify-between gap-3 text-xs text-muted-foreground">
-                <span>Короткого названия достаточно, чтобы сохранить задачу.</span>
+                <span>
+                  {hasNoDate
+                    ? "Сохранится во «Входящих» без даты."
+                    : "Короткого названия достаточно, чтобы сохранить задачу."}
+                </span>
                 {title.length > 160 && <span className="shrink-0">{title.length}/200</span>}
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-border/70 bg-muted/25 px-3.5 py-3 sm:px-4">
-              <div className="flex min-w-0 items-center gap-2 text-sm">
-                <CalendarIcon className="h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
-                <span className="truncate font-medium">{getDateSummary()}</span>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/25 px-3.5 py-3 sm:px-4">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-brand shadow-sm">
+                  <CalendarIcon className="size-4" aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-muted-foreground">Планирование</span>
+                  <span className="block truncate text-sm font-semibold">{getDateSummary()}</span>
+                </span>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-9 shrink-0 gap-1.5 px-2 text-brand hover:text-brand"
-                aria-expanded={detailsOpen}
-                aria-controls="create-task-details"
-                onClick={() => setDetailsOpen(true)}
-              >
-                {dueDateStart ? "Изменить" : "Запланировать"}
-                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", detailsOpen && "rotate-180")} />
-              </Button>
+              <Popover open={scheduleOpen} onOpenChange={setScheduleOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 shrink-0 gap-1.5 px-3"
+                    aria-expanded={scheduleOpen}
+                  >
+                    {hasNoDate ? "Выбрать дату" : "Изменить"}
+                    <ChevronDown className={cn("size-3.5 transition-transform", scheduleOpen && "rotate-180")} aria-hidden="true" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  className="max-h-[min(30rem,var(--radix-popover-content-available-height))] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto p-3"
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-semibold">Когда выполнить</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">Выберите один день или период</p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={cn("min-h-9 px-2 text-xs", hasNoDate && "border-brand bg-brand/10 text-brand hover:bg-brand/15")}
+                        aria-pressed={hasNoDate}
+                        onClick={() => {
+                          setDateRange(undefined);
+                          setScheduleMode("day");
+                          setScheduleOpen(false);
+                        }}
+                      >
+                        Без даты
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={cn("min-h-9 px-2 text-xs", isSingleDaySelected(new Date()) && "border-brand bg-brand/10 text-brand hover:bg-brand/15")}
+                        aria-pressed={isSingleDaySelected(new Date())}
+                        onClick={() => {
+                          setDateRange(new Date());
+                          setScheduleMode("day");
+                          setScheduleOpen(false);
+                        }}
+                      >
+                        Сегодня
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={cn("min-h-9 px-2 text-xs", isSingleDaySelected(addDays(new Date(), 1)) && "border-brand bg-brand/10 text-brand hover:bg-brand/15")}
+                        aria-pressed={isSingleDaySelected(addDays(new Date(), 1))}
+                        onClick={() => {
+                          setDateRange(addDays(new Date(), 1));
+                          setScheduleMode("day");
+                          setScheduleOpen(false);
+                        }}
+                      >
+                        Завтра
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 rounded-lg bg-muted p-1" role="group" aria-label="Тип планирования">
+                      <button
+                        type="button"
+                        className={cn(
+                          "min-h-9 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+                          scheduleMode === "day" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                        )}
+                        aria-pressed={scheduleMode === "day"}
+                        onClick={() => setScheduleMode("day")}
+                      >
+                        На день
+                      </button>
+                      <button
+                        type="button"
+                        className={cn(
+                          "min-h-9 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+                          scheduleMode === "range" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                        )}
+                        aria-pressed={scheduleMode === "range"}
+                        onClick={() => setScheduleMode("range")}
+                      >
+                        Период
+                      </button>
+                    </div>
+
+                    {scheduleMode === "day" ? (
+                      <Calendar
+                        mode="single"
+                        selected={dueDateStart}
+                        defaultMonth={dueDateStart ?? new Date()}
+                        onSelect={(date) => {
+                          setDateRange(date);
+                          if (date) setScheduleOpen(false);
+                        }}
+                        locale={ru}
+                      />
+                    ) : (
+                      <Calendar
+                        mode="range"
+                        min={1}
+                        selected={dueDateStart ? { from: dueDateStart, to: dueDateEnd } : undefined}
+                        defaultMonth={dueDateStart ?? new Date()}
+                        onDayClick={(date) => {
+                          if (!dueDateStart || dueDateEnd) {
+                            setDueDateStart(date);
+                            setDueDateEnd(undefined);
+                            return;
+                          }
+
+                          const [start, end] = date < dueDateStart
+                            ? [date, dueDateStart]
+                            : [dueDateStart, date];
+                          setDateRange(start, end);
+                          setScheduleOpen(false);
+                        }}
+                        locale={ru}
+                      />
+                    )}
+                    {scheduleMode === "range" && (
+                      <p className="border-t border-border/70 pt-2 text-xs leading-relaxed text-muted-foreground">
+                        Период включает и выбранный день начала, и день окончания.
+                      </p>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <section className="overflow-hidden rounded-xl border border-border/80">
@@ -196,7 +328,7 @@ export function CreateTaskDialog({
                 onClick={() => setDetailsOpen((value) => !value)}
               >
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold">Детали и планирование</span>
+                  <span className="block text-sm font-semibold">Дополнительно</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     Описание, энергия и важность
                   </span>
@@ -297,134 +429,6 @@ export function CreateTaskDialog({
                     </div>
                   </div>
 
-                  <div className="space-y-3 border-t border-border/70 pt-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <Label>Когда</Label>
-                        <p className="mt-1 text-xs text-muted-foreground">Можно запланировать на день или период</p>
-                      </div>
-                      {!hasNoDate && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 gap-1 px-2 text-muted-foreground"
-                          onClick={() => setDateRange(undefined)}
-                        >
-                          <X className="h-3.5 w-3.5" aria-hidden="true" />
-                          Очистить
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn("min-h-10", hasNoDate && "border-brand bg-brand/10 text-brand hover:bg-brand/15")}
-                        onClick={() => setDateRange(undefined)}
-                      >
-                        Без даты
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn("min-h-10", isSingleDaySelected(new Date()) && "border-brand bg-brand/10 text-brand hover:bg-brand/15")}
-                        onClick={() => setDateRange(new Date())}
-                      >
-                        Сегодня
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn("min-h-10", isSingleDaySelected(addDays(new Date(), 1)) && "border-brand bg-brand/10 text-brand hover:bg-brand/15")}
-                        onClick={() => setDateRange(addDays(new Date(), 1))}
-                      >
-                        Завтра
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "min-h-10",
-                          dueDateStart &&
-                            dueDateEnd &&
-                            isSameDay(dueDateStart, new Date()) &&
-                            isSameDay(dueDateEnd, addDays(new Date(), 7)) &&
-                            "border-brand bg-brand/10 text-brand hover:bg-brand/15",
-                        )}
-                        onClick={() => setDateRange(new Date(), addDays(new Date(), 7))}
-                      >
-                        Неделя
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="task-date-start" className="text-sm text-muted-foreground">
-                          Начало
-                        </Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              id="task-date-start"
-                              type="button"
-                              variant="outline"
-                              className={cn("min-h-11 w-full justify-start text-left font-normal", !dueDateStart && "text-muted-foreground")}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
-                              {dueDateStart ? format(dueDateStart, "d MMMM yyyy", { locale: ru }) : "Выбрать дату"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={dueDateStart}
-                              onSelect={(date) => {
-                                setDueDateStart(date);
-                                if (!date || (dueDateEnd && date > dueDateEnd)) {
-                                  setDueDateEnd(date);
-                                }
-                              }}
-                              locale={ru}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="task-date-end" className="text-sm text-muted-foreground">
-                          Окончание
-                        </Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              id="task-date-end"
-                              type="button"
-                              variant="outline"
-                              disabled={!dueDateStart}
-                              className={cn("min-h-11 w-full justify-start text-left font-normal", !dueDateEnd && "text-muted-foreground")}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
-                              {dueDateEnd ? format(dueDateEnd, "d MMMM yyyy", { locale: ru }) : "Выбрать дату"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={dueDateEnd}
-                              onSelect={(date) => setDueDateEnd(date)}
-                              locale={ru}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
             </section>

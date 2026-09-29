@@ -1,0 +1,197 @@
+- generic:
+  - generic:
+    - generic:
+      - generic [aria-hidden]:
+        - generic: TaskFocus
+        - button
+      - generic:
+        - generic:
+          - banner [aria-hidden]:
+            - generic:
+              - generic:
+                - heading [level=1]: Входящие
+                - generic: "2"
+              - paragraph: Быстро сохраните мысль. Дату и остальные детали можно добавить позже.
+          - generic [aria-hidden]:
+            - generic:
+              - generic:
+                - textbox:
+                  - /placeholder: Что нужно сохранить?
+                - button [disabled]
+              - paragraph: Enter сохраняет мысль. Планируйте её позже через меню задачи.
+          - region "Разобрать входящие":
+            - generic [aria-hidden]:
+              - generic:
+                - checkbox
+                - heading [level=2]: Разобрать входящие
+              - generic: Выберите задачи, чтобы распределить их вместе
+            - generic [aria-hidden]:
+              - generic:
+                - article:
+                  - generic:
+                    - button
+                    - checkbox
+                    - button
+                    - generic:
+                      - button: Разобрать inbox без даты
+                      - generic:
+                        - generic: Без отметки
+                        - generic: Энергия 2/5
+                      - paragraph: "Пройтись по накопленным идеям и решить: запланировать, удалить или превратить в подзадачи."
+                    - button
+              - generic:
+                - article:
+                  - generic:
+                    - button
+                    - checkbox
+                    - button
+                    - generic:
+                      - button: Выбрать музыку для фокус-сессии
+                      - generic:
+                        - generic: Без отметки
+                        - generic: Энергия 1/5
+                    - button
+            - status
+      - navigation [aria-hidden]:
+        - generic:
+          - button:
+            - generic: Сегодня
+          - button:
+            - generic: Входящие
+          - button
+          - button:
+            - generic: Неделя
+          - button:
+            - generic: Разделы
+  - region "Notifications alt+T"
+  - alert
+  - dialog [ref=f2e517]:
+    - generic [ref=f2e518]:
+      - generic [ref=f2e519]:
+        - heading "Новая задача" [level=2] [ref=f2e520]
+        - paragraph [ref=f2e521]: Сначала зафиксируйте главное. Дату и остальные детали можно добавить позже.
+      - generic [ref=f2e522]:
+        - generic [ref=f2e523]:
+          - generic [ref=f2e524]:
+            - text: Что нужно сделать?
+            - generic [ref=f2e525]: "*"
+          - textbox "Что нужно сделать? *" [ref=f2e526]:
+            - /placeholder: Например, подготовить план встречи
+          - generic [ref=f2e527]: Короткого названия достаточно, чтобы сохранить задачу.
+        - generic [ref=f2e529]:
+          - generic [ref=f2e534]:
+            - generic [ref=f2e535]: Планирование
+            - generic [ref=f2e536]: Без даты · попадёт во «Входящие»
+          - button "Выбрать дату" [expanded] [ref=f2e537]
+        - button "Дополнительно Описание, энергия и важность" [ref=f2e539]:
+          - generic [ref=f2e540]:
+            - generic [ref=f2e541]: Дополнительно
+            - generic [ref=f2e542]: Описание, энергия и важность
+      - generic [ref=f2e545]:
+        - button "Отмена" [ref=f2e546]
+        - button "Создать задачу" [ref=f2e547]
+    - button "Close" [ref=f2e548]
+  - dialog [ref=f2e550]:
+    - generic [ref=f2e551]:
+      - generic [ref=f2e552]:
+        - paragraph [ref=f2e553]: Когда выполнить
+        - paragraph [ref=f2e554]: Выберите один день или период
+      - generic [ref=f2e555]:
+        - button "Без даты" [active] [pressed] [ref=f2e556]
+        - button "Сегодня" [ref=f2e557]
+        - button "Завтра" [ref=f2e558]
+      - group "Тип планирования" [ref=f2e559]:
+        - button "На день" [pressed] [ref=f2e560]
+        - button "Период" [ref=f2e561]
+      - generic [ref=f2e563]:
+        - navigation "Navigation bar" [ref=f2e564]:
+          - button "Go to the Previous Month" [ref=f2e565]
+          - button "Go to the Next Month" [ref=f2e566]
+        - generic [ref=f2e567]:
+          - status [ref=f2e569]: сентябрь 2026
+          - grid "сентябрь 2026" [ref=f2e570]:
+            - rowgroup [aria-hidden] [ref=f2e571]:
+              - row [ref=f2e572]:
+                - columnheader [ref=f2e573]: пн
+                - columnheader [ref=f2e574]: вт
+                - columnheader [ref=f2e575]: ср
+                - columnheader [ref=f2e576]: чт
+                - columnheader [ref=f2e577]: пт
+                - columnheader [ref=f2e578]: сб
+                - columnheader [ref=f2e579]: вс
+            - rowgroup [ref=f2e580]:
+              - row [ref=f2e581]:
+                - gridcell [ref=f2e582]:
+                  - button "понедельник, 31 августа 2026 г." [ref=f2e583]: "31"
+                - gridcell [ref=f2e584]:
+                  - button "вторник, 1 сентября 2026 г." [ref=f2e585]: "1"
+                - gridcell [ref=f2e586]:
+                  - button "среда, 2 сентября 2026 г." [ref=f2e587]: "2"
+                - gridcell [ref=f2e588]:
+                  - button "четверг, 3 сентября 2026 г." [ref=f2e589]: "3"
+                - gridcell [ref=f2e590]:
+                  - button "пятница, 4 сентября 2026 г." [ref=f2e591]: "4"
+                - gridcell [ref=f2e592]:
+                  - button "суббота, 5 сентября 2026 г." [ref=f2e593]: "5"
+                - gridcell [ref=f2e594]:
+                  - button "воскресенье, 6 сентября 2026 г." [ref=f2e595]: "6"
+              - row [ref=f2e596]:
+                - gridcell [ref=f2e597]:
+                  - button "понедельник, 7 сентября 2026 г." [ref=f2e598]: "7"
+                - gridcell [ref=f2e599]:
+                  - button "вторник, 8 сентября 2026 г." [ref=f2e600]: "8"
+                - gridcell [ref=f2e601]:
+                  - button "среда, 9 сентября 2026 г." [ref=f2e602]: "9"
+                - gridcell [ref=f2e603]:
+                  - button "четверг, 10 сентября 2026 г." [ref=f2e604]: "10"
+                - gridcell [ref=f2e605]:
+                  - button "пятница, 11 сентября 2026 г." [ref=f2e606]: "11"
+                - gridcell [ref=f2e607]:
+                  - button "суббота, 12 сентября 2026 г." [ref=f2e608]: "12"
+                - gridcell [ref=f2e609]:
+                  - button "воскресенье, 13 сентября 2026 г." [ref=f2e610]: "13"
+              - row [ref=f2e611]:
+                - gridcell [ref=f2e612]:
+                  - button "понедельник, 14 сентября 2026 г." [ref=f2e613]: "14"
+                - gridcell [ref=f2e614]:
+                  - button "вторник, 15 сентября 2026 г." [ref=f2e615]: "15"
+                - gridcell [ref=f2e616]:
+                  - button "среда, 16 сентября 2026 г." [ref=f2e617]: "16"
+                - gridcell [ref=f2e618]:
+                  - button "четверг, 17 сентября 2026 г." [ref=f2e619]: "17"
+                - gridcell [ref=f2e620]:
+                  - button "пятница, 18 сентября 2026 г." [ref=f2e621]: "18"
+                - gridcell [ref=f2e622]:
+                  - button "суббота, 19 сентября 2026 г." [ref=f2e623]: "19"
+                - gridcell [ref=f2e624]:
+                  - button "воскресенье, 20 сентября 2026 г." [ref=f2e625]: "20"
+              - row [ref=f2e626]:
+                - gridcell [ref=f2e627]:
+                  - button "понедельник, 21 сентября 2026 г." [ref=f2e628]: "21"
+                - gridcell [ref=f2e629]:
+                  - button "вторник, 22 сентября 2026 г." [ref=f2e630]: "22"
+                - gridcell [ref=f2e631]:
+                  - button "среда, 23 сентября 2026 г." [ref=f2e632]: "23"
+                - gridcell [ref=f2e633]:
+                  - button "четверг, 24 сентября 2026 г." [ref=f2e634]: "24"
+                - gridcell [ref=f2e635]:
+                  - button "пятница, 25 сентября 2026 г." [ref=f2e636]: "25"
+                - gridcell [ref=f2e637]:
+                  - button "суббота, 26 сентября 2026 г." [ref=f2e638]: "26"
+                - gridcell [ref=f2e639]:
+                  - button "воскресенье, 27 сентября 2026 г." [ref=f2e640]: "27"
+              - row [ref=f2e641]:
+                - gridcell [ref=f2e642]:
+                  - button "понедельник, 28 сентября 2026 г." [ref=f2e643]: "28"
+                - gridcell [ref=f2e644]:
+                  - button "Today, вторник, 29 сентября 2026 г." [ref=f2e645]: "29"
+                - gridcell [ref=f2e646]:
+                  - button "среда, 30 сентября 2026 г." [ref=f2e647]: "30"
+                - gridcell [ref=f2e648]:
+                  - button "четверг, 1 октября 2026 г." [ref=f2e649]: "1"
+                - gridcell [ref=f2e650]:
+                  - button "пятница, 2 октября 2026 г." [ref=f2e651]: "2"
+                - gridcell [ref=f2e652]:
+                  - button "суббота, 3 октября 2026 г." [ref=f2e653]: "3"
+                - gridcell [ref=f2e654]:
+                  - button "воскресенье, 4 октября 2026 г." [ref=f2e655]: "4"

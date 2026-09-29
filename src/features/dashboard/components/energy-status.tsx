@@ -23,19 +23,19 @@ const ENERGY_OPTIONS = [
     level: 1,
     title: "Лёгкая",
     description: "Для простых и знакомых задач",
-    color: "text-emerald-700 bg-emerald-100 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800",
+    color: "text-indigo-800 bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800",
   },
   {
     level: 2,
     title: "Рутина",
     description: "Хорошо для обычных дел",
-    color: "text-lime-700 bg-lime-100 dark:bg-lime-900/20 border-lime-200 dark:border-lime-800",
+    color: "text-blue-800 bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 border-blue-200 dark:border-blue-800",
   },
   {
     level: 3,
     title: "Сбалансированная",
     description: "Оптимально для большинства задач",
-    color: "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800",
+    color: "text-amber-800 bg-amber-100 dark:bg-amber-950/50 dark:text-amber-200 border-amber-200 dark:border-amber-800",
   },
   {
     level: 4,
@@ -59,18 +59,10 @@ const ENERGY_DESCRIPTIONS = {
   5: "Пиковая продуктивность и большие проекты",
 };
 
-const ENERGY_COLORS = {
-  1: "bg-green-500",
-  2: "bg-lime-500",
-  3: "bg-yellow-500",
-  4: "bg-orange-500",
-  5: "bg-red-500",
-};
-
 const ENERGY_BG_COLORS = {
-  1: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800",
-  2: "bg-lime-50 dark:bg-lime-900/20 border-lime-200 dark:border-lime-800",
-  3: "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800",
+  1: "bg-indigo-50 dark:bg-indigo-950/35 border-indigo-200 dark:border-indigo-800",
+  2: "bg-blue-50 dark:bg-blue-950/35 border-blue-200 dark:border-blue-800",
+  3: "bg-amber-50 dark:bg-amber-950/35 border-amber-200 dark:border-amber-800",
   4: "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800",
   5: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800",
 };

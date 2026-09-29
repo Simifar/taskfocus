@@ -1,0 +1,86 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e65]:
+    - complementary "Основная навигация" [ref=e605]:
+      - generic [ref=e619]:
+        - paragraph [ref=e620]: TaskFocus
+        - paragraph [ref=e621]: Demo User
+      - navigation "Разделы TaskFocus" [ref=e622]:
+        - button "Найти задачу Ctrl K" [ref=e623]:
+          - generic [ref=e624]: Найти задачу
+          - generic [ref=e625]: Ctrl K
+        - region "Задачи" [ref=e626]:
+          - heading "Задачи" [level=2] [ref=e627]
+          - generic [ref=e628]:
+            - button "Сегодня 5" [ref=e629]:
+              - generic [ref=e630]: Сегодня
+              - generic [ref=e631]: "5"
+            - button "Входящие 2" [ref=e632]:
+              - generic [ref=e633]: Входящие
+              - generic [ref=e634]: "2"
+        - region "Планирование" [ref=e635]:
+          - heading "Планирование" [level=2] [ref=e636]
+          - generic [ref=e637]:
+            - button "Неделя 9" [ref=e638]:
+              - generic [ref=e639]: Неделя
+              - generic [ref=e640]: "9"
+            - button "Календарь" [ref=e641]
+            - button "Матрица Эйзенхауэра" [ref=e643]
+        - region "Завершённое" [ref=e645]:
+          - heading "Завершённое" [level=2] [ref=e646]
+          - button "Архив 2" [ref=e648]:
+            - generic [ref=e649]: Архив
+            - generic [ref=e650]: "2"
+      - generic [ref=e651]:
+        - paragraph [ref=e652]: Аккаунт
+        - generic [ref=e653]:
+          - button "DU Профиль" [ref=e654]:
+            - generic [ref=e655]: DU
+            - generic [ref=e656]: Профиль
+          - button "Настройки" [ref=e657]
+        - button "Выйти" [ref=e659]
+    - generic [ref=e663]:
+      - banner [ref=e664]:
+        - generic [ref=e665]:
+          - generic [ref=e666]:
+            - heading "Входящие" [level=1] [ref=e670]
+            - generic [ref=e671]: "2"
+          - paragraph [ref=e672]: Быстро сохраните мысль. Дату и остальные детали можно добавить позже.
+      - generic [ref=e674]:
+        - generic [ref=e675]:
+          - textbox "Название новой задачи" [ref=e676]:
+            - /placeholder: Что нужно сохранить?
+          - button "Сохранить задачу во входящие" [disabled]
+        - paragraph [ref=e677]: Enter сохраняет мысль. Планируйте её позже через меню задачи.
+      - region [ref=e678]:
+        - generic [ref=e679]:
+          - generic [ref=e680]:
+            - checkbox "Выбрать все входящие задачи" [ref=e681]
+            - heading "Разобрать входящие" [level=2] [ref=e682]
+          - generic [ref=e683]: Выберите задачи, чтобы распределить их вместе
+        - generic [ref=e684]:
+          - article [ref=e686]:
+            - generic [ref=e687]:
+              - button "Перетащить задачу" [ref=e688]
+              - checkbox "Выбрать задачу «Разобрать inbox без даты»" [ref=e696]
+              - button "Отметить задачу «Разобрать inbox без даты» выполненной" [ref=e697]
+              - generic [ref=e698]:
+                - button "Разобрать inbox без даты" [ref=e699]
+                - generic [ref=e700]:
+                  - generic [ref=e701]: Без отметки
+                  - generic [ref=e702]: Энергия 2/5
+                - paragraph [ref=e703]: "Пройтись по накопленным идеям и решить: запланировать, удалить или превратить в подзадачи."
+              - button "Действия для задачи «Разобрать inbox без даты»" [ref=e704]
+          - article [ref=e706]:
+            - generic [ref=e707]:
+              - button "Перетащить задачу" [ref=e708]
+              - checkbox "Выбрать задачу «Выбрать музыку для фокус-сессии»" [ref=e716]
+              - button "Отметить задачу «Выбрать музыку для фокус-сессии» выполненной" [ref=e717]
+              - generic [ref=e718]:
+                - button "Выбрать музыку для фокус-сессии" [ref=e719]
+                - generic [ref=e720]:
+                  - generic [ref=e721]: Без отметки
+                  - generic [ref=e722]: Энергия 1/5
+              - button "Действия для задачи «Выбрать музыку для фокус-сессии»" [ref=e723]
+        - status [ref=e724]
+  - region "Notifications alt+T"
+  - alert [ref=e64]
