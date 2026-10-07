@@ -1,31 +1,33 @@
 "use client";
 
-import type { Task } from "@/shared/types";
-import { Card, CardContent } from "@/shared/ui/card";
-import { Button } from "@/shared/ui/button";
-import { Badge } from "@/shared/ui/badge";
-import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
-import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
-import { ChevronLeft, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { addDays, endOfDay, format, isPast, isSameDay } from "date-fns";
 import { ru } from "date-fns/locale";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+
+import type { Task } from "@/shared/types";
+import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
+import { Button } from "@/shared/ui/button";
+import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
+import { TaskRow } from "@/features/tasks/components/task-row";
+import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import { isTaskScheduledForDay } from "@/features/dashboard/lib/task-date-filters";
 import { getPlannedRootTasks } from "@/features/dashboard/lib/plan";
-import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 
 interface DayViewProps {
   tasks: Task[];
   selectedDate: Date;
+  backLabel?: string;
   onBack: () => void;
-  onEdit?: (task: Task) => void;
-  onComplete?: (task: Task) => void;
+  onChangeDay?: (date: Date) => void;
+  onEdit: (task: Task) => void;
+  onComplete: (task: Task) => void;
   onArchive?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
+  onStartFocus?: (task: Task) => void;
   onAddTask?: () => void;
   onReorder?: (tasks: Task[]) => void;
-  // Subtasks
   onToggleSubtask?: (subtask: Task) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
 }
@@ -33,107 +35,103 @@ interface DayViewProps {
 export function DayView({
   tasks,
   selectedDate,
+  backLabel = "Назад",
   onBack,
+  onChangeDay,
   onEdit,
   onComplete,
   onArchive,
   onDelete,
+  onStartFocus,
   onAddTask,
   onReorder,
   onToggleSubtask,
   onAddSubtask,
-  onEditSubtask,
   onDeleteSubtask,
 }: DayViewProps) {
-  // Filter tasks for selected date
   const dayTasks = getPlannedRootTasks(tasks, (task) => isTaskScheduledForDay(task, selectedDate));
-
-  // Separate active and completed
-  const activeTasks = dayTasks.filter((t) => t.status === "active");
-  const completedTasks = dayTasks.filter((t) => t.status === "completed");
-
-  const dayName = format(selectedDate, "EEEE", { locale: ru });
-  const dateStr = format(selectedDate, "d MMMM yyyy", { locale: ru });
+  const activeTasks = dayTasks.filter((task) => task.status === "active");
+  const completedTasks = dayTasks.filter((task) => task.status === "completed");
+  const isToday = isSameDay(selectedDate, new Date());
+  const isDayPast = isPast(endOfDay(selectedDate)) && !isToday;
+  const full = activeTasks.length >= MAX_ACTIVE_TASKS_PER_DAY;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto w-full max-w-3xl pb-6">
+      <div className="flex items-center justify-between gap-2">
+        <Button variant="ghost" className="-ml-3 min-h-11 gap-1.5 text-muted-foreground sm:min-h-9" onClick={onBack}>
+          <ArrowLeft /> {backLabel}
+        </Button>
+        {onChangeDay && (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="size-11 sm:size-9" aria-label="Предыдущий день" onClick={() => onChangeDay(addDays(selectedDate, -1))}>
+              <ChevronLeft />
+            </Button>
+            <Button variant="ghost" size="icon" className="size-11 sm:size-9" aria-label="Следующий день" onClick={() => onChangeDay(addDays(selectedDate, 1))}>
+              <ChevronRight />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <header className="mt-2 flex items-end justify-between gap-4">
         <div>
-          <div className="mb-2 flex items-center gap-3">
-          <Button variant="ghost" size="icon" aria-label="Вернуться к плану" onClick={onBack}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold capitalize tracking-tight">
-            <Calendar className="h-6 w-6 text-brand" />
-            {dayName}
+          <p className="text-sm font-medium text-muted-foreground">
+            {format(selectedDate, "d MMMM yyyy", { locale: ru })}
+            {isToday && " · сегодня"}
+          </p>
+          <h1 className="mt-1 text-3xl font-semibold capitalize tracking-tight">
+            {format(selectedDate, "EEEE", { locale: ru })}
           </h1>
-          </div>
-          <p className="pl-11 text-sm capitalize text-muted-foreground">{dateStr}</p>
+          <p className="mt-1 text-sm text-muted-foreground tabular-nums">
+            Активных {activeTasks.length} из {MAX_ACTIVE_TASKS_PER_DAY}
+            {completedTasks.length > 0 && ` · готово ${completedTasks.length}`}
+          </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-          <div className="rounded-xl border border-border/70 bg-card/70 px-3 py-2">
-            <p className="text-sm font-medium tabular-nums">{activeTasks.length}/{MAX_ACTIVE_TASKS_PER_DAY} активных</p>
-            <p className="text-xs text-muted-foreground">{completedTasks.length} выполнено</p>
-          </div>
-          <Button type="button" onClick={onAddTask}>
-            <Calendar className="mr-2 h-4 w-4" /> Добавить задачу
+        {!isDayPast && onAddTask && (
+          <Button className="min-h-11 gap-2 sm:min-h-9" variant="outline" onClick={onAddTask} disabled={full} title={full ? "День заполнен" : undefined}>
+            <Plus /> Задача
           </Button>
-        </div>
+        )}
       </header>
 
-      {/* Active Tasks Section */}
-      {activeTasks.length > 0 ? (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              Активные задачи
-              <Badge variant="default">{activeTasks.length}</Badge>
-            </h3>
-          </div>
-          <SortableTasksList
-            tasks={activeTasks}
-            onEdit={onEdit || (() => {})}
-            onComplete={onComplete || (() => {})}
-            onArchive={onArchive || (() => {})}
-            onDelete={onDelete || (() => {})}
-            onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
-            onToggleSubtask={onToggleSubtask}
-            onAddSubtask={onAddSubtask}
-            onEditSubtask={onEditSubtask}
-            onDeleteSubtask={onDeleteSubtask}
-          />
-        </div>
-      ) : (
-        <Card className="border-dashed">
-          <CardContent className="p-8 text-center">
-            <p className="font-medium">{completedTasks.length > 0 ? "На этот день всё готово" : "В этот день пока нет задач"}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {completedTasks.length > 0 ? `Выполнено: ${completedTasks.length}.` : "Добавьте задачу, чтобы запланировать её на этот день."}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      <section aria-label="Активные задачи" className="mt-6">
+        <SortableTasksList
+          tasks={activeTasks}
+          hideSchedule
+          onEdit={onEdit}
+          onComplete={onComplete}
+          onArchive={onArchive}
+          onDelete={onDelete}
+          onStartFocus={onStartFocus}
+          onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
+          onToggleSubtask={onToggleSubtask}
+          onAddSubtask={onAddSubtask}
+          onDeleteSubtask={onDeleteSubtask}
+          empty={
+            <div className="rounded-2xl border border-dashed px-5 py-10 text-center">
+              <p className="font-semibold">
+                {completedTasks.length > 0 ? "На этот день всё готово" : isDayPast ? "В этот день задач не было" : "День свободен"}
+              </p>
+              {!isDayPast && completedTasks.length === 0 && (
+                <p className="mt-1 text-sm text-muted-foreground">Добавьте задачу или перетащите её сюда из недели.</p>
+              )}
+            </div>
+          }
+        />
+      </section>
 
-      {/* Completed Tasks Section */}
       {completedTasks.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-            Выполненные задачи
-            <Badge variant="secondary">{completedTasks.length}</Badge>
-          </h3>
-          <SortableTasksList
-            tasks={completedTasks}
-            onEdit={onEdit || (() => {})}
-            onComplete={onComplete || (() => {})}
-            onArchive={onArchive || (() => {})}
-            onDelete={onDelete || (() => {})}
-            onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
-            onToggleSubtask={onToggleSubtask}
-            onAddSubtask={onAddSubtask}
-            onEditSubtask={onEditSubtask}
-            onDeleteSubtask={onDeleteSubtask}
-          />
-        </div>
+        <section aria-labelledby="day-done" className="mt-8">
+          <h2 id="day-done" className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Check className="size-4 text-success" aria-hidden="true" /> Выполнено · {completedTasks.length}
+          </h2>
+          <div className="space-y-1.5">
+            {completedTasks.map((task) => (
+              <TaskRow key={task.id} task={task} compact onComplete={onComplete} onEdit={onEdit} onArchive={onArchive} onDelete={onDelete} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

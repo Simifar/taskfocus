@@ -1,20 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { cn } from "@/shared/lib/utils";
 import { AlertCircle, Loader2, Brain, Search } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import type { Task } from "@/shared/types";
 import { useCurrentUser, useLogout } from "@/features/auth/hooks";
 import { useStats } from "@/features/stats/hooks";
-import { useTasks } from "@/features/tasks/hooks";
+import { findCachedTask, useTasks } from "@/features/tasks/hooks";
 import type { TasksQuery } from "@/features/tasks/api";
 import { useDashboardStore, useSelectedDate } from "@/features/dashboard/store";
 import { toDateOnly } from "@/shared/lib/dates/date-only";
 import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
 import { useDashboardActions } from "@/features/dashboard/hooks/use-dashboard-actions";
 import { getTaskAddTarget } from "@/features/dashboard/lib/task-add-target";
+import { describeTaskSchedule } from "@/features/tasks/lib/task-row";
 
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { MobileNavigation } from "./mobile-navigation";
@@ -25,7 +28,9 @@ import { CalendarView } from "./calendar-view";
 import { EisenhowerMatrixView } from "./eisenhower-matrix-view";
 import { DayView } from "./day-view";
 import { ArchiveView } from "./archive-view";
-import { FocusModeDialog } from "./focus-mode-dialog";
+import { FocusMode } from "./focus-mode-dialog";
+import { useFocusStore } from "@/features/dashboard/focus-store";
+import { ViewSkeleton } from "./view-skeleton";
 import { TaskSearchDialog } from "./task-search-dialog";
 import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
 import { EditTaskDialog } from "@/features/tasks/components/edit-task-dialog";
@@ -61,6 +66,15 @@ export function DashboardLayout() {
   }, [calendarMonth, currentView, selectedDate, weekDate]);
 
   const tasksQuery = useTasks(tasksQueryInput);
+  // Overdue tasks fall out of every date view, so Today surfaces them explicitly.
+  const activeTasksQuery = useTasks({ status: "active" }, { enabled: currentView === "today" });
+  const overdueTasks = useMemo(
+    () =>
+      (activeTasksQuery.data?.items ?? []).filter(
+        (task) => !task.parentTaskId && describeTaskSchedule(task)?.tone === "overdue",
+      ),
+    [activeTasksQuery.data],
+  );
   const statsQuery = useStats();
   const {
     handleAddSubtask,
@@ -83,11 +97,17 @@ export function DashboardLayout() {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [preSelectedDate, setPreSelectedDate] = useState<Date | undefined>(undefined);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingSnapshot, setEditingTask] = useState<Task | null>(null);
   const [dayReturnView, setDayReturnView] = useState<"today" | "week" | "calendar">("today");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [focusOpen, setFocusOpen] = useState(false);
-  const [focusTask, setFocusTask] = useState<Task | null>(null);
+  const queryClient = useQueryClient();
+  const focusSession = useFocusStore((s) => s.session);
+  const startFocus = useFocusStore((s) => s.start);
+  // Resolve open sheets against the cache so they reflect optimistic edits live.
+  const editingTask = editingSnapshot
+    ? findCachedTask(queryClient, editingSnapshot.id) ?? editingSnapshot
+    : null;
+  const focusTask = focusSession ? findCachedTask(queryClient, focusSession.taskId) : null;
 
   useEffect(() => {
     if (currentView === "day" && !selectedDate) setView("today");
@@ -98,6 +118,19 @@ export function DashboardLayout() {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSearchOpen(true);
+        return;
+      }
+      // "N" opens quick capture unless the user is typing or a dialog is open.
+      const target = event.target as HTMLElement | null;
+      const typing = target?.closest("input, textarea, select, [contenteditable=true]");
+      const dialogOpen = document.querySelector("[role=dialog], [role=alertdialog]");
+      if (
+        event.key.toLowerCase() === "n" &&
+        !event.metaKey && !event.ctrlKey && !event.altKey &&
+        !typing && !dialogOpen
+      ) {
+        event.preventDefault();
+        addTaskRef.current();
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -111,7 +144,7 @@ export function DashboardLayout() {
 
   const tasks = tasksQuery.data?.items ?? [];
   const stats = statsQuery.data ?? null;
-  const isLoading = isAuthLoading || tasksQuery.isLoading;
+  const isContentLoading = tasksQuery.isPending && !tasksQuery.data;
 
   const handleLogout = async () => {
     try {
@@ -156,8 +189,15 @@ export function DashboardLayout() {
     setCreateDialogOpen(true);
   };
 
-  // Show spinner while auth or data is loading, and while redirecting on auth failure
-  if (isLoading || isAuthError || !user) {
+  const addTaskRef = useRef(handleAddTask);
+  useEffect(() => {
+    addTaskRef.current = handleAddTask;
+  });
+
+  const handleStartFocus = (task: Task) => startFocus(task);
+
+  // Only auth blocks the whole screen; switching sections keeps the shell in place.
+  if (isAuthLoading || isAuthError || !user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-brand" />
@@ -173,30 +213,37 @@ export function DashboardLayout() {
         currentView={currentView}
         dayReturnView={dayReturnView}
         onSearch={() => setSearchOpen(true)}
+        onAddTask={() => handleAddTask()}
         onLogout={handleLogout}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 md:hidden">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:hidden">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-brand rounded-lg">
-              <Brain className="h-4 w-4 text-brand-foreground" />
-            </div>
-            <span className="font-bold text-base">TaskFocus</span>
+            <span className="flex size-7 items-center justify-center rounded-lg bg-brand">
+              <Brain className="size-4 text-brand-foreground" aria-hidden="true" />
+            </span>
+            <span className="text-sm font-semibold">TaskFocus</span>
           </div>
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex size-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand"
+            className="-mr-2 flex size-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="Найти задачу"
           >
             <Search className="size-5" aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        <div className="min-h-0 flex-1 overflow-auto p-4 pb-28 md:p-6 md:pb-6 xl:p-8">
+        <main
+          id="main"
+          className={cn(
+            "min-h-0 flex-1 overflow-auto px-4 pt-5 md:px-8 md:pt-8",
+            focusSession ? "pb-28" : "pb-8",
+          )}
+        >
           {tasksQuery.isError && tasksQuery.data && (
-            <div role="status" className="mx-auto mb-4 flex max-w-5xl items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm">
+            <div role="status" className="mx-auto mb-4 flex max-w-3xl items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning-soft px-4 py-3 text-sm">
               <span>Не удалось обновить список. Показаны сохранённые данные.</span>
               <button type="button" className="shrink-0 font-medium underline underline-offset-4" onClick={() => void tasksQuery.refetch()}>Повторить</button>
             </div>
@@ -208,6 +255,8 @@ export function DashboardLayout() {
               <p className="mt-2 text-sm text-muted-foreground">Проверьте соединение и попробуйте ещё раз. Список не был заменён пустым состоянием.</p>
               <button type="button" className="mt-5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand/90" onClick={() => void tasksQuery.refetch()}>Повторить загрузку</button>
             </section>
+          ) : isContentLoading ? (
+            <ViewSkeleton view={currentView} />
           ) : <>
           {currentView === "today" && (
             <TodayView
@@ -227,11 +276,11 @@ export function DashboardLayout() {
               onAddSubtask={handleAddSubtask}
               onEditSubtask={setEditingTask}
               onDeleteSubtask={handleDeleteSubtask}
-              isLoading={isLoading}
-              onStartFocus={(task) => {
-                setFocusTask(task);
-                setFocusOpen(true);
-              }}
+              onStartFocus={handleStartFocus}
+              focusTaskId={focusSession?.taskId ?? null}
+              overdueTasks={overdueTasks}
+              onAssignToToday={handleAssignToToday}
+              onOpenInbox={() => setView("inbox")}
             />
           )}
 
@@ -239,6 +288,7 @@ export function DashboardLayout() {
             <InboxView
               tasks={tasks}
               onEdit={setEditingTask}
+              onStartFocus={handleStartFocus}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
               onDelete={handleDeleteTask}
@@ -308,6 +358,7 @@ export function DashboardLayout() {
               onAssignToToday={handleAssignToToday}
               onAssignToWeek={handleAssignToWeek}
               onMoveToQuadrant={handleMoveToQuadrant}
+              onStartFocus={handleStartFocus}
               onReorder={handleReorder}
             />
           )}
@@ -317,6 +368,9 @@ export function DashboardLayout() {
               tasks={tasks}
               selectedDate={selectedDate}
               onBack={handleBackFromDay}
+              backLabel={{ today: "Сегодня", week: "Неделя", calendar: "Календарь" }[dayReturnView]}
+              onChangeDay={(date) => setView("day", date)}
+              onStartFocus={handleStartFocus}
               onEdit={setEditingTask}
               onArchive={handleArchiveTask}
               onComplete={handleToggleCompleteTask}
@@ -336,11 +390,12 @@ export function DashboardLayout() {
               isLoading={tasksQuery.isLoading}
               stats={stats}
               onRestore={handleRestoreTask}
+              onEdit={setEditingTask}
               onDelete={handleDeleteTask}
             />
           )}
           </>}
-        </div>
+        </main>
         <MobileNavigation
           currentView={currentView}
           dayReturnView={dayReturnView}
@@ -369,9 +424,18 @@ export function DashboardLayout() {
       />
       {editingTask && (
         <EditTaskDialog
+          key={editingTask.id}
           task={editingTask}
           open={!!editingTask}
           onOpenChange={(open) => !open && setEditingTask(null)}
+          onComplete={handleToggleCompleteTask}
+          onArchive={handleArchiveTask}
+          onRestore={handleRestoreTask}
+          onDelete={handleDeleteTask}
+          onStartFocus={handleStartFocus}
+          onToggleSubtask={handleToggleSubtask}
+          onAddSubtask={handleAddSubtask}
+          onDeleteSubtask={handleDeleteSubtask}
         />
       )}
       <TaskSearchDialog
@@ -382,11 +446,10 @@ export function DashboardLayout() {
         onArchive={handleArchiveTask}
         onDelete={handleDeleteTask}
       />
-      <FocusModeDialog
-        open={focusOpen}
+      <FocusMode
         task={focusTask}
-        onOpenChange={setFocusOpen}
         onComplete={handleToggleCompleteTask}
+        onToggleSubtask={handleToggleSubtask}
       />
     </div>
   );

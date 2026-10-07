@@ -11,6 +11,7 @@ import {
   Grid2X2,
   Inbox,
   LogOut,
+  Plus,
   Search,
   Settings2,
 } from "lucide-react";
@@ -26,6 +27,7 @@ interface DashboardSidebarProps {
   currentView: DashboardView;
   dayReturnView: "today" | "week" | "calendar";
   onSearch: () => void;
+  onAddTask: () => void;
   onLogout: () => void;
 }
 
@@ -74,6 +76,7 @@ export function DashboardSidebar({
   currentView,
   dayReturnView,
   onSearch,
+  onAddTask,
   onLogout,
 }: DashboardSidebarProps) {
   const router = useRouter();
@@ -84,9 +87,9 @@ export function DashboardSidebar({
     <aside
       id="dashboard-navigation"
       aria-label="Основная навигация"
-      className="hidden w-[272px] shrink-0 flex-col border-r border-border bg-sidebar md:flex"
+      className="hidden w-[256px] shrink-0 flex-col border-r border-border bg-sidebar md:flex"
     >
-      <div className="border-b border-border px-5 py-5">
+      <div className="px-5 pt-5 pb-1">
         <div className="flex items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-foreground">
             <Brain className="size-5" aria-hidden="true" />
@@ -100,16 +103,26 @@ export function DashboardSidebar({
         </div>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5" aria-label="Разделы TaskFocus">
-        <Button
-          variant="outline"
-          className="h-10 w-full justify-start gap-2 border-border bg-background/70 text-sm text-muted-foreground shadow-none"
-          onClick={onSearch}
-        >
-          <Search className="size-4" aria-hidden="true" />
-          <span className="flex-1 text-left">Найти задачу</span>
-          <kbd className="rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium">Ctrl K</kbd>
-        </Button>
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Разделы TaskFocus">
+        <div className="space-y-1.5">
+          <Button
+            className="h-10 w-full justify-start gap-2 bg-brand text-sm text-brand-foreground hover:bg-brand/90"
+            onClick={onAddTask}
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            <span className="flex-1 text-left">Новая задача</span>
+            <kbd className="rounded bg-brand-foreground/15 px-1.5 py-0.5 text-[10px] font-medium">N</kbd>
+          </Button>
+          <Button
+            variant="ghost"
+            className="h-10 w-full justify-start gap-2 text-sm text-muted-foreground hover:bg-sidebar-accent"
+            onClick={onSearch}
+          >
+            <Search className="size-4" aria-hidden="true" />
+            <span className="flex-1 text-left">Поиск</span>
+            <kbd className="rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium">Ctrl K</kbd>
+          </Button>
+        </div>
 
         {navigationGroups.map((group) => (
           <section key={group.label} aria-label={group.label}>

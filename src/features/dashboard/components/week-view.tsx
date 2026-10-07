@@ -1,29 +1,27 @@
 "use client";
 
+import { addDays, endOfDay, format, isPast, isSameDay } from "date-fns";
+import { ru } from "date-fns/locale";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+
 import type { Task } from "@/shared/types";
-import { Button } from "@/shared/ui/button";
-import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/lib/utils";
-import { SortableTasksBoard, type SortableTaskGroup, type TaskGroupMove } from "@/features/tasks/components/sortable-tasks-board";
+import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
+import {
+  SortableTasksBoard,
+  type SortableTaskGroup,
+  type TaskGroupMove,
+} from "@/features/tasks/components/sortable-tasks-board";
 import { TaskRow } from "@/features/tasks/components/task-row";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
 import {
-  ChevronLeft,
-  ChevronRight,
-  CalendarDays,
-  CheckCircle2,
-  Plus,
-} from "lucide-react";
-import { addDays, endOfDay, format, isPast, isSameDay } from "date-fns";
-import { ru } from "date-fns/locale";
-import {
   getCurrentWeekRange,
-  isTaskScheduledForWeek,
   isTaskScheduledForDay,
+  isTaskScheduledForWeek,
 } from "@/features/dashboard/lib/task-date-filters";
 import { getPlannedRootTasks } from "@/features/dashboard/lib/plan";
-import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
-import { toast } from "sonner";
+import { PlanHeader } from "./plan-header";
 
 interface WeekViewProps {
   tasks: Task[];
@@ -36,10 +34,10 @@ interface WeekViewProps {
   onCreateTask?: (date: Date) => void;
   onSelectDay?: (date: Date) => void;
   onToggleSubtask?: (subtask: Task) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
-  onScheduleTask?: (taskId: string, date: Date) => void;
+  onScheduleTask?: (taskId: string, date: Date) => Promise<boolean> | void;
   onReorder?: (tasks: Task[]) => void;
 }
 
@@ -59,112 +57,99 @@ export function WeekView({
   const { start: weekStart, end: weekEnd } = getCurrentWeekRange(weekDate);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const today = new Date();
+  const isCurrentWeek = isSameDay(weekStart, getCurrentWeekRange().start);
 
   const weekTasks = getPlannedRootTasks(tasks, (task) => isTaskScheduledForWeek(task, weekDate));
-
-  const tasksByDay = weekDays.map((day) => ({
-    date: day,
-    tasks: weekTasks.filter((task) => isTaskScheduledForDay(task, day)),
+  const tasksByDay = weekDays.map((date) => ({
+    date,
+    id: format(date, "yyyy-MM-dd"),
+    tasks: weekTasks.filter((task) => isTaskScheduledForDay(task, date)),
   }));
+  const activeTotal = weekTasks.filter((task) => task.status === "active").length;
+  const doneTotal = weekTasks.length - activeTotal;
 
-  const busyDays = tasksByDay.filter((day) => day.tasks.length > 0).length;
-  const totalTasks = weekTasks.length;
-  const groups: SortableTaskGroup[] = tasksByDay.map(({ date, tasks: dayTasks }) => {
+  const activeCountFor = (groupId: string) =>
+    tasksByDay.find((day) => day.id === groupId)?.tasks.filter((task) => task.status === "active").length ?? 0;
+
+  const getDropBlocker = (task: Task, groupId: string) => {
+    const alreadyThere = tasksByDay.find((day) => day.id === groupId)?.tasks.some((t) => t.id === task.id);
+    if (!alreadyThere && task.status === "active" && activeCountFor(groupId) >= MAX_ACTIVE_TASKS_PER_DAY) {
+      return `День заполнен · ${MAX_ACTIVE_TASKS_PER_DAY}/${MAX_ACTIVE_TASKS_PER_DAY}`;
+    }
+    return null;
+  };
+
+  const groups: SortableTaskGroup[] = tasksByDay.map(({ date, id, tasks: dayTasks }) => {
     const isToday = isSameDay(date, today);
     const isDayPast = isPast(endOfDay(date)) && !isToday;
-    const activeDayCount = dayTasks.filter((task) => task.status === "active").length;
-    const dayLabel = format(date, "EEEE", { locale: ru });
-    const dayNum = format(date, "d");
-    const monthLabel = format(date, "MMM", { locale: ru });
-    const dateId = format(date, "yyyy-MM-dd");
+    const activeCount = dayTasks.filter((task) => task.status === "active").length;
+    const full = activeCount >= MAX_ACTIVE_TASKS_PER_DAY;
 
     return {
-      id: dateId,
+      id,
       tasks: dayTasks,
       className: cn(
-        "min-h-[180px] overflow-hidden rounded-xl border bg-card transition-colors hover:border-brand/35",
-        isToday && "border-brand/60 ring-2 ring-brand/20",
-        isDayPast && dayTasks.length === 0 && "opacity-60",
+        "group/day flex flex-col rounded-xl border bg-card/60",
+        isToday ? "border-brand/50 bg-card" : "border-border/70",
+        isDayPast && "opacity-70",
       ),
-      contentClassName: "space-y-2 p-2",
+      contentClassName: "flex-1 space-y-1.5 px-1.5 pb-1.5",
       header: (
-        <div className={cn("flex", isToday ? "bg-brand text-brand-foreground" : "bg-muted/45")}>
+        <div className="flex items-center gap-1 py-1 pr-1 pl-1">
           <button
             type="button"
-            className="min-w-0 flex-1 px-3 py-3 text-left transition-colors hover:bg-black/5 dark:hover:bg-white/5"
             onClick={() => onSelectDay?.(date)}
+            className="flex min-h-11 min-w-0 flex-1 items-baseline gap-2 rounded-lg px-2 text-left hover:bg-muted"
+            aria-label={`Открыть ${format(date, "EEEE, d MMMM", { locale: ru })}`}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold leading-none">{dayNum}</span>
-                  <span className={cn("text-xs uppercase", isToday ? "text-brand-foreground/75" : "text-muted-foreground")}>
-                    {monthLabel}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm font-semibold capitalize">{dayLabel}</p>
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                {isToday && <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">сегодня</span>}
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
-                    isToday ? "bg-white/20" : "bg-background text-foreground",
-                    activeDayCount >= MAX_ACTIVE_TASKS_PER_DAY && "text-warning",
-                  )}
-                  aria-label={`${activeDayCount} активных из ${MAX_ACTIVE_TASKS_PER_DAY}`}
-                >
-                  {activeDayCount}/{MAX_ACTIVE_TASKS_PER_DAY}
-                </span>
-              </div>
-            </div>
+            <span className={cn("text-sm font-semibold capitalize", isToday && "text-brand")}>
+              {format(date, "EEEEEE", { locale: ru })}
+            </span>
+            <span className={cn("text-sm tabular-nums", isToday ? "font-semibold text-brand" : "text-muted-foreground")}>
+              {format(date, "d MMM", { locale: ru })}
+            </span>
+            {isToday && <span className="text-xs text-brand">· сегодня</span>}
           </button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-auto w-11 shrink-0 rounded-none border-l border-border/60",
-              isToday ? "text-brand-foreground hover:bg-white/10 hover:text-brand-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-            aria-label={`Добавить задачу на ${format(date, "d MMMM", { locale: ru })}`}
-            title={`Добавить задачу на ${format(date, "d MMMM", { locale: ru })}`}
-            onClick={() => onCreateTask?.(date)}
+          <span
+            className={cn("px-1 text-xs tabular-nums", full ? "font-medium text-warning" : "text-muted-foreground")}
+            aria-label={`${activeCount} активных из ${MAX_ACTIVE_TASKS_PER_DAY}`}
           >
-            <Plus className="h-4 w-4" />
-          </Button>
+            {activeCount}/{MAX_ACTIVE_TASKS_PER_DAY}
+          </span>
+          {!isDayPast && (
+            <button
+              type="button"
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+              aria-label={`Добавить задачу на ${format(date, "d MMMM", { locale: ru })}`}
+              title={full ? "День заполнен" : `Добавить задачу на ${format(date, "d MMMM", { locale: ru })}`}
+              disabled={full}
+              onClick={() => onCreateTask?.(date)}
+            >
+              <Plus className="size-4" />
+            </button>
+          )}
         </div>
       ),
       empty: (
-        <div className="flex min-h-[76px] w-full flex-col items-center justify-center rounded-xl bg-muted/20 px-3 text-center">
-          <CheckCircle2 className="mb-2 h-6 w-6 text-muted-foreground/50" aria-hidden="true" />
-          <span className="text-sm font-medium text-muted-foreground">{isDayPast ? "Нет задач" : "Свободный день"}</span>
-          {!isDayPast && <span className="mt-1 text-xs text-muted-foreground/70">Перетащите задачу сюда или добавьте через «+»</span>}
-        </div>
+        <p className="flex min-h-12 items-center justify-center rounded-lg border border-dashed border-border/70 px-2 text-xs text-muted-foreground">
+          {isDayPast ? "Не было задач" : "Свободно"}
+        </p>
       ),
     };
   });
 
   const handleBoardChange = (nextGroups: SortableTaskGroup[], move?: TaskGroupMove) => {
     if (move) {
-      const destinationGroup = nextGroups.find((group) => group.id === move.toGroupId);
-      const destinationAlreadyContainsTask = tasksByDay
-        .find(({ date }) => format(date, "yyyy-MM-dd") === move.toGroupId)
-        ?.tasks.some((task) => task.id === move.task.id) ?? false;
-      const destinationActiveCount = destinationGroup?.tasks.filter((task) => task.status === "active").length ?? 0;
-
-      if (destinationActiveCount > MAX_ACTIVE_TASKS_PER_DAY ||
-          (destinationActiveCount >= MAX_ACTIVE_TASKS_PER_DAY && !destinationAlreadyContainsTask)) {
-        toast.error(`На этот день уже выбраны ${MAX_ACTIVE_TASKS_PER_DAY} активных задач`);
+      const blocker = getDropBlocker(move.task, move.toGroupId);
+      if (blocker) {
+        toast.error("На этот день уже 5 активных задач", { description: "Освободите место или выберите другой день." });
         return;
       }
-
       void onScheduleTask?.(move.task.id, new Date(`${move.toGroupId}T12:00:00`));
     }
 
     const targetGroupId = move?.toGroupId ?? nextGroups.find((group) => {
-      const dateGroup = tasksByDay.find(({ date }) => format(date, "yyyy-MM-dd") === group.id);
-      const before = dateGroup?.tasks ?? [];
+      const before = tasksByDay.find((day) => day.id === group.id)?.tasks ?? [];
       return group.tasks.length !== before.length || group.tasks.some((task, index) => task.id !== before[index]?.id);
     })?.id;
     const reorderedGroup = nextGroups.find((group) => group.id === targetGroupId);
@@ -173,43 +158,33 @@ export function WeekView({
 
   return (
     <div className="space-y-5">
-      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand/12 via-background to-muted/50 p-5 md:p-6">
-        <div className="absolute -right-16 -top-20 h-44 w-44 rounded-full bg-brand/10 blur-3xl" />
-        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
-              <CalendarDays className="h-3.5 w-3.5 text-brand" />
-              Недельный фокус
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-                {isSameDay(weekStart, getCurrentWeekRange().start) ? "Эта неделя" : "Неделя"}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {format(weekStart, "d MMM", { locale: ru })} — {format(weekEnd, "d MMM yyyy", { locale: ru })}
-              </p>
-            </div>
-          </div>
+      <PlanHeader
+        title={isCurrentWeek ? "Эта неделя" : "Неделя"}
+        subtitle={
+          <>
+            {format(weekStart, "d MMM", { locale: ru })} — {format(weekEnd, "d MMM yyyy", { locale: ru })}
+            {weekTasks.length > 0 && ` · в плане ${activeTotal}, готово ${doneTotal}`}
+          </>
+        }
+        prevLabel="Предыдущая неделя"
+        nextLabel="Следующая неделя"
+        isCurrent={isCurrentWeek}
+        onPrev={() => onWeekChange?.(addDays(weekDate, -7))}
+        onNext={() => onWeekChange?.(addDays(weekDate, 7))}
+        onToday={() => onWeekChange?.(new Date())}
+      />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="justify-center rounded-full px-3 py-1.5">
-              {totalTasks} задач · {busyDays} дней с планом
-            </Badge>
-            <Button variant="outline" size="icon" aria-label="Предыдущая неделя" onClick={() => onWeekChange?.(addDays(weekDate, -7))}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onWeekChange?.(new Date())}>Сегодня</Button>
-            <Button variant="outline" size="icon" aria-label="Следующая неделя" onClick={() => onWeekChange?.(addDays(weekDate, 7))}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      <p className="hidden text-xs text-muted-foreground md:block">
+        Перетащите задачу за ручку на другой день, чтобы перенести её. В день — до {MAX_ACTIVE_TASKS_PER_DAY} активных задач.
+      </p>
 
       <SortableTasksBoard
         groups={groups}
-        className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 2xl:grid-cols-4"
+        className="grid grid-cols-1 items-start gap-2 sm:grid-cols-2 xl:grid-cols-4 min-[1600px]:grid-cols-7"
         onChange={handleBoardChange}
+        getDropBlocker={getDropBlocker}
+        groupLabel={(id) => format(new Date(`${id}T12:00:00`), "EEEE, d MMMM", { locale: ru })}
+        renderOverlay={(task) => <TaskRow task={task} compact hideSchedule isDragging />}
         renderTask={(task, dragHandle) => (
           <TaskRow
             task={task}
@@ -218,6 +193,7 @@ export function WeekView({
             onEdit={onEdit}
             onArchive={onArchive}
             onDelete={onDelete}
+            hideSchedule
             compact
           />
         )}

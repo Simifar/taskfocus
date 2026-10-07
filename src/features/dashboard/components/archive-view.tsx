@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Archive, Loader2, RotateCcw, Trash2 } from "lucide-react";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import { Archive, RotateCcw, Trash2 } from "lucide-react";
 
 import type { StatsResponse, Task } from "@/shared/types";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/ui/alert-dialog";
-import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent } from "@/shared/ui/card";
 
 interface ArchiveViewProps {
   tasks: Task[];
@@ -15,109 +13,67 @@ interface ArchiveViewProps {
   stats: StatsResponse | null;
   onRestore: (taskId: string) => void;
   onDelete: (taskId: string) => void;
+  onEdit?: (task: Task) => void;
 }
 
-export function ArchiveView({
-  tasks: archivedTasks,
-  isLoading = false,
-  stats,
-  onRestore,
-  onDelete,
-}: ArchiveViewProps) {
-  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
-  const rootTasks = archivedTasks.filter((task) => !task.parentTaskId);
-
-  const handleConfirmDelete = () => {
-    if (!pendingDelete) return;
-    onDelete(pendingDelete.id);
-    setPendingDelete(null);
-  };
+export function ArchiveView({ tasks, onRestore, onDelete, onEdit }: ArchiveViewProps) {
+  // Restored tasks leave the list at once thanks to the optimistic status patch.
+  const archived = tasks.filter((task) => !task.parentTaskId && task.status === "archived");
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-muted p-2">
-          <Archive className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Архив</h1>
-          <p className="text-sm text-muted-foreground">
-            {stats?.archivedTasks ?? rootTasks.length} задач в архиве
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-3xl pb-6">
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight">Архив</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {archived.length > 0
+            ? `Задач в архиве: ${archived.length}. Верните нужное или удалите лишнее.`
+            : "Отложенные задачи хранятся здесь, пока не понадобятся."}
+        </p>
+      </header>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-label="Загрузка архива" />
+      {archived.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-dashed px-5 py-12 text-center">
+          <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Archive className="size-5" aria-hidden="true" />
+          </span>
+          <p className="mt-4 font-semibold">Архив пуст</p>
         </div>
-      ) : rootTasks.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-            <Archive className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-            <p className="mt-4 text-lg font-medium text-muted-foreground">Архив пуст</p>
-            <p className="mt-1 text-sm text-muted-foreground">Заархивированные задачи появятся здесь.</p>
-          </CardContent>
-        </Card>
       ) : (
-        <div className="space-y-3">
-          {rootTasks.map((task) => (
-            <Card key={task.id} className="border-border/80">
-              <CardContent className="flex items-start gap-3 p-4">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium leading-tight text-muted-foreground line-through">{task.title}</p>
-                  {task.description && (
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{task.description}</p>
-                  )}
-                  <Badge variant="outline" className="mt-3 text-xs">Архивная задача</Badge>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-brand hover:bg-brand/10 hover:text-brand/80"
-                    title="Восстановить"
-                    aria-label={`Восстановить задачу «${task.title}»`}
-                    onClick={() => onRestore(task.id)}
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    title="Удалить навсегда"
-                    aria-label={`Удалить задачу «${task.title}» навсегда`}
-                    onClick={() => setPendingDelete(task)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+        <ul className="mt-6 m-0 list-none space-y-1.5 p-0">
+          {archived.map((task) => (
+            <li key={task.id} className="group/row m-0 flex items-center gap-2 rounded-xl border border-border/70 bg-card py-1.5 pr-1.5 pl-4">
+              <button
+                type="button"
+                className="min-w-0 flex-1 py-1.5 text-left"
+                onClick={() => onEdit?.(task)}
+              >
+                <span className="block break-words text-[15px] text-muted-foreground">{task.title}</span>
+                <span className="block text-xs text-muted-foreground/80">
+                  Изменена {format(new Date(task.updatedAt), "d MMMM", { locale: ru })}
+                </span>
+              </button>
+              <Button
+                variant="ghost"
+                className="min-h-11 shrink-0 gap-1.5 px-3 sm:min-h-9"
+                aria-label={`Вернуть задачу «${task.title}» в работу`}
+                onClick={() => onRestore(task.id)}
+              >
+                <RotateCcw /> <span className="hidden sm:inline">Вернуть</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-11 shrink-0 text-muted-foreground hover:text-destructive sm:size-9"
+                title="Удалить (можно отменить)"
+                aria-label={`Удалить задачу «${task.title}»`}
+                onClick={() => onDelete(task.id)}
+              >
+                <Trash2 />
+              </Button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-
-      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить задачу навсегда?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Задача «{pendingDelete?.title}» и её подзадачи будут удалены без возможности восстановления.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отменить</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Удалить навсегда
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

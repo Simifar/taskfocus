@@ -1,37 +1,22 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import type { Task } from "@/shared/types";
-import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
-import { Card, CardContent } from "@/shared/ui/card";
+import { Archive, CalendarArrowUp, CalendarDays, Plus, Timer } from "lucide-react";
+
+import type { EisenhowerQuadrant, Task } from "@/shared/types";
 import { cn } from "@/shared/lib/utils";
-import { SortableTasksBoard, type SortableTaskGroup, type TaskGroupMove } from "@/features/tasks/components/sortable-tasks-board";
+import { Button } from "@/shared/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import {
-  Archive,
-  CalendarCheck,
-  CheckCircle2,
-  Edit2,
-  Grid2X2,
-  Plus,
-  Trash2,
-} from "lucide-react";
+  SortableTasksBoard,
+  type SortableTaskGroup,
+  type TaskGroupMove,
+} from "@/features/tasks/components/sortable-tasks-board";
+import { TaskRow } from "@/features/tasks/components/task-row";
 import {
   EISENHOWER_META,
   EISENHOWER_ORDER,
   getEisenhowerQuadrant,
 } from "@/features/tasks/lib/eisenhower";
-import type { EisenhowerQuadrant } from "@/shared/types";
+import { describeTaskSchedule } from "@/features/tasks/lib/task-row";
 
 interface EisenhowerMatrixViewProps {
   tasks: Task[];
@@ -42,139 +27,55 @@ interface EisenhowerMatrixViewProps {
   onAddTask?: () => void;
   onAssignToToday?: (taskId: string) => void;
   onAssignToWeek?: (taskId: string) => void;
+  onStartFocus?: (task: Task) => void;
   onReorder?: (tasks: Task[]) => void;
   onMoveToQuadrant?: (taskId: string, quadrant: EisenhowerQuadrant) => void;
 }
 
-function MatrixTaskCard({
-  task,
-  dragHandle,
-  onEdit,
-  onComplete,
-  onArchive,
-  onDelete,
-  onAssignToToday,
-  onAssignToWeek,
-  quadrant,
-}: EisenhowerMatrixViewProps & { task: Task; dragHandle?: ReactNode; quadrant: EisenhowerQuadrant }) {
-  const [deleteOpen, setDeleteOpen] = useState(false);
+/** What each quadrant asks the user to decide, and the one-tap action that does it. */
+const GUIDANCE: Record<EisenhowerQuadrant, { hint: string; emptyHint: string }> = {
+  do: {
+    hint: "Поставьте на сегодня и начните с них.",
+    emptyHint: "Горящих задач нет — хороший знак.",
+  },
+  schedule: {
+    hint: "Главное для целей. Выберите день, пока не стало срочным.",
+    emptyHint: "Отметьте задачи, которые двигают вас вперёд, как важные.",
+  },
+  delegate: {
+    hint: "Сделайте быстро, передайте или сократите объём.",
+    emptyHint: "Ничего не отвлекает.",
+  },
+  eliminate: {
+    hint: "Сюда попадают и неразмеченные задачи. Отметьте важное или уберите лишнее.",
+    emptyHint: "Пусто — всё разобрано.",
+  },
+};
 
+function PriorityToggle({
+  label,
+  active,
+  onClick,
+  taskTitle,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  taskTitle: string;
+}) {
   return (
-    <>
-    <Card className={cn("border-l-4 bg-background/95 py-0 shadow-sm transition-colors hover:shadow-md", EISENHOWER_META[quadrant].border)}>
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-2">
-          {dragHandle}
-          <button
-            type="button"
-            className="min-w-0 flex-1 text-left"
-            onClick={() => onEdit?.(task)}
-          >
-            <p className="line-clamp-2 text-sm font-semibold leading-snug">{task.title}</p>
-            {task.description && (
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>
-            )}
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <Badge variant="outline" className="h-5 rounded-full px-2 text-[11px]">
-                энергия {task.energyLevel}
-              </Badge>
-              {task.subtasks.length > 0 && (
-                <Badge variant="secondary" className="h-5 rounded-full px-2 text-[11px]">
-                  {task.subtasks.filter((subtask) => subtask.status === "completed").length}/{task.subtasks.length}
-                </Badge>
-              )}
-            </div>
-          </button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-brand"
-            title="Выполнить"
-            aria-label={`Отметить задачу «${task.title}» выполненной`}
-            onClick={() => onComplete?.(task)}
-          >
-            <CheckCircle2 className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="mt-3 flex flex-wrap justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-brand"
-            title="Сегодня"
-            aria-label={`Назначить «${task.title}» на сегодня`}
-            onClick={() => onAssignToToday?.(task.id)}
-          >
-            <CalendarCheck className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-brand"
-            title="На неделю"
-            aria-label={`Назначить «${task.title}» на эту неделю`}
-            onClick={() => onAssignToWeek?.(task.id)}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-brand"
-            title="Редактировать"
-            aria-label={`Редактировать «${task.title}»`}
-            onClick={() => onEdit?.(task)}
-          >
-            <Edit2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-orange-600"
-            title="В архив"
-            aria-label={`Архивировать «${task.title}»`}
-            onClick={() => onArchive?.(task.id)}
-          >
-            <Archive className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-            title="Удалить"
-            aria-label={`Удалить «${task.title}»`}
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-    <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Удалить задачу?</AlertDialogTitle>
-          <AlertDialogDescription>
-            «{task.title}» и её подзадачи будут удалены без возможности восстановления.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Отменить</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={() => {
-              onDelete?.(task.id);
-              setDeleteOpen(false);
-            }}
-          >
-            Удалить
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-    </>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={`${label}: ${active ? "снять отметку" : "отметить"} для «${taskTitle}»`}
+      className={cn(
+        "min-h-8 rounded-md px-2 text-[11px] font-medium transition-colors",
+        active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -187,109 +88,145 @@ export function EisenhowerMatrixView({
   onAddTask,
   onAssignToToday,
   onAssignToWeek,
+  onStartFocus,
   onReorder,
   onMoveToQuadrant,
 }: EisenhowerMatrixViewProps) {
   const activeTasks = tasks.filter((task) => task.status === "active" && !task.parentTaskId);
-  const tasksByQuadrant = EISENHOWER_ORDER.reduce(
-    (acc, quadrant) => {
-      acc[quadrant] = activeTasks.filter((task) => getEisenhowerQuadrant(task) === quadrant);
-      return acc;
-    },
-    {} as Record<EisenhowerQuadrant, Task[]>,
-  );
+  const byQuadrant = Object.fromEntries(
+    EISENHOWER_ORDER.map((quadrant) => [
+      quadrant,
+      activeTasks.filter((task) => getEisenhowerQuadrant(task) === quadrant),
+    ]),
+  ) as Record<EisenhowerQuadrant, Task[]>;
 
-  const importantCount = activeTasks.filter((task) => task.important).length;
-  const urgentCount = activeTasks.filter((task) => task.urgent).length;
+  const setPriority = (task: Task, important: boolean, urgent: boolean) =>
+    onMoveToQuadrant?.(task.id, getEisenhowerQuadrant({ important, urgent }));
+
+  const quickActionFor = (task: Task, quadrant: EisenhowerQuadrant) => {
+    const schedule = describeTaskSchedule(task);
+    const plannedToday = schedule?.tone === "today";
+    if (quadrant === "do") {
+      return plannedToday && onStartFocus ? (
+        <Button variant="ghost" size="icon" className="size-8" title="Начать фокус" aria-label={`Начать фокус: «${task.title}»`} onClick={() => onStartFocus(task)}>
+          <Timer />
+        </Button>
+      ) : onAssignToToday ? (
+        <Button variant="ghost" size="icon" className="size-8" title="На сегодня" aria-label={`Запланировать «${task.title}» на сегодня`} onClick={() => onAssignToToday(task.id)}>
+          <CalendarArrowUp />
+        </Button>
+      ) : null;
+    }
+    if (quadrant === "schedule" && !schedule && onAssignToWeek) {
+      return (
+        <Button variant="ghost" size="icon" className="size-8" title="На эту неделю" aria-label={`Запланировать «${task.title}» на эту неделю`} onClick={() => onAssignToWeek(task.id)}>
+          <CalendarDays />
+        </Button>
+      );
+    }
+    if (quadrant === "eliminate" && onArchive) {
+      return (
+        <Button variant="ghost" size="icon" className="size-8" title="В архив" aria-label={`Убрать «${task.title}» в архив`} onClick={() => onArchive(task.id)}>
+          <Archive />
+        </Button>
+      );
+    }
+    return null;
+  };
+
   const groups: SortableTaskGroup[] = EISENHOWER_ORDER.map((quadrant) => {
     const meta = EISENHOWER_META[quadrant];
-    const quadrantTasks = tasksByQuadrant[quadrant];
+    const items = byQuadrant[quadrant];
 
     return {
       id: quadrant,
-      tasks: quadrantTasks,
-      className: cn("min-h-[300px] rounded-xl border p-3", meta.panel),
-      contentClassName: "space-y-2",
+      tasks: items,
+      className: "flex flex-col rounded-xl border bg-card/60 p-2",
+      contentClassName: "flex-1 space-y-1.5",
       header: (
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className={cn("size-2.5 rounded-full", meta.dot)} />
-              <h3 className="font-semibold">{meta.title}</h3>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">{meta.description}</p>
+        <div className="px-1.5 pt-1 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className={cn("size-2 rounded-full", meta.dot)} aria-hidden="true" />
+            <h2 className="text-sm font-semibold">{meta.action}</h2>
+            <span className="text-sm tabular-nums text-muted-foreground">{items.length}</span>
+            <span className="ml-auto text-xs text-muted-foreground">{meta.title}</span>
           </div>
-          <Badge variant="secondary" className="shrink-0 tabular-nums">
-            {quadrantTasks.length}
-          </Badge>
+          <p className="mt-1 text-xs text-muted-foreground">{GUIDANCE[quadrant].hint}</p>
         </div>
       ),
       empty: (
-        <div className="flex min-h-[190px] items-center justify-center rounded-lg border border-dashed border-border/80 bg-background/50 px-4 text-center text-sm text-muted-foreground">
-          Перетащите сюда задачу или добавьте новую
-        </div>
+        <p className="flex min-h-20 items-center justify-center rounded-lg border border-dashed px-4 text-center text-xs text-muted-foreground">
+          {GUIDANCE[quadrant].emptyHint}
+        </p>
       ),
     };
   });
 
   const handleBoardChange = (nextGroups: SortableTaskGroup[], move?: TaskGroupMove) => {
     if (move) onMoveToQuadrant?.(move.task.id, move.toGroupId as EisenhowerQuadrant);
-    const reorderedTasks = nextGroups.flatMap((group) => group.tasks);
-    onReorder?.(reorderedTasks);
+    onReorder?.(nextGroups.flatMap((group) => group.tasks));
   };
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-            <Grid2X2 className="h-3.5 w-3.5 text-brand" />
-            Матрица фокуса
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Матрица Эйзенхауэра</h2>
-            <p className="text-sm text-muted-foreground">
-              Перетаскивайте задачи между квадрантами, чтобы менять их важность и срочность.
-            </p>
-          </div>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Приоритеты</h1>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            Решите, что делать, что планировать, а что отпустить. Перетащите задачу или переключите «Важно» и «Срочно».
+          </p>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary" className="rounded-full px-3 py-1.5">
-            {activeTasks.length} активных
-          </Badge>
-          <Badge variant="outline" className="rounded-full px-3 py-1.5">
-            {importantCount} важных
-          </Badge>
-          <Badge variant="outline" className="rounded-full px-3 py-1.5">
-            {urgentCount} срочных
-          </Badge>
-          <Button size="sm" className="gap-2" onClick={onAddTask}>
-            <Plus className="h-4 w-4" />
-            Добавить
+        {onAddTask && (
+          <Button className="min-h-11 gap-2 sm:min-h-9" variant="outline" onClick={onAddTask}>
+            <Plus /> Задача
           </Button>
-        </div>
-      </div>
-
-      <SortableTasksBoard
-        groups={groups}
-        className="grid gap-3 lg:grid-cols-2"
-        onChange={handleBoardChange}
-        renderTask={(task, dragHandle, groupId) => (
-          <MatrixTaskCard
-            task={task}
-            quadrant={groupId as EisenhowerQuadrant}
-            dragHandle={dragHandle}
-            tasks={tasks}
-            onEdit={onEdit}
-            onComplete={onComplete}
-            onArchive={onArchive}
-            onDelete={onDelete}
-            onAssignToToday={onAssignToToday}
-            onAssignToWeek={onAssignToWeek}
-          />
         )}
-      />
+      </header>
+
+      {activeTasks.length === 0 ? (
+        <div className="rounded-2xl border border-dashed px-5 py-12 text-center">
+          <p className="font-semibold">Нет активных задач</p>
+          <p className="mt-1 text-sm text-muted-foreground">Добавьте задачи — и здесь станет видно, за что браться первым.</p>
+        </div>
+      ) : (
+        <SortableTasksBoard
+          groups={groups}
+          className="grid gap-3 lg:grid-cols-2"
+          onChange={handleBoardChange}
+          groupLabel={(id) => EISENHOWER_META[id as EisenhowerQuadrant].action}
+          renderOverlay={(task) => <TaskRow task={task} compact isDragging />}
+          renderTask={(task, dragHandle, groupId) => (
+            <TaskRow
+              task={task}
+              compact
+              dragHandle={dragHandle}
+              onComplete={onComplete}
+              onEdit={onEdit}
+              onArchive={onArchive}
+              onDelete={onDelete}
+              onStartFocus={onStartFocus}
+              onAssignToToday={onAssignToToday}
+              onAssignToWeek={onAssignToWeek}
+              quickActions={quickActionFor(task, groupId as EisenhowerQuadrant)}
+            >
+              <div className="flex items-center gap-1 pb-1.5 pl-[3.25rem]">
+                <PriorityToggle
+                  label="Важно"
+                  active={task.important}
+                  taskTitle={task.title}
+                  onClick={() => setPriority(task, !task.important, task.urgent)}
+                />
+                <PriorityToggle
+                  label="Срочно"
+                  active={task.urgent}
+                  taskTitle={task.title}
+                  onClick={() => setPriority(task, task.important, !task.urgent)}
+                />
+              </div>
+            </TaskRow>
+          )}
+        />
+      )}
     </div>
   );
 }

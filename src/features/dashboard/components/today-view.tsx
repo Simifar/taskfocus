@@ -1,30 +1,36 @@
 "use client";
 
+import { useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Calendar, CheckCircle2, Plus, Timer } from "lucide-react";
+import {
+  CalendarArrowUp,
+  Check,
+  ChevronDown,
+  Inbox,
+  Maximize2,
+  Plus,
+  Sparkles,
+  Timer,
+} from "lucide-react";
 
 import type { Task } from "@/shared/types";
 import { MAX_ACTIVE_TASKS_PER_DAY } from "@/shared/lib/task-limits";
-import { Badge } from "@/shared/ui/badge";
+import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent } from "@/shared/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
 import { isTaskScheduledForDay } from "@/features/dashboard/lib/task-date-filters";
 import { getTodayTaskRecommendation } from "@/features/dashboard/lib/today";
+import { useFocusStore } from "@/features/dashboard/focus-store";
 import { SortableTasksList } from "@/features/tasks/components/sortable-tasks-list";
-import { TaskRow } from "@/features/tasks/components/task-row";
+import { CompleteButton, EnergyMeter, TaskRow } from "@/features/tasks/components/task-row";
+import { describeTaskSchedule } from "@/features/tasks/lib/task-row";
+import { EISENHOWER_META, getEisenhowerQuadrant } from "@/features/tasks/lib/eisenhower";
 import { mergeReorderedTasks } from "@/features/tasks/lib/reorder";
-
 
 interface TodayViewProps {
   tasks: Task[];
+  /** Active tasks whose planned range ended before today. */
+  overdueTasks?: Task[];
   currentEnergy: number | null;
   onEnergyChange: (level: number | null) => void;
   onEdit: (task: Task) => void;
@@ -33,23 +39,28 @@ interface TodayViewProps {
   onDelete: (taskId: string) => void;
   onAddTask: (target?: "today" | "inbox") => void;
   onStartFocus: (task: Task) => void;
+  onAssignToToday?: (taskId: string) => void;
+  onOpenInbox?: () => void;
   onReorder?: (tasks: Task[]) => void;
   showCompleted: boolean;
   onShowCompletedChange: (show: boolean) => void;
   onToggleSubtask?: (subtask: Task) => void;
-  onAddSubtask?: (parentId: string, title: string) => void;
+  onAddSubtask?: (parentId: string, title: string) => Promise<void> | void;
   onEditSubtask?: (subtask: Task) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
   todayActiveCount?: number;
-  isLoading?: boolean;
+  focusTaskId?: string | null;
 }
 
-function getToday() {
-  return format(new Date(), "EEEE, MMMM d", { locale: ru });
-}
+const ENERGY_FILTERS: { value: number | null; label: string }[] = [
+  { value: null, label: "Любые" },
+  { value: 2, label: "Мало сил" },
+  { value: 3, label: "Средне" },
+];
 
 export function TodayView({
   tasks,
+  overdueTasks = [],
   currentEnergy,
   onEnergyChange,
   onEdit,
@@ -58,17 +69,20 @@ export function TodayView({
   onDelete,
   onAddTask,
   onStartFocus,
+  onAssignToToday,
+  onOpenInbox,
   onReorder,
   showCompleted,
   onShowCompletedChange,
   onToggleSubtask,
   onAddSubtask,
-  onEditSubtask,
   onDeleteSubtask,
   todayActiveCount,
-  isLoading = false,
+  focusTaskId = null,
 }: TodayViewProps) {
   const today = new Date();
+  const expandFocus = useFocusStore((s) => s.setExpanded);
+  const [overdueOpen, setOverdueOpen] = useState(true);
 
   const todayTasks = tasks.filter(
     (task) =>
@@ -76,194 +90,337 @@ export function TodayView({
       (task.status === "active" || task.status === "completed") &&
       isTaskScheduledForDay(task, today),
   );
-  const todayActiveTasks = todayTasks.filter((task) => task.status === "active");
-  const completedTasks = todayTasks.filter((task) => task.status === "completed");
-  const activeTasks = currentEnergy === null
-    ? todayActiveTasks
-    : todayActiveTasks.filter((task) => task.energyLevel <= currentEnergy);
-  const recommendation = getTodayTaskRecommendation(activeTasks, today, currentEnergy);
-  const remainingActiveTasks = recommendation
-    ? activeTasks.filter((task) => task.id !== recommendation.id)
-    : activeTasks;
+  const todayActive = todayTasks.filter((task) => task.status === "active");
+  const completed = todayTasks.filter((task) => task.status === "completed");
+  const visibleActive = currentEnergy === null
+    ? todayActive
+    : todayActive.filter((task) => task.energyLevel <= currentEnergy);
 
-  const activeTodayCount = todayActiveCount ?? todayActiveTasks.length;
-  const canAddMore = activeTodayCount < MAX_ACTIVE_TASKS_PER_DAY;
-  const hasTasksButFiltered = currentEnergy !== null && todayActiveTasks.length > 0 && activeTasks.length === 0;
+  // "Now" is the task in focus if it belongs to today, otherwise the recommendation.
+  const focused = focusTaskId ? todayActive.find((task) => task.id === focusTaskId) ?? null : null;
+  const now = focused ?? getTodayTaskRecommendation(visibleActive, today, currentEnergy);
+  const next = now ? visibleActive.filter((task) => task.id !== now.id) : visibleActive;
 
-  const handleReorder = (reorderedActiveTasks: Task[]) => {
-    onReorder?.(mergeReorderedTasks(tasks, reorderedActiveTasks));
+  const activeCount = todayActiveCount ?? todayActive.length;
+  const slotsLeft = Math.max(0, MAX_ACTIVE_TASKS_PER_DAY - activeCount);
+  const filteredOut = currentEnergy !== null && todayActive.length > 0 && visibleActive.length === 0;
+  const total = todayActive.length + completed.length;
+
+  const handlers = {
+    onEdit,
+    onComplete,
+    onArchive,
+    onDelete,
+    onStartFocus,
+    onToggleSubtask,
+    onAddSubtask,
+    onDeleteSubtask,
   };
 
   return (
-    <div className="min-h-full">
-      <div className="mx-auto max-w-6xl space-y-5">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-6 w-6 shrink-0 text-brand" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-medium capitalize text-muted-foreground">{getToday()}</p>
-                <h1 className="text-headline">Сегодня</h1>
-              </div>
-            </div>
-            <div className="mt-2 flex items-center gap-3">
-              <p className="text-sm text-muted-foreground">
-                {activeTodayCount} из {MAX_ACTIVE_TASKS_PER_DAY} задач в плане
-              </p>
-              <div className="flex gap-1" aria-hidden="true">
-                {Array.from({ length: MAX_ACTIVE_TASKS_PER_DAY }, (_, index) => (
-                  <span key={index} className={`h-1.5 w-5 rounded-full ${index < activeTodayCount ? "bg-brand" : "bg-muted"}`} />
-                ))}
-              </div>
-            </div>
-          </div>
-          <Button
-            onClick={() => onAddTask(canAddMore ? "today" : "inbox")}
-            disabled={isLoading}
-            className="w-full rounded-lg bg-brand px-4 text-brand-foreground hover:bg-brand/90 sm:w-auto"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {canAddMore ? "Добавить задачу" : "Записать во Входящие"}
-          </Button>
-        </header>
-
-        <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-card/60 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium">Подходящая энергия</p>
-            <p className="text-xs text-muted-foreground">Список и следующий шаг подстраиваются под ваш ресурс.</p>
-          </div>
-          <Select
-            value={currentEnergy === null ? "all" : String(currentEnergy)}
-            onValueChange={(value) => onEnergyChange(value === "all" ? null : Number(value))}
-            disabled={isLoading}
-          >
-            <SelectTrigger className="w-full sm:w-48" aria-label="Фильтр по энергии">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все уровни</SelectItem>
-              <SelectItem value="1">Энергия до 1</SelectItem>
-              <SelectItem value="2">Энергия до 2</SelectItem>
-              <SelectItem value="3">Энергия до 3</SelectItem>
-              <SelectItem value="4">Энергия до 4</SelectItem>
-              <SelectItem value="5">Энергия до 5</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="mx-auto w-full max-w-3xl pb-6">
+      <header className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-muted-foreground first-letter:uppercase">
+            {format(today, "EEEE, d MMMM", { locale: ru })}
+          </p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">Сегодня</h1>
         </div>
+        <Button
+          onClick={() => onAddTask(slotsLeft > 0 ? "today" : "inbox")}
+          className="hidden h-10 gap-2 bg-brand text-brand-foreground hover:bg-brand/90 md:inline-flex"
+        >
+          <Plus /> {slotsLeft > 0 ? "Задача на сегодня" : "Во Входящие"}
+        </Button>
+      </header>
 
-        {recommendation && (
-          <section className="border-l-2 border-brand py-1 pl-4 sm:pl-5">
-            <div className="flex flex-wrap items-start justify-between gap-3 pb-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand">Начните отсюда</p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight">Один следующий шаг</h2>
-                <p className="mt-1 text-xs text-muted-foreground">Выбрана подходящая задача по сроку, важности и энергии.</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onStartFocus(recommendation)}
-                  className="gap-1.5"
-                >
-                  <Timer className="h-3.5 w-3.5" />
-                  Сосредоточиться
-                </Button>
-              </div>
-            </div>
-            <div>
-              <TaskRow
-                task={recommendation}
-                onComplete={onComplete}
-                onEdit={onEdit}
-                onArchive={onArchive}
-                onDelete={onDelete}
-              />
-            </div>
-          </section>
-        )}
+      {total > 0 && (
+        <DayProgress done={completed.length} active={todayActive.length} slotsLeft={slotsLeft} />
+      )}
 
-        <section aria-labelledby="today-tasks-title" className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 id="today-tasks-title" className="text-title">{recommendation ? "Дальше по плану" : "План на сегодня"}</h2>
-              <p className="text-sm text-muted-foreground">
-                {recommendation ? `В плане осталось задач: ${remainingActiveTasks.length}.` : "Активные задачи, запланированные на этот день."}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {completedTasks.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onShowCompletedChange(!showCompleted)}
-                  className="gap-1.5"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {showCompleted ? "Скрыть" : "Выполненные"} ({completedTasks.length})
-                </Button>
-              )}
-              <Badge variant="outline">{activeTodayCount}/{MAX_ACTIVE_TASKS_PER_DAY}</Badge>
-            </div>
-          </div>
+      {now && (
+        <NowCard
+          task={now}
+          inFocus={focused !== null}
+          onComplete={onComplete}
+          onEdit={onEdit}
+          onStartFocus={onStartFocus}
+          onOpenFocus={() => expandFocus(true)}
+        />
+      )}
 
-          {hasTasksButFiltered ? (
-            <Card>
-              <CardContent className="py-10 text-center">
-                <p className="font-medium">Нет задач для выбранной ёмкости</p>
-                <p className="mt-1 text-sm text-muted-foreground">Выберите более высокий уровень или сбросьте фильтр.</p>
-                <Button variant="outline" size="sm" className="mt-4" onClick={() => onEnergyChange(null)}>
-                  Показать все уровни
-                </Button>
-              </CardContent>
-            </Card>
-          ) : todayActiveTasks.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <CheckCircle2 className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden="true" />
-                <p className="mt-3 font-medium">{completedTasks.length > 0 ? "План на сегодня выполнен" : "На сегодня задач пока нет"}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {completedTasks.length > 0 ? `Готово задач: ${completedTasks.length}.` : "Добавьте задачу, когда будете готовы выбрать следующий шаг."}
-                </p>
-              </CardContent>
-            </Card>
-          ) : remainingActiveTasks.length > 0 ? (
-            <SortableTasksList
-              tasks={remainingActiveTasks}
-              onEdit={onEdit}
-              onArchive={onArchive}
-              onComplete={onComplete}
-              onDelete={onDelete}
-              onReorder={handleReorder}
-              onToggleSubtask={onToggleSubtask}
-              onAddSubtask={onAddSubtask}
-              onEditSubtask={onEditSubtask}
-              onDeleteSubtask={onDeleteSubtask}
-            />
-          ) : null}
-        </section>
-
-        {completedTasks.length > 0 && showCompleted && (
-          <section aria-labelledby="completed-tasks-title" className="space-y-3">
-            <div>
-              <h2 id="completed-tasks-title" className="text-title">Выполненные</h2>
-              <p className="text-sm text-muted-foreground">Завершённые задачи остаются свернутыми по умолчанию.</p>
-            </div>
-            <div className="space-y-2">
-              {completedTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  onComplete={onComplete}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                />
+      {overdueTasks.length > 0 && (
+        <section aria-labelledby="today-overdue" className="mt-8">
+          <button
+            type="button"
+            onClick={() => setOverdueOpen((open) => !open)}
+            aria-expanded={overdueOpen}
+            className="flex min-h-10 w-full items-center gap-2 text-left"
+          >
+            <h2 id="today-overdue" className="text-sm font-semibold text-destructive">
+              Просрочено · {overdueTasks.length}
+            </h2>
+            <span className="text-xs text-muted-foreground">перенесите или закройте</span>
+            <ChevronDown className={cn("ml-auto size-4 text-muted-foreground transition-transform", overdueOpen && "rotate-180")} aria-hidden="true" />
+          </button>
+          {overdueOpen && (
+            <div className="mt-2 space-y-1.5">
+              {overdueTasks.map((task) => (
+                <div key={task.id} className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <TaskRow task={task} compact onComplete={onComplete} onEdit={onEdit} onArchive={onArchive} onDelete={onDelete} />
+                  </div>
+                  {onAssignToToday && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-11 shrink-0 sm:size-10"
+                      disabled={slotsLeft === 0}
+                      title={slotsLeft === 0 ? "На сегодня уже 5 задач" : "Перенести на сегодня"}
+                      aria-label={`Перенести «${task.title}» на сегодня`}
+                      onClick={() => onAssignToToday(task.id)}
+                    >
+                      <CalendarArrowUp />
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
-          </section>
+          )}
+        </section>
+      )}
+
+      {(next.length > 0 || filteredOut || todayActive.length > 1) && (
+        <section aria-labelledby="today-next" className="mt-8">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h2 id="today-next" className="text-sm font-semibold">
+              {now ? "Дальше" : "План"} {next.length > 0 && <span className="font-normal text-muted-foreground">· {next.length}</span>}
+            </h2>
+            <div role="radiogroup" aria-label="Фильтр по энергии" className="flex rounded-lg bg-muted p-0.5">
+              {ENERGY_FILTERS.map((filter) => (
+                <button
+                  key={filter.label}
+                  type="button"
+                  role="radio"
+                  aria-checked={currentEnergy === filter.value}
+                  onClick={() => onEnergyChange(filter.value)}
+                  className={cn(
+                    "min-h-9 rounded-md px-3 text-xs font-medium transition-colors",
+                    currentEnergy === filter.value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredOut ? (
+            <div className="rounded-xl border border-dashed px-4 py-8 text-center">
+              <p className="font-medium">Под этот уровень сил задач нет</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Все {todayActive.length} задачи на сегодня требуют больше энергии.
+              </p>
+              <Button variant="outline" size="sm" className="mt-4 min-h-10" onClick={() => onEnergyChange(null)}>
+                Показать все
+              </Button>
+            </div>
+          ) : (
+            <SortableTasksList
+              tasks={next}
+              hideSchedule
+              onReorder={(reordered) => onReorder?.(mergeReorderedTasks(tasks, reordered))}
+              {...handlers}
+            />
+          )}
+        </section>
+      )}
+
+      {todayActive.length === 0 && (
+        <EmptyToday
+          completedCount={completed.length}
+          canAdd={slotsLeft > 0}
+          onAddTask={() => onAddTask(slotsLeft > 0 ? "today" : "inbox")}
+          onOpenInbox={onOpenInbox}
+        />
+      )}
+
+      {completed.length > 0 && (
+        <section aria-labelledby="today-done" className="mt-8">
+          <button
+            type="button"
+            onClick={() => onShowCompletedChange(!showCompleted)}
+            aria-expanded={showCompleted}
+            className="flex min-h-10 w-full items-center gap-2 text-left text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Check className="size-4 text-success" aria-hidden="true" />
+            <h2 id="today-done" className="text-sm font-medium">Выполнено · {completed.length}</h2>
+            <ChevronDown className={cn("ml-auto size-4 transition-transform", showCompleted && "rotate-180")} aria-hidden="true" />
+          </button>
+          {showCompleted && (
+            <div className="mt-2 space-y-1.5">
+              {completed.map((task) => (
+                <TaskRow key={task.id} task={task} compact onComplete={onComplete} onEdit={onEdit} onDelete={onDelete} onArchive={onArchive} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
+
+/** Five slots: green = done, outlined brand = planned, muted = free capacity. */
+function DayProgress({ done, active, slotsLeft }: { done: number; active: number; slotsLeft: number }) {
+  const slots = Math.max(MAX_ACTIVE_TASKS_PER_DAY, done + active);
+  return (
+    <div className="mt-5">
+      <div className="flex gap-1" aria-hidden="true">
+        {Array.from({ length: slots }, (_, index) => (
+          <span
+            key={index}
+            className={cn(
+              "h-1.5 flex-1 rounded-full transition-colors duration-300",
+              index < done ? "bg-success" : index < done + active ? "bg-brand/70" : "bg-muted",
+            )}
+          />
+        ))}
+      </div>
+      <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        <span>
+          Осталось <span className="font-semibold text-foreground tabular-nums">{active}</span>
+        </span>
+        <span>
+          Готово <span className="font-semibold text-foreground tabular-nums">{done}</span>
+        </span>
+        <span>{slotsLeft > 0 ? `Свободно мест: ${slotsLeft}` : "План на день заполнен"}</span>
+      </p>
+    </div>
+  );
+}
+
+function NowCard({
+  task,
+  inFocus,
+  onComplete,
+  onEdit,
+  onStartFocus,
+  onOpenFocus,
+}: {
+  task: Task;
+  inFocus: boolean;
+  onComplete: (task: Task) => void;
+  onEdit: (task: Task) => void;
+  onStartFocus: (task: Task) => void;
+  onOpenFocus: () => void;
+}) {
+  const quadrant = getEisenhowerQuadrant(task);
+  const schedule = describeTaskSchedule(task);
+  const steps = task.subtasks ?? [];
+  const doneSteps = steps.filter((step) => step.status === "completed").length;
+  const nextStep = steps.find((step) => step.status !== "completed");
+
+  return (
+    <section
+      aria-labelledby="today-now"
+      className={cn(
+        "mt-6 rounded-2xl border bg-card p-4 shadow-sm sm:p-5",
+        inFocus ? "border-brand/50" : "border-border",
+      )}
+    >
+      <p id="today-now" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand">
+        {inFocus ? <Timer className="size-3.5" aria-hidden="true" /> : <Sparkles className="size-3.5" aria-hidden="true" />}
+        {inFocus ? "Сейчас в фокусе" : "Начните с этого"}
+      </p>
+      <div className="mt-3 flex items-start gap-3">
+        <span className="flex h-7 w-5 shrink-0 items-center justify-center">
+          <CompleteButton task={task} onComplete={() => onComplete(task)} />
+        </span>
+        <button
+          type="button"
+          onClick={() => onEdit(task)}
+          className="min-w-0 flex-1 text-left text-lg font-semibold leading-7 tracking-tight break-words hover:underline hover:decoration-muted-foreground/40 hover:underline-offset-4"
+        >
+          {task.title}
+        </button>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 pl-8 text-xs text-muted-foreground">
+        {(task.important || task.urgent) && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className={cn("size-1.5 rounded-full", EISENHOWER_META[quadrant].dot)} aria-hidden="true" />
+            {EISENHOWER_META[quadrant].title}
+          </span>
+        )}
+        {schedule?.range && <span>{schedule.label}</span>}
+        <span className="inline-flex items-center gap-1.5">
+          <EnergyMeter level={task.energyLevel} /> энергия {task.energyLevel}/5
+        </span>
+        {steps.length > 0 && <span className="tabular-nums">Шаги {doneSteps}/{steps.length}</span>}
+      </div>
+      {nextStep && (
+        <p className="mt-3 ml-8 rounded-lg bg-muted/60 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Следующий шаг: </span>
+          {nextStep.title}
+        </p>
+      )}
+      <div className="mt-4 flex flex-wrap gap-2 sm:pl-8">
+        {inFocus ? (
+          <Button className="min-h-11 gap-2 bg-brand text-brand-foreground hover:bg-brand/90 sm:min-h-10" onClick={onOpenFocus}>
+            <Maximize2 /> Открыть таймер
+          </Button>
+        ) : (
+          <Button className="min-h-11 gap-2 bg-brand text-brand-foreground hover:bg-brand/90 sm:min-h-10" onClick={() => onStartFocus(task)}>
+            <Timer /> Фокус 25 мин
+          </Button>
+        )}
+        <Button variant="outline" className="min-h-11 gap-2 sm:min-h-10" onClick={() => onComplete(task)}>
+          <Check /> Готово
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function EmptyToday({
+  completedCount,
+  canAdd,
+  onAddTask,
+  onOpenInbox,
+}: {
+  completedCount: number;
+  canAdd: boolean;
+  onAddTask: () => void;
+  onOpenInbox?: () => void;
+}) {
+  const allDone = completedCount > 0;
+  return (
+    <div className="mt-8 rounded-2xl border border-dashed px-5 py-10 text-center">
+      <span
+        className={cn(
+          "mx-auto flex size-11 items-center justify-center rounded-full",
+          allDone ? "bg-success-soft text-success" : "bg-muted text-muted-foreground",
+        )}
+      >
+        {allDone ? <Check className="size-5" /> : <Sparkles className="size-5" />}
+      </span>
+      <p className="mt-4 font-semibold">{allDone ? "План на сегодня выполнен" : "На сегодня пока ничего"}</p>
+      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+        {allDone
+          ? `Закрыто задач: ${completedCount}. Можно отдохнуть или взять что-то из Входящих.`
+          : "Выберите до пяти задач — меньше плана, больше сделанного."}
+      </p>
+      <div className="mt-5 flex flex-wrap justify-center gap-2">
+        {canAdd && (
+          <Button className="min-h-11 gap-2 sm:min-h-10" onClick={onAddTask}>
+            <Plus /> Добавить задачу
+          </Button>
+        )}
+        {onOpenInbox && (
+          <Button variant="outline" className="min-h-11 gap-2 sm:min-h-10" onClick={onOpenInbox}>
+            <Inbox /> Выбрать из Входящих
+          </Button>
         )}
       </div>
-
     </div>
   );
 }

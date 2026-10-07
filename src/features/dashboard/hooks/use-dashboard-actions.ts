@@ -1,9 +1,16 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import type { EisenhowerQuadrant, Task } from "@/shared/types";
 import { describeTaskError } from "@/features/tasks/errors";
 import { getCurrentWeekRange } from "@/features/dashboard/lib/task-date-filters";
+import { statsKeys } from "@/features/stats/hooks";
+import { tasksApi } from "@/features/tasks/api";
 import {
+  removeTaskFromLists,
+  rollback,
+  snapshotAndCancel,
+  taskKeys,
   useCreateSubtask,
   useBatchTasks,
   useDeleteTask,
@@ -16,7 +23,10 @@ function reportError(err: unknown, fallback: string) {
   toast.error(describeTaskError(err, fallback));
 }
 
+const UNDO_WINDOW_MS = 6000;
+
 export function useDashboardActions() {
+  const qc = useQueryClient();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const toggleComplete = useToggleComplete();
@@ -24,25 +34,46 @@ export function useDashboardActions() {
   const reorderTasks = useReorderTasks();
   const batchTasks = useBatchTasks();
 
-  const handleToggleCompleteTask = async (task: Task) => {
+  // Feedback appears with the optimistic change, not after the round trip; a
+  // failed request rolls the change back and replaces the toast with an error.
+  const handleToggleCompleteTask = async (task: Pick<Task, "id" | "title" | "status">) => {
+    const completing = task.status !== "completed";
+    const toastId = completing
+      ? toast.success("Выполнено", {
+          description: task.title,
+          duration: UNDO_WINDOW_MS,
+          action: {
+            label: "Отменить",
+            onClick: () => void toggleComplete.mutateAsync({ id: task.id, completed: false }).catch(
+              (err) => reportError(err, "Не удалось вернуть задачу"),
+            ),
+          },
+        })
+      : undefined;
     try {
-      await toggleComplete.mutateAsync({
-        id: task.id,
-        completed: task.status !== "completed",
-      });
-      toast.success(task.status === "completed" ? "Задача снова активна" : "Задача выполнена");
+      await toggleComplete.mutateAsync({ id: task.id, completed: completing });
       return true;
     } catch (err) {
+      if (toastId !== undefined) toast.dismiss(toastId);
       reportError(err, "Не удалось обновить задачу");
       return false;
     }
   };
 
   const handleArchiveTask = async (taskId: string) => {
+    const toastId = toast.success("В архиве", {
+      duration: UNDO_WINDOW_MS,
+      action: {
+        label: "Отменить",
+        onClick: () => void updateTask.mutateAsync({ id: taskId, input: { status: "active" } }).catch(
+          (err) => reportError(err, "Не удалось вернуть задачу"),
+        ),
+      },
+    });
     try {
       await updateTask.mutateAsync({ id: taskId, input: { status: "archived" } });
-      toast.success("Задача отправлена в архив");
     } catch (err) {
+      toast.dismiss(toastId);
       reportError(err, "Не удалось отправить задачу в архив");
     }
   };
@@ -56,13 +87,37 @@ export function useDashboardActions() {
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      await deleteTask.mutateAsync(taskId);
-      toast.success("Задача удалена");
-    } catch (err) {
-      reportError(err, "Не удалось удалить задачу");
-    }
+  // Deletion is irreversible on the server, so it is deferred: the task
+  // disappears immediately and is only removed after the undo window closes.
+  const handleDeleteTask = (taskId: string, label = "Задача удалена") => {
+    const ctx = snapshotAndCancel(qc);
+    removeTaskFromLists(qc, [taskId]);
+    let undone = false;
+
+    const commit = window.setTimeout(async () => {
+      if (undone) return;
+      try {
+        await tasksApi.remove(taskId);
+      } catch (err) {
+        rollback(qc, ctx);
+        reportError(err, "Не удалось удалить задачу");
+      } finally {
+        void qc.invalidateQueries({ queryKey: taskKeys.all });
+        void qc.invalidateQueries({ queryKey: statsKeys.all });
+      }
+    }, UNDO_WINDOW_MS);
+
+    toast(label, {
+      duration: UNDO_WINDOW_MS,
+      action: {
+        label: "Отменить",
+        onClick: () => {
+          undone = true;
+          window.clearTimeout(commit);
+          rollback(qc, ctx);
+        },
+      },
+    });
   };
 
   const handleAssignToToday = async (taskId: string) => {
@@ -75,7 +130,7 @@ export function useDashboardActions() {
           dueDateEnd: today.toISOString(),
         },
       });
-      toast.success("Задача назначена на сегодня");
+      toast.success("Запланировано на сегодня");
     } catch (err) {
       reportError(err, "Не удалось назначить задачу");
     }
@@ -91,7 +146,7 @@ export function useDashboardActions() {
           dueDateEnd: end.toISOString(),
         },
       });
-      toast.success("Задача назначена на неделю");
+      toast.success("Запланировано на эту неделю");
     } catch (err) {
       reportError(err, "Не удалось назначить задачу");
     }
@@ -132,7 +187,6 @@ export function useDashboardActions() {
         id: subtask.id,
         completed: subtask.status !== "completed",
       });
-      toast.success(subtask.status === "completed" ? "Подзадача снова активна" : "Подзадача выполнена");
     } catch (err) {
       reportError(err, "Не удалось обновить подзадачу");
     }
@@ -142,14 +196,7 @@ export function useDashboardActions() {
     await createSubtask.mutateAsync({ parentId, title });
   };
 
-  const handleDeleteSubtask = async (subtaskId: string) => {
-    try {
-      await deleteTask.mutateAsync(subtaskId);
-      toast.success("Подзадача удалена");
-    } catch (err) {
-      reportError(err, "Не удалось удалить подзадачу");
-    }
-  };
+  const handleDeleteSubtask = (subtaskId: string) => handleDeleteTask(subtaskId, "Подзадача удалена");
 
   const handleBatchArchive = async (taskIds: string[]) => {
     try {
