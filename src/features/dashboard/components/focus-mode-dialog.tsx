@@ -139,7 +139,7 @@ export function FocusMode({ task, onComplete, onToggleSubtask }: FocusModeProps)
 
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent sheet className="gap-0 p-0 sm:max-w-md">
-          <div className="px-6 pt-6 pb-2">
+          <div className="px-6 pt-7 pb-2">
             <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <Timer className="size-3.5 text-brand" aria-hidden="true" />
               Фокус
@@ -155,7 +155,7 @@ export function FocusMode({ task, onComplete, onToggleSubtask }: FocusModeProps)
             )}
           </div>
 
-          <div className="px-6 py-6">
+          <div className="mx-4 my-3 rounded-3xl bg-brand-soft/60 px-4 py-8 sm:mx-6">
             <div
               role="timer"
               aria-live="off"
@@ -183,7 +183,7 @@ export function FocusMode({ task, onComplete, onToggleSubtask }: FocusModeProps)
                 <RotateCcw />
               </Button>
               <Button
-                className="h-14 min-w-36 rounded-full bg-brand text-base text-brand-foreground hover:bg-brand/90"
+                className="h-14 min-w-28 rounded-2xl sm:min-w-36 bg-brand text-base text-brand-foreground hover:bg-brand/90"
                 onClick={toggle}
               >
                 {running ? <Pause /> : <Play />}

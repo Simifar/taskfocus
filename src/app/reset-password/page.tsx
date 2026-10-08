@@ -2,31 +2,27 @@ import Link from "next/link";
 import { ArrowLeft, LockKeyhole } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
+import { StatusShell } from "@/shared/ui/status-shell";
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+    <StatusShell>
+        <div>
           <div className="mx-auto w-12 h-12 bg-brand/10 rounded-full flex items-center justify-center mb-4">
             <LockKeyhole className="w-6 h-6 text-brand" />
           </div>
-          <CardTitle className="text-2xl font-bold">Сброс пароля</CardTitle>
-          <CardDescription>Эта функция пока недоступна</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <h1 className="text-2xl font-semibold leading-tight">Сброс пароля</h1>
+          <p className="mt-3 text-sm font-medium text-brand">Эта функция пока недоступна</p>
+        </div>
+        <div className="mt-4 space-y-6">
           <p className="text-sm text-muted-foreground text-center">
             Ссылка сброса пароля не создаётся, поэтому пароль не изменён.
           </p>
-          <Link href="/login">
-            <Button variant="outline" className="w-full">
+          <Button asChild variant="outline" className="w-full"><Link href="/login">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Вернуться ко входу
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
-    </div>
+            </Link></Button>
+        </div>
+    </StatusShell>
   );
 }

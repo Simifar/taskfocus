@@ -80,6 +80,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Providers>
+            <a href="#main" className="sr-only fixed top-3 left-3 z-[100] rounded-xl bg-card px-4 py-3 text-sm font-semibold shadow-lg focus:not-sr-only">Перейти к содержимому</a>
             {children}
             <Toaster position="top-center" />
           </Providers>

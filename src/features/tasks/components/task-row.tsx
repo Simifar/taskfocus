@@ -71,6 +71,7 @@ export function EnergyMeter({ level, className }: { level: number; className?: s
       {[1, 2, 3, 4, 5].map((bar) => (
         <span
           key={bar}
+          data-energy-bar={bar <= level ? "active" : "inactive"}
           className={cn("w-[3px] rounded-full bg-current", bar > level && "opacity-20")}
           style={{ height: `${3 + bar * 1.6}px` }}
         />
@@ -105,11 +106,12 @@ export function CompleteButton({
       )}
     >
       <span
+        data-complete
         className={cn(
           "flex size-5 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color,color,transform] duration-200 active:scale-90",
           done
             ? "border-success bg-success text-background"
-            : "border-muted-foreground/45 text-transparent group-hover/check:border-success group-hover/check:text-success/70",
+            : "border-[color:var(--completion-border,var(--muted-foreground))] text-transparent group-hover/check:border-success group-hover/check:text-success/70",
         )}
       >
         <Check className="size-3" strokeWidth={3} aria-hidden="true" />
@@ -154,7 +156,7 @@ export function TaskRow({
   return (
     <article
       className={cn(
-        "group/row relative rounded-xl border border-border/70 bg-card transition-[border-color,box-shadow,background-color] duration-150 hover:border-border hover:shadow-sm",
+        "group/row relative rounded-2xl border border-border bg-card transition-[border-color,box-shadow,background-color] duration-150 hover:border-brand/35 hover:shadow-[var(--shadow-panel)]",
         done && "bg-card/50",
         isDragging && "border-brand/50 shadow-lg ring-1 ring-brand/30",
         selection?.checked && "border-brand/40 bg-brand-soft/60",
@@ -162,7 +164,7 @@ export function TaskRow({
       )}
       aria-busy={pending || undefined}
     >
-      <div className={cn("flex items-start gap-2.5 pr-1.5", compact ? "py-2 pl-2.5" : "py-2.5 pl-3 sm:py-3")}>
+      <div className={cn("flex items-start gap-2.5 pr-1.5", compact ? "py-3 pl-3" : "py-4 pl-4 sm:py-4")}>
         {dragHandle && <div className="relative z-10 -my-1 shrink-0">{dragHandle}</div>}
 
         {selection && (
@@ -230,7 +232,7 @@ export function TaskRow({
                     type="button"
                     onClick={steps.onToggle}
                     aria-expanded={steps.expanded}
-                    className="relative z-10 -mx-1.5 -my-1.5 inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 tabular-nums hover:bg-muted hover:text-foreground"
+                    className="relative z-10 -mx-1.5 -my-1.5 inline-flex min-h-11 sm:min-h-8 items-center gap-1 rounded-md px-1.5 tabular-nums hover:bg-muted hover:text-foreground"
                   >
                     <ListChecks className="size-3.5" aria-hidden="true" />
                     <span className="sr-only">{steps.expanded ? "Скрыть шаги" : "Показать шаги"}:</span>
@@ -257,13 +259,13 @@ export function TaskRow({
         )}
 
         {hasMenu && !pending && (
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="relative z-10 -my-1 size-9 shrink-0 text-muted-foreground transition-opacity data-[state=open]:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100"
+                className="relative z-10 -my-1 size-11 sm:size-9 shrink-0 text-muted-foreground transition-opacity data-[state=open]:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100"
                 aria-label={`Действия для задачи «${task.title}»`}
               >
                 <MoreHorizontal className="size-4" />

@@ -18,11 +18,11 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <main id="main" className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <AlertTriangle className="w-6 h-6 text-red-600" />
+          <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-destructive" />
           </div>
           <CardTitle className="text-2xl font-bold">Что-то пошло не так</CardTitle>
           <CardDescription>
@@ -30,7 +30,7 @@ export default function Error({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-gray-600 text-center">
+          <p className="text-sm text-muted-foreground text-center">
             Пожалуйста, попробуйте обновить страницу или вернитесь позже.
           </p>
           
@@ -40,14 +40,12 @@ export default function Error({
               Попробовать ещё раз
             </Button>
             
-            <Link href="/login">
-              <Button variant="outline" className="w-full">
+            <Button asChild variant="outline" className="w-full"><Link href="/login">
                 Вернуться к входу
-              </Button>
-            </Link>
+              </Link></Button>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

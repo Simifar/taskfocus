@@ -87,24 +87,19 @@ export function DashboardSidebar({
     <aside
       id="dashboard-navigation"
       aria-label="Основная навигация"
-      className="hidden w-[256px] shrink-0 flex-col border-r border-border bg-sidebar md:flex"
+      className="hidden w-[232px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex xl:w-[256px]"
     >
-      <div className="px-5 pt-5 pb-1">
-        <div className="flex items-center gap-3">
-          <BrandLogo variant="symbol" decorative />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-tight">TaskFocus</p>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {user?.name || user?.username || "Личное пространство"}
-            </p>
-          </div>
-        </div>
+      <div className="px-5 pt-6 pb-2">
+        <BrandLogo className="w-[184px]" />
+        <p className="mt-3 truncate px-1 text-xs text-muted-foreground">
+          {user?.name || user?.username || "Личное пространство"}
+        </p>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Разделы TaskFocus">
+      <nav className="flex-1 space-y-7 overflow-y-auto px-3 py-5" aria-label="Разделы TaskFocus">
         <div className="space-y-1.5">
           <Button
-            className="h-10 w-full justify-start gap-2 bg-brand text-sm text-brand-foreground hover:bg-brand/90"
+            className="h-11 w-full justify-start gap-2 bg-brand text-sm text-brand-foreground hover:bg-brand/90"
             onClick={onAddTask}
           >
             <Plus className="size-4" aria-hidden="true" />
@@ -113,7 +108,7 @@ export function DashboardSidebar({
           </Button>
           <Button
             variant="ghost"
-            className="h-10 w-full justify-start gap-2 text-sm text-muted-foreground hover:bg-sidebar-accent"
+            className="h-11 w-full justify-start gap-2 text-sm text-muted-foreground hover:bg-sidebar-accent"
             onClick={onSearch}
           >
             <Search className="size-4" aria-hidden="true" />
@@ -137,8 +132,8 @@ export function DashboardSidebar({
                     key={view}
                     variant="ghost"
                     className={cn(
-                      "h-10 w-full justify-start gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
+                      "h-11 w-full justify-start gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      isActive && "bg-sidebar-accent text-sidebar-accent-foreground shadow-[inset_3px_0_0_var(--brand)]",
                     )}
                     onClick={() => setView(view)}
                     aria-current={isActive ? "page" : undefined}
@@ -159,13 +154,14 @@ export function DashboardSidebar({
       </nav>
 
       <div className="space-y-2 border-t border-border p-3">
+        <p className="px-3 pb-2 text-xs leading-5 text-muted-foreground">До пяти задач в дневном плане. Остальное подождёт во Входящих.</p>
         <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           Аккаунт
         </p>
         <div className="space-y-1">
           <Button
             variant="ghost"
-            className="h-9 w-full justify-start gap-3 px-2.5 text-sm"
+            className="h-11 w-full justify-start gap-3 px-2.5 text-sm"
             onClick={() => router.push("/profile")}
           >
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-semibold text-brand">
@@ -175,14 +171,14 @@ export function DashboardSidebar({
           </Button>
           <Button
             variant="ghost"
-            className="h-9 w-full justify-start gap-3 px-3 text-sm"
+            className="h-11 w-full justify-start gap-3 px-3 text-sm"
             onClick={() => router.push("/settings")}
           >
             <Settings2 className="size-4" aria-hidden="true" />
             <span>Настройки</span>
           </Button>
         </div>
-        <Button variant="ghost" className="h-9 w-full justify-start gap-3 px-3 text-sm text-muted-foreground" onClick={onLogout}>
+        <Button variant="ghost" className="h-11 w-full justify-start gap-3 px-3 text-sm text-muted-foreground" onClick={onLogout}>
           <LogOut className="size-4" aria-hidden="true" />
           <span>Выйти</span>
         </Button>

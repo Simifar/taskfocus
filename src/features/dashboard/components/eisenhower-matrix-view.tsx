@@ -70,7 +70,7 @@ function PriorityToggle({
       aria-pressed={active}
       aria-label={`${label}: ${active ? "снять отметку" : "отметить"} для «${taskTitle}»`}
       className={cn(
-        "min-h-8 rounded-md px-2 text-[11px] font-medium transition-colors",
+        "min-h-11 rounded-lg px-3 sm:min-h-9 text-[11px] font-medium transition-colors",
         active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
@@ -108,25 +108,25 @@ export function EisenhowerMatrixView({
     const plannedToday = schedule?.tone === "today";
     if (quadrant === "do") {
       return plannedToday && onStartFocus ? (
-        <Button variant="ghost" size="icon" className="size-8" title="Начать фокус" aria-label={`Начать фокус: «${task.title}»`} onClick={() => onStartFocus(task)}>
+        <Button variant="ghost" size="icon" className="size-11 sm:size-9" title="Начать фокус" aria-label={`Начать фокус: «${task.title}»`} onClick={() => onStartFocus(task)}>
           <Timer />
         </Button>
       ) : onAssignToToday ? (
-        <Button variant="ghost" size="icon" className="size-8" title="На сегодня" aria-label={`Запланировать «${task.title}» на сегодня`} onClick={() => onAssignToToday(task.id)}>
+        <Button variant="ghost" size="icon" className="size-11 sm:size-9" title="На сегодня" aria-label={`Запланировать «${task.title}» на сегодня`} onClick={() => onAssignToToday(task.id)}>
           <CalendarArrowUp />
         </Button>
       ) : null;
     }
     if (quadrant === "schedule" && !schedule && onAssignToWeek) {
       return (
-        <Button variant="ghost" size="icon" className="size-8" title="На эту неделю" aria-label={`Запланировать «${task.title}» на эту неделю`} onClick={() => onAssignToWeek(task.id)}>
+        <Button variant="ghost" size="icon" className="size-11 sm:size-9" title="На эту неделю" aria-label={`Запланировать «${task.title}» на эту неделю`} onClick={() => onAssignToWeek(task.id)}>
           <CalendarDays />
         </Button>
       );
     }
     if (quadrant === "eliminate" && onArchive) {
       return (
-        <Button variant="ghost" size="icon" className="size-8" title="В архив" aria-label={`Убрать «${task.title}» в архив`} onClick={() => onArchive(task.id)}>
+        <Button variant="ghost" size="icon" className="size-11 sm:size-9" title="В архив" aria-label={`Убрать «${task.title}» в архив`} onClick={() => onArchive(task.id)}>
           <Archive />
         </Button>
       );
@@ -141,15 +141,15 @@ export function EisenhowerMatrixView({
     return {
       id: quadrant,
       tasks: items,
-      className: "flex flex-col rounded-xl border bg-card/60 p-2",
+      className: "workspace-panel flex min-w-0 flex-col p-3",
       contentClassName: "flex-1 space-y-1.5",
       header: (
         <div className="px-1.5 pt-1 pb-2.5">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className={cn("size-2 rounded-full", meta.dot)} aria-hidden="true" />
             <h2 className="text-sm font-semibold">{meta.action}</h2>
             <span className="text-sm tabular-nums text-muted-foreground">{items.length}</span>
-            <span className="ml-auto text-xs text-muted-foreground">{meta.title}</span>
+            <span className="w-full text-xs text-muted-foreground">{meta.title}</span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">{GUIDANCE[quadrant].hint}</p>
         </div>
@@ -171,7 +171,7 @@ export function EisenhowerMatrixView({
     <div className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Приоритеты</h1>
+          <h1 className="workspace-title">Приоритеты</h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
             Решите, что делать, что планировать, а что отпустить. Перетащите задачу или переключите «Важно» и «Срочно».
           </p>

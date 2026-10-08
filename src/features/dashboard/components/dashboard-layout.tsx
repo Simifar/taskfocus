@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { AlertCircle, Loader2, Search } from "lucide-react";
 import { BrandLogo } from "@/shared/ui/brand-logo";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { Task } from "@/shared/types";
@@ -219,27 +220,30 @@ export function DashboardLayout() {
       />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:hidden">
-          <div className="flex items-center gap-2">
-            <BrandLogo className="w-[160px]" />
+        <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-card/80 px-4 md:px-6 xl:px-10">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="md:hidden"><BrandLogo className="w-[160px]" /></div>
+            <p className="hidden truncate text-sm text-muted-foreground md:block">Личное пространство <span aria-hidden="true" className="mx-2 text-border">/</span> <span className="font-medium text-foreground">{{ today: "Сегодня", inbox: "Входящие", week: "Неделя", calendar: "Календарь", matrix: "Приоритеты", day: "План дня", archive: "Архив" }[currentView]}</span></p>
           </div>
+          <div className="flex shrink-0 items-center gap-1"><ThemeToggle />
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="-mr-2 flex size-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex size-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="Найти задачу"
           >
             <Search className="size-5" aria-hidden="true" />
-          </button>
+          </button></div>
         </header>
 
         <main
-          id="main"
+          id="main" tabIndex={-1}
           className={cn(
-            "min-h-0 flex-1 overflow-auto px-4 pt-5 md:px-8 md:pt-8",
+            "min-h-0 flex-1 overflow-auto px-4 pt-6 md:px-6 md:pt-8 xl:px-10 xl:pt-10",
             focusSession ? "pb-28" : "pb-8",
           )}
         >
+          <div className="workspace-enter mx-auto w-full max-w-[1440px]">
           {tasksQuery.isError && tasksQuery.data && (
             <div role="status" className="mx-auto mb-4 flex max-w-3xl items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning-soft px-4 py-3 text-sm">
               <span>Не удалось обновить список. Показаны сохранённые данные.</span>
@@ -393,6 +397,7 @@ export function DashboardLayout() {
             />
           )}
           </>}
+          </div>
         </main>
         <MobileNavigation
           currentView={currentView}

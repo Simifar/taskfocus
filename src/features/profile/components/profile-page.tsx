@@ -103,11 +103,11 @@ function Metric({
   value: number | undefined;
 }) {
   return (
-    <div className="min-w-0 rounded-xl bg-muted/60 p-3.5 sm:p-4">
-      <div className="flex size-7 items-center justify-center rounded-lg bg-background text-muted-foreground">
+    <div className="min-w-0 rounded-xl border border-border bg-brand-soft/40 p-3 sm:p-4">
+      <div className="flex size-7 items-center justify-center rounded-lg bg-card text-brand">
         <Icon className="size-4 shrink-0" aria-hidden="true" />
       </div>
-      <p className="mt-2 text-[11px] font-medium text-muted-foreground">{label}</p>
+      <p className="mt-2 text-xs font-medium text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
         {value === undefined ? <span className="inline-block h-7 w-10 animate-pulse rounded bg-muted-foreground/15" /> : value}
       </p>
@@ -134,7 +134,7 @@ export function ProfilePage() {
         </div>
       ) : null}
 
-      <section aria-label="Пользователь" className="flex min-w-0 items-center gap-4 rounded-2xl border border-border bg-card p-5 sm:gap-5 sm:p-6">
+      <section aria-label="Пользователь" className="flex min-w-0 items-center gap-4 rounded-3xl border border-brand/20 bg-brand-soft/60 p-5 sm:gap-5 sm:p-6">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-lg font-semibold text-brand sm:size-16 sm:text-xl" aria-hidden="true">
           {user ? initials(user.name, user.username, user.email) : <span className="size-7 animate-pulse rounded-full bg-brand/15" />}
         </div>
@@ -174,7 +174,7 @@ export function ProfilePage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-3 gap-2">
                 <Metric icon={ListTodo} label="В работе" value={statsQuery.data?.activeTasks} />
                 <Metric icon={CircleCheck} label="Готово" value={statsQuery.data?.completedTasks} />
                 <Metric icon={Archive} label="Архив" value={statsQuery.data?.archivedTasks} />

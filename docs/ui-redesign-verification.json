@@ -1,0 +1,1514 @@
+{
+  "date": "2026-10-08",
+  "method": "Codex in-app browser; Playwright locators; CDP; local axe-core",
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21aa"
+  ],
+  "matrix": {
+    "screens": 14,
+    "widths": [
+      320,
+      390,
+      768,
+      1440
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "states": 112,
+    "passed": 112
+  },
+  "checks": {
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": {
+      "passed": 54,
+      "failed": 0
+    },
+    "productionBuild": "pass"
+  },
+  "boundaries": [
+    "Production browser coverage: public pages only.",
+    "Authenticated components use synthetic in-memory API and Next Link/Image/navigation adapters.",
+    "No real database mutations, actual credentials authentication or Google OAuth tested.",
+    "No screen-reader certification or physical-device test."
+  ],
+  "rows": [
+    {
+      "screen": "today",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "day",
+      "method": "synthetic components",
+      "heading": "четверг",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "day",
+      "method": "synthetic components",
+      "heading": "четверг",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "day",
+      "method": "synthetic components",
+      "heading": "четверг",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "day",
+      "method": "synthetic components",
+      "heading": "четверг",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "day",
+      "method": "synthetic components",
+      "heading": "четверг",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "day",
+      "method": "synthetic components",
+      "heading": "четверг",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "day",
+      "method": "synthetic components",
+      "heading": "четверг",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "day",
+      "method": "synthetic components",
+      "heading": "четверг",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "profile",
+      "method": "synthetic components",
+      "heading": "Профиль",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "profile",
+      "method": "synthetic components",
+      "heading": "Профиль",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "settings",
+      "method": "synthetic components",
+      "heading": "Настройки",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "settings",
+      "method": "synthetic components",
+      "heading": "Настройки",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "profile",
+      "method": "synthetic components",
+      "heading": "Профиль",
+      "scrollWidth": 375,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "profile",
+      "method": "synthetic components",
+      "heading": "Профиль",
+      "scrollWidth": 375,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "settings",
+      "method": "synthetic components",
+      "heading": "Настройки",
+      "scrollWidth": 375,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "settings",
+      "method": "synthetic components",
+      "heading": "Настройки",
+      "scrollWidth": 375,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "profile",
+      "method": "synthetic components",
+      "heading": "Профиль",
+      "scrollWidth": 753,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "profile",
+      "method": "synthetic components",
+      "heading": "Профиль",
+      "scrollWidth": 753,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "settings",
+      "method": "synthetic components",
+      "heading": "Настройки",
+      "scrollWidth": 753,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "settings",
+      "method": "synthetic components",
+      "heading": "Настройки",
+      "scrollWidth": 753,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "profile",
+      "method": "synthetic components",
+      "heading": "Профиль",
+      "scrollWidth": 1425,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "profile",
+      "method": "synthetic components",
+      "heading": "Профиль",
+      "scrollWidth": 1425,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "settings",
+      "method": "synthetic components",
+      "heading": "Настройки",
+      "scrollWidth": 1425,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "settings",
+      "method": "synthetic components",
+      "heading": "Настройки",
+      "scrollWidth": 1425,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "login",
+      "method": "Next.js production public page",
+      "heading": "С возвращением",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "login",
+      "method": "Next.js production public page",
+      "heading": "С возвращением",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "login",
+      "method": "Next.js production public page",
+      "heading": "С возвращением",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "login",
+      "method": "Next.js production public page",
+      "heading": "С возвращением",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "login",
+      "method": "Next.js production public page",
+      "heading": "С возвращением",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "login",
+      "method": "Next.js production public page",
+      "heading": "С возвращением",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "login",
+      "method": "Next.js production public page",
+      "heading": "С возвращением",
+      "scrollWidth": 1425,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "login",
+      "method": "Next.js production public page",
+      "heading": "С возвращением",
+      "scrollWidth": 1425,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "register",
+      "method": "Next.js production public page",
+      "heading": "Новый день — новый фокус",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "register",
+      "method": "Next.js production public page",
+      "heading": "Новый день — новый фокус",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "register",
+      "method": "Next.js production public page",
+      "heading": "Новый день — новый фокус",
+      "scrollWidth": 375,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "register",
+      "method": "Next.js production public page",
+      "heading": "Новый день — новый фокус",
+      "scrollWidth": 375,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "register",
+      "method": "Next.js production public page",
+      "heading": "Новый день — новый фокус",
+      "scrollWidth": 753,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "register",
+      "method": "Next.js production public page",
+      "heading": "Новый день — новый фокус",
+      "scrollWidth": 753,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "register",
+      "method": "Next.js production public page",
+      "heading": "Новый день — новый фокус",
+      "scrollWidth": 1425,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "register",
+      "method": "Next.js production public page",
+      "heading": "Новый день — новый фокус",
+      "scrollWidth": 1425,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "forgot-password",
+      "method": "Next.js production public page",
+      "heading": "Восстановление пароля",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "forgot-password",
+      "method": "Next.js production public page",
+      "heading": "Восстановление пароля",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "forgot-password",
+      "method": "Next.js production public page",
+      "heading": "Восстановление пароля",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "forgot-password",
+      "method": "Next.js production public page",
+      "heading": "Восстановление пароля",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "forgot-password",
+      "method": "Next.js production public page",
+      "heading": "Восстановление пароля",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "forgot-password",
+      "method": "Next.js production public page",
+      "heading": "Восстановление пароля",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "forgot-password",
+      "method": "Next.js production public page",
+      "heading": "Восстановление пароля",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "forgot-password",
+      "method": "Next.js production public page",
+      "heading": "Восстановление пароля",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "reset-password",
+      "method": "Next.js production public page",
+      "heading": "Сброс пароля",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "reset-password",
+      "method": "Next.js production public page",
+      "heading": "Сброс пароля",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "reset-password",
+      "method": "Next.js production public page",
+      "heading": "Сброс пароля",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "reset-password",
+      "method": "Next.js production public page",
+      "heading": "Сброс пароля",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "reset-password",
+      "method": "Next.js production public page",
+      "heading": "Сброс пароля",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "reset-password",
+      "method": "Next.js production public page",
+      "heading": "Сброс пароля",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "reset-password",
+      "method": "Next.js production public page",
+      "heading": "Сброс пароля",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "reset-password",
+      "method": "Next.js production public page",
+      "heading": "Сброс пароля",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "__ui-review-404",
+      "method": "Next.js production public page",
+      "heading": "Страница не найдена",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "__ui-review-404",
+      "method": "Next.js production public page",
+      "heading": "Страница не найдена",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "__ui-review-404",
+      "method": "Next.js production public page",
+      "heading": "Страница не найдена",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "__ui-review-404",
+      "method": "Next.js production public page",
+      "heading": "Страница не найдена",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "__ui-review-404",
+      "method": "Next.js production public page",
+      "heading": "Страница не найдена",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "__ui-review-404",
+      "method": "Next.js production public page",
+      "heading": "Страница не найдена",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "__ui-review-404",
+      "method": "Next.js production public page",
+      "heading": "Страница не найдена",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "__ui-review-404",
+      "method": "Next.js production public page",
+      "heading": "Страница не найдена",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "task-menu",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [
+        {
+          "id": "aria-hidden-focus",
+          "impact": "serious",
+          "nodes": [
+            {
+              "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+              "target": [
+                "a"
+              ]
+            },
+            {
+              "summary": "Fix all of the following:\n  Focusable content should be disabled or be removed from the DOM",
+              "target": [
+                ".h-16"
+              ]
+            },
+            {
+              "summary": "Fix all of the following:\n  Focusable content should be disabled or be removed from the DOM",
+              "target": [
+                ".items-end"
+              ]
+            },
+            {
+              "summary": "Fix all of the following:\n  Focusable content should be disabled or be removed from the DOM",
+              "target": [
+                "form"
+              ]
+            },
+            {
+              "summary": "Fix all of the following:\n  Focusable content should be disabled or be removed from the DOM",
+              "target": [
+                ".space-y-1\\.5[data-aria-hidden=\"true\"]"
+              ]
+            },
+            {
+              "summary": "Fix all of the following:\n  Focusable content should be disabled or be removed from the DOM",
+              "target": [
+                ".z-30"
+              ]
+            }
+          ]
+        }
+      ],
+      "width": 390,
+      "phase": "before menu fix"
+    },
+    {
+      "screen": "task-menu-after-fix",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "create-dialog",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "create-details",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "app-error",
+      "method": "synthetic components",
+      "heading": "Что-то пошло не так",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today-empty",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "inbox-empty",
+      "method": "synthetic components",
+      "heading": "Входящие",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "week-empty",
+      "method": "synthetic components",
+      "heading": "Эта неделя",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "calendar-empty",
+      "method": "synthetic components",
+      "heading": "октябрь 2026",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "matrix-empty",
+      "method": "synthetic components",
+      "heading": "Приоритеты",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "archive-empty",
+      "method": "synthetic components",
+      "heading": "Архив",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "tasks-error",
+      "method": "synthetic components",
+      "heading": "Не удалось загрузить задачи",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "tasks-loading",
+      "method": "synthetic components",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "search-empty",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "search-no-results",
+      "method": "synthetic components",
+      "heading": "Сегодня",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320,
+      "phase": "after applicable fixes"
+    },
+    {
+      "screen": "today-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Сегодня",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320
+    },
+    {
+      "screen": "inbox-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Входящие",
+      "scrollWidth": 320,
+      "theme": "light",
+      "violations": [],
+      "width": 320
+    },
+    {
+      "screen": "today-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Сегодня",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320
+    },
+    {
+      "screen": "inbox-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Входящие",
+      "scrollWidth": 320,
+      "theme": "dark",
+      "violations": [],
+      "width": 320
+    },
+    {
+      "screen": "today-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Сегодня",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390
+    },
+    {
+      "screen": "inbox-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Входящие",
+      "scrollWidth": 390,
+      "theme": "light",
+      "violations": [],
+      "width": 390
+    },
+    {
+      "screen": "today-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Сегодня",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390
+    },
+    {
+      "screen": "inbox-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Входящие",
+      "scrollWidth": 390,
+      "theme": "dark",
+      "violations": [],
+      "width": 390
+    },
+    {
+      "screen": "today-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Сегодня",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768
+    },
+    {
+      "screen": "inbox-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Входящие",
+      "scrollWidth": 768,
+      "theme": "light",
+      "violations": [],
+      "width": 768
+    },
+    {
+      "screen": "today-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Сегодня",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768
+    },
+    {
+      "screen": "inbox-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Входящие",
+      "scrollWidth": 768,
+      "theme": "dark",
+      "violations": [],
+      "width": 768
+    },
+    {
+      "screen": "today-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Сегодня",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440
+    },
+    {
+      "screen": "inbox-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Входящие",
+      "scrollWidth": 1440,
+      "theme": "light",
+      "violations": [],
+      "width": 1440
+    },
+    {
+      "screen": "today-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Сегодня",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440
+    },
+    {
+      "screen": "inbox-completion-contrast",
+      "method": "synthetic components",
+      "phase": "after completion contrast fix",
+      "heading": "Входящие",
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "violations": [],
+      "width": 1440
+    }
+  ],
+  "finalRegression": "Completion-button border and inverse focus: Today/Inbox at all four widths in both themes; no axe violations or overflow."
+}

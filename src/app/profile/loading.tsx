@@ -6,7 +6,7 @@ export default function ProfileLoading() {
         <div className="h-5 w-20 bg-muted rounded animate-pulse" />
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <main id="main" aria-label="Загрузка профиля" className="max-w-6xl mx-auto px-4 py-8 space-y-5">
         {/* Hero skeleton */}
         <div className="bg-muted rounded-2xl p-6 animate-pulse">
           <div className="flex items-center gap-4">
@@ -39,7 +39,7 @@ export default function ProfileLoading() {
             </div>
           </div>
         ))}
-      </div>
+      </main>
     </div>
   );
 }

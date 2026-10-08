@@ -78,16 +78,16 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent sheet className="gap-0 p-0 sm:max-w-xl">
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
+      <DialogContent sheet className="gap-0 overflow-hidden p-0 sm:max-w-xl">
+        <form onSubmit={handleSubmit} className="flex max-h-[86dvh] min-h-0 flex-col">
           <div className="px-5 pt-5 pr-14 sm:px-6 sm:pt-6">
-            <DialogTitle className="text-sm font-medium text-muted-foreground">Новая задача</DialogTitle>
+            <DialogTitle className="text-xs font-semibold uppercase tracking-wider text-brand">Новая задача</DialogTitle>
             <DialogDescription className="sr-only">
               Введите название и нажмите Enter. Дата, энергия и приоритет необязательны.
             </DialogDescription>
           </div>
 
-          <div className="space-y-3 px-5 pt-2 pb-4 sm:px-6">
+          <div className="min-h-0 space-y-5 overflow-y-auto px-5 pt-5 pb-6 sm:px-6">
             <Label htmlFor="task-title" className="sr-only">Название</Label>
             <input
               id="task-title"
@@ -98,7 +98,7 @@ export function CreateTaskDialog({
               autoFocus
               autoComplete="off"
               enterKeyHint="done"
-              className="w-full bg-transparent text-xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/60 focus-visible:outline-none"
+              className="min-h-12 w-full rounded-lg bg-transparent text-2xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
             />
             <Label htmlFor="task-description" className="sr-only">Заметка</Label>
             <Textarea
@@ -140,7 +140,7 @@ export function CreateTaskDialog({
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t px-5 py-3 sm:px-6">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t bg-muted/40 px-5 py-3 sm:px-6">
             <p className="hidden text-xs text-muted-foreground sm:block">
               <kbd className="rounded border bg-muted px-1.5 py-0.5 font-sans text-[11px]">Enter</kbd> — создать
             </p>

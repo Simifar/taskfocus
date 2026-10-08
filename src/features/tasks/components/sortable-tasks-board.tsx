@@ -81,7 +81,7 @@ export function BoardDragHandle(props: React.ComponentProps<"button"> & { label:
       type="button"
       aria-label={label}
       className={cn(
-        "flex h-8 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground/70 hover:text-foreground active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-ring",
+        "flex h-11 w-6 sm:h-8 sm:w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground/70 hover:text-foreground active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-ring",
         className,
       )}
       {...rest}

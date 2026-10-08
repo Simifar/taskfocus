@@ -23,6 +23,7 @@ export default function GlobalError({
 
   return (
     <html lang="ru">
+      <head><title>TaskFocus — ошибка приложения</title><style>{`:root{--status-bg:#F3F6FF;--status-fg:#172C62;--status-muted:#536382} @media(prefers-color-scheme:dark){:root{--status-bg:#0C1430;--status-fg:#F2F5FF;--status-muted:#ADBADA}} button:focus-visible{outline:3px solid #85A4FF;outline-offset:4px}`}</style></head>
       <body
         style={{
           margin: 0,
@@ -31,11 +32,11 @@ export default function GlobalError({
           alignItems: "center",
           justifyContent: "center",
           fontFamily: "system-ui, -apple-system, sans-serif",
-          background: "#f9fafb",
-          color: "#111827",
+          background: "var(--status-bg)",
+          color: "var(--status-fg)",
         }}
       >
-        <div style={{ textAlign: "center", maxWidth: 420, padding: "2rem" }}>
+        <main id="main" style={{ textAlign: "center", maxWidth: 420, padding: "2rem" }}>
           <div
             style={{
               width: 64,
@@ -61,7 +62,7 @@ export default function GlobalError({
           <p
             style={{
               fontSize: "0.875rem",
-              color: "#6b7280",
+              color: "var(--status-muted)",
               marginBottom: "1.5rem",
               lineHeight: 1.6,
             }}
@@ -74,7 +75,7 @@ export default function GlobalError({
             <p
               style={{
                 fontSize: "0.75rem",
-                color: "#9ca3af",
+                color: "var(--status-muted)",
                 fontFamily: "monospace",
                 marginBottom: "1.5rem",
               }}
@@ -86,11 +87,11 @@ export default function GlobalError({
           <button
             onClick={reset}
             style={{
-              padding: "0.5rem 1.25rem",
-              background: "#10b981",
+              padding: "0.875rem 1.25rem",
+              background: "#3156CA",
               color: "#fff",
               border: "none",
-              borderRadius: "0.375rem",
+              borderRadius: "0.75rem",
               cursor: "pointer",
               fontSize: "0.875rem",
               fontWeight: 500,
@@ -98,7 +99,7 @@ export default function GlobalError({
           >
             Перезагрузить приложение
           </button>
-        </div>
+        </main>
       </body>
     </html>
   );

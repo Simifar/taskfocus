@@ -118,13 +118,13 @@ export function TodayView({
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl pb-6">
-      <header className="flex items-end justify-between gap-4">
+    <div className="mx-auto w-full max-w-4xl pb-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-sm font-medium text-muted-foreground first-letter:uppercase">
             {format(today, "EEEE, d MMMM", { locale: ru })}
           </p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight">Сегодня</h1>
+          <h1 className="mt-2 workspace-title">Сегодня</h1>
         </div>
         <Button
           onClick={() => onAddTask(slotsLeft > 0 ? "today" : "inbox")}
@@ -155,9 +155,9 @@ export function TodayView({
             type="button"
             onClick={() => setOverdueOpen((open) => !open)}
             aria-expanded={overdueOpen}
-            className="flex min-h-10 w-full items-center gap-2 text-left"
+            className="flex min-h-11 w-full flex-wrap items-center gap-2 text-left"
           >
-            <h2 id="today-overdue" className="text-sm font-semibold text-destructive">
+            <h2 id="today-overdue" className="shrink-0 text-sm font-semibold text-destructive">
               Просрочено · {overdueTasks.length}
             </h2>
             <span className="text-xs text-muted-foreground">перенесите или закройте</span>
@@ -196,16 +196,15 @@ export function TodayView({
             <h2 id="today-next" className="text-sm font-semibold">
               {now ? "Дальше" : "План"} {next.length > 0 && <span className="font-normal text-muted-foreground">· {next.length}</span>}
             </h2>
-            <div role="radiogroup" aria-label="Фильтр по энергии" className="flex rounded-lg bg-muted p-0.5">
+            <div role="group" aria-label="Фильтр по энергии" className="flex rounded-lg bg-muted p-0.5">
               {ENERGY_FILTERS.map((filter) => (
                 <button
                   key={filter.label}
                   type="button"
-                  role="radio"
-                  aria-checked={currentEnergy === filter.value}
+                  aria-pressed={currentEnergy === filter.value}
                   onClick={() => onEnergyChange(filter.value)}
                   className={cn(
-                    "min-h-9 rounded-md px-3 text-xs font-medium transition-colors",
+                    "min-h-11 rounded-lg px-3 text-xs font-medium transition-colors",
                     currentEnergy === filter.value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -274,13 +273,13 @@ export function TodayView({
 function DayProgress({ done, active, slotsLeft }: { done: number; active: number; slotsLeft: number }) {
   const slots = Math.max(MAX_ACTIVE_TASKS_PER_DAY, done + active);
   return (
-    <div className="mt-5">
+    <div className="workspace-panel mt-6 px-4 py-4 sm:px-5">
       <div className="flex gap-1" aria-hidden="true">
         {Array.from({ length: slots }, (_, index) => (
           <span
             key={index}
             className={cn(
-              "h-1.5 flex-1 rounded-full transition-colors duration-300",
+              "h-2 flex-1 rounded-full transition-colors duration-300",
               index < done ? "bg-success" : index < done + active ? "bg-brand/70" : "bg-muted",
             )}
           />
@@ -324,13 +323,13 @@ function NowCard({
     <section
       aria-labelledby="today-now"
       className={cn(
-        "mt-6 rounded-2xl border bg-card p-4 shadow-sm sm:p-5",
-        inFocus ? "border-brand/50" : "border-border",
+        "focus-hero mt-5 rounded-3xl border p-5 sm:p-8",
+        inFocus && "ring-2 ring-[#85A4FF]/40",
       )}
     >
-      <p id="today-now" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand">
+      <p id="today-now" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#85A4FF]">
         {inFocus ? <Timer className="size-3.5" aria-hidden="true" /> : <Sparkles className="size-3.5" aria-hidden="true" />}
-        {inFocus ? "Сейчас в фокусе" : "Начните с этого"}
+        {inFocus ? "Сейчас в фокусе" : "Следующее действие"}
       </p>
       <div className="mt-3 flex items-start gap-3">
         <span className="flex h-7 w-5 shrink-0 items-center justify-center">
@@ -339,12 +338,12 @@ function NowCard({
         <button
           type="button"
           onClick={() => onEdit(task)}
-          className="min-w-0 flex-1 text-left text-lg font-semibold leading-7 tracking-tight break-words hover:underline hover:decoration-muted-foreground/40 hover:underline-offset-4"
+          className="min-w-0 flex-1 text-left text-2xl font-semibold leading-8 sm:text-3xl sm:leading-10 tracking-tight break-words hover:underline hover:decoration-muted-foreground/40 hover:underline-offset-4"
         >
           {task.title}
         </button>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 pl-8 text-xs text-muted-foreground">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 pl-8 text-xs text-[#CAD7FC]">
         {(task.important || task.urgent) && (
           <span className="inline-flex items-center gap-1.5">
             <span className={cn("size-1.5 rounded-full", EISENHOWER_META[quadrant].dot)} aria-hidden="true" />
@@ -358,22 +357,22 @@ function NowCard({
         {steps.length > 0 && <span className="tabular-nums">Шаги {doneSteps}/{steps.length}</span>}
       </div>
       {nextStep && (
-        <p className="mt-3 ml-8 rounded-lg bg-muted/60 px-3 py-2 text-sm">
-          <span className="text-muted-foreground">Следующий шаг: </span>
+        <p className="mt-5 ml-8 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm">
+          <span className="text-[#CAD7FC]">Следующий шаг: </span>
           {nextStep.title}
         </p>
       )}
-      <div className="mt-4 flex flex-wrap gap-2 sm:pl-8">
+      <div className="mt-6 flex flex-wrap gap-3 sm:pl-8">
         {inFocus ? (
-          <Button className="min-h-11 gap-2 bg-brand text-brand-foreground hover:bg-brand/90 sm:min-h-10" onClick={onOpenFocus}>
+          <Button className="min-h-11 gap-2 bg-[#85A4FF] text-[#172C62] hover:bg-[#A6BDFF]" onClick={onOpenFocus}>
             <Maximize2 /> Открыть таймер
           </Button>
         ) : (
-          <Button className="min-h-11 gap-2 bg-brand text-brand-foreground hover:bg-brand/90 sm:min-h-10" onClick={() => onStartFocus(task)}>
+          <Button className="min-h-11 gap-2 bg-[#85A4FF] text-[#172C62] hover:bg-[#A6BDFF]" onClick={() => onStartFocus(task)}>
             <Timer /> Фокус 25 мин
           </Button>
         )}
-        <Button variant="outline" className="min-h-11 gap-2 sm:min-h-10" onClick={() => onComplete(task)}>
+        <Button variant="outline" className="min-h-11 gap-2 border-white/25 bg-transparent text-[#F2F5FF] hover:bg-white/10 hover:text-white dark:bg-transparent dark:hover:bg-white/10" onClick={() => onComplete(task)}>
           <Check /> Готово
         </Button>
       </div>
@@ -394,7 +393,7 @@ function EmptyToday({
 }) {
   const allDone = completedCount > 0;
   return (
-    <div className="mt-8 rounded-2xl border border-dashed px-5 py-10 text-center">
+    <div className="workspace-panel mt-8 px-5 py-12 text-center">
       <span
         className={cn(
           "mx-auto flex size-11 items-center justify-center rounded-full",

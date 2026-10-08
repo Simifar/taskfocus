@@ -74,7 +74,7 @@ function AppearanceSettings() {
                     onChange={() => setTheme(value)}
                     className="peer sr-only"
                   />
-                  <span className="flex min-h-[118px] flex-col rounded-xl border border-border bg-background p-3.5 transition-colors peer-checked:border-brand peer-checked:bg-brand/5 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand group-hover:bg-muted/60 sm:p-4">
+                  <span className="flex min-h-[160px] flex-col rounded-xl border border-border bg-background p-3.5 transition-colors peer-checked:border-brand peer-checked:bg-brand/5 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand group-hover:bg-muted/60 sm:p-4">
                     <span className="flex items-center justify-between gap-2">
                       <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
                       <Check
@@ -82,7 +82,11 @@ function AppearanceSettings() {
                         aria-hidden="true"
                       />
                     </span>
-                    <span className="mt-4 text-sm font-semibold">{label}</span>
+                    <span aria-hidden="true" className={`mt-3 flex h-14 gap-1.5 rounded-lg border p-2 ${value === "dark" ? "border-[#3B5078] bg-[#0C1430]" : value === "light" ? "border-[#DAE2F2] bg-[#F3F6FF]" : "border-border bg-muted"}`}>
+                      <span className={`w-4 rounded-sm ${value === "dark" ? "bg-[#1C326A]" : "bg-[#D8E3FF]"}`} />
+                      <span className="flex flex-1 flex-col gap-1.5"><span className="h-2 w-2/3 rounded bg-[#5278F6]" /><span className={`h-5 rounded ${value === "dark" ? "bg-[#18284F]" : "bg-white"}`} /></span>
+                    </span>
+                    <span className="mt-3 text-sm font-semibold">{label}</span>
                     <span className="mt-1 text-xs leading-4 text-muted-foreground">{description}</span>
                   </span>
                 </label>
@@ -246,7 +250,7 @@ function DeleteAccount() {
                 void confirmDelete();
               }}
               disabled={deleteAccount.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="h-auto min-h-11 whitespace-normal bg-destructive py-3 text-white hover:bg-destructive/90 dark:text-background"
             >
               {deleteAccount.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
               Удалить без возможности восстановления

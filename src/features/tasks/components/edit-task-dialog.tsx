@@ -169,7 +169,7 @@ export function EditTaskDialog({
                     }
                   }}
                   className={cn(
-                    "field-sizing-content w-full resize-none bg-transparent text-xl font-semibold leading-snug tracking-tight outline-none focus-visible:outline-none",
+                    "field-sizing-content w-full resize-none rounded-lg bg-transparent text-2xl font-semibold leading-snug tracking-tight outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
                     isCompleted && "text-muted-foreground line-through",
                   )}
                 />
@@ -188,7 +188,7 @@ export function EditTaskDialog({
           </div>
         </div>
 
-        <div className="space-y-5 px-5 py-5 sm:px-6">
+        <div className="space-y-6 px-5 py-6 sm:px-6">
           <div>
             <Label htmlFor="edit-task-description" className="sr-only">Заметка</Label>
             <Textarea
@@ -296,7 +296,7 @@ export function EditTaskDialog({
           )}
         </div>
 
-        <div className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t bg-background px-5 py-3 sm:px-6">
+        <div className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t bg-card px-5 py-4 sm:px-6">
           {!isArchived && !isSubtask && !isCompleted && onStartFocus && (
             <Button
               className="min-h-11 gap-2 bg-brand text-brand-foreground hover:bg-brand/90 sm:min-h-9"

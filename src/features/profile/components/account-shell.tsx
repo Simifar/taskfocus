@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Settings2, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/shared/ui/brand-logo";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
 
 type AccountSection = "profile" | "settings";
 
@@ -25,20 +26,23 @@ export function AccountShell({ section, title, description, children }: AccountS
 
   return (
     <div className="min-h-svh bg-background text-foreground">
-      <header className="sticky top-0 z-20 border-b border-border/80 bg-background/90 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <header className="sticky top-0 z-20 border-b border-border/80 bg-card/90 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
           <Link
             href="/"
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand sm:gap-2 sm:px-2"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             <span>К задачам</span>
           </Link>
-          <BrandLogo className="w-[140px]" />
+          <div className="flex shrink-0 items-center gap-1">
+            <BrandLogo className="w-[128px] sm:w-[140px]" />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pb-12 pt-7 sm:px-6 sm:pt-10">
+      <main id="main" tabIndex={-1} className="workspace-enter mx-auto max-w-6xl px-4 pb-12 pt-7 sm:px-6 sm:pt-10">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-brand">
@@ -56,6 +60,21 @@ export function AccountShell({ section, title, description, children }: AccountS
           </Link>
         </div>
 
+        <nav aria-label="Разделы аккаунта" className="mt-7 flex gap-1 border-b border-border pb-3">
+          {[
+            { href: "/profile", label: "Профиль", key: "profile" },
+            { href: "/settings", label: "Настройки", key: "settings" },
+          ].map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              aria-current={section === item.key ? "page" : undefined}
+              className={`inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-medium ${section === item.key ? "bg-brand-soft text-brand" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
         <div className="pt-6">{children}</div>
       </main>
     </div>

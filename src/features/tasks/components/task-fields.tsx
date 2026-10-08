@@ -187,10 +187,25 @@ export function EnergyPicker({ value, onChange, id }: EnergyPickerProps) {
             type="button"
             role="radio"
             aria-checked={value === level}
+            tabIndex={value === level ? 0 : -1}
+            data-energy-level={level}
             aria-label={`Энергия ${level} из 5: ${energyHint(level)}`}
             onClick={() => onChange(level)}
+            onKeyDown={(event) => {
+              const next = event.key === "Home" ? 1
+                : event.key === "End" ? 5
+                : event.key === "ArrowRight" || event.key === "ArrowDown" ? level % 5 + 1
+                : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (level + 3) % 5 + 1
+                : null;
+              if (next === null) return;
+              event.preventDefault();
+              onChange(next);
+              event.currentTarget.parentElement
+                ?.querySelector<HTMLButtonElement>(`[data-energy-level="${next}"]`)
+                ?.focus();
+            }}
             className={cn(
-              "flex min-h-10 items-end justify-center gap-0.5 rounded-md pb-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex min-h-11 items-end justify-center gap-0.5 rounded-lg pb-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               value === level ? "bg-background shadow-sm" : "hover:bg-background/60",
             )}
           >

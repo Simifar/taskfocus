@@ -112,16 +112,16 @@ export function CalendarView({
       id: dateKey,
       tasks: dayTasks.slice(0, VISIBLE_PER_DAY),
       className: cn(
-        "group min-h-[52px] bg-card p-0.5 sm:min-h-[84px] sm:p-1.5 md:min-h-[124px] md:p-2",
+        "group min-w-0 min-h-[64px] bg-card p-0.5 sm:min-h-[84px] sm:p-1 lg:min-h-[152px] lg:p-2",
         !inMonth && "bg-muted/40 text-muted-foreground",
       ),
-      contentClassName: "hidden space-y-1 md:block",
+      contentClassName: "hidden space-y-1.5 lg:block",
       header: (
-        <div className="mb-1 flex items-center justify-center gap-1 md:justify-between">
+        <div className="mb-1 flex items-center justify-center gap-1 lg:justify-between">
           <button
             type="button"
             className={cn(
-              "relative flex h-11 w-full items-center justify-center rounded-lg text-xs font-semibold tabular-nums transition-colors sm:size-8 sm:rounded-full md:text-sm",
+              "relative flex h-11 w-full items-center justify-center rounded-lg text-xs font-semibold tabular-nums transition-colors sm:h-11 sm:rounded-xl lg:w-10 lg:text-sm",
               isToday ? "bg-brand text-brand-foreground" : "hover:bg-muted",
             )}
             aria-label={`${format(day, "d MMMM yyyy", { locale: ru })}: ${dayTasks.length} задач`}
@@ -132,7 +132,7 @@ export function CalendarView({
               <span
                 aria-hidden="true"
                 className={cn(
-                  "absolute bottom-1 left-1/2 size-1.5 -translate-x-1/2 rounded-full md:hidden",
+                  "absolute bottom-1 left-1/2 size-1.5 -translate-x-1/2 rounded-full lg:hidden",
                   doneCount === dayTasks.length ? "bg-success" : isToday ? "bg-brand-foreground" : "bg-brand",
                 )}
               />
@@ -141,7 +141,7 @@ export function CalendarView({
           {!isDayPast && (
             <button
               type="button"
-              className="hidden size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 md:inline-flex"
+              className="hidden size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:inline-flex"
               aria-label={`Добавить задачу на ${format(day, "d MMMM", { locale: ru })}`}
               title={`Добавить задачу на ${format(day, "d MMMM", { locale: ru })}`}
               onClick={() => onCreateTask?.(day)}
@@ -151,7 +151,7 @@ export function CalendarView({
           )}
         </div>
       ),
-      empty: <div className="hidden h-10 md:block" />,
+      empty: <div className="hidden h-10 lg:block" />,
     };
   });
 
@@ -189,10 +189,10 @@ export function CalendarView({
         onToday={() => onMonthChange?.(new Date())}
       />
 
-      <div className="overflow-hidden rounded-xl border bg-card">
-        <div className="grid grid-cols-7 border-b">
+      <div className="workspace-panel overflow-hidden">
+        <div className="grid grid-cols-7 border-b bg-muted/40">
           {WEEKDAY_LABELS.map((day) => (
-            <div key={day} className="py-2 text-center text-xs font-medium text-muted-foreground">
+            <div key={day} className="py-3 text-center text-xs font-medium text-muted-foreground">
               {day}
             </div>
           ))}
@@ -224,7 +224,7 @@ export function CalendarView({
                   {dragHandle}
                   <button
                     type="button"
-                    className="flex min-h-7 min-w-0 flex-1 items-center gap-1.5 text-left"
+                    className="flex min-h-9 min-w-0 flex-1 items-center gap-1.5 text-left"
                     onClick={() => onEdit?.(task)}
                     title={task.title}
                   >
@@ -235,7 +235,7 @@ export function CalendarView({
                 {overflowCount > 0 && task === group?.tasks.at(-1) ? (
                   <button
                     type="button"
-                    className="mt-1 min-h-6 px-1 text-xs font-medium text-brand hover:underline"
+                    className="mt-1 min-h-9 px-1 text-xs font-medium text-brand hover:underline"
                     onClick={() => onSelectDay?.(new Date(`${groupId}T12:00:00`))}
                   >
                     +{overflowCount} ещё
@@ -246,7 +246,7 @@ export function CalendarView({
           }}
         />
       </div>
-      <p className="text-xs text-muted-foreground md:hidden">Нажмите на число, чтобы открыть день.</p>
+      <p className="text-sm text-muted-foreground lg:hidden">Нажмите на число, чтобы открыть день.</p>
     </div>
   );
 }

@@ -111,10 +111,10 @@ export function InboxView({
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl pb-24 md:pb-6">
-      <header className="flex items-end justify-between gap-4">
+    <div className="mx-auto w-full max-w-4xl pb-24 md:pb-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Входящие</h1>
+          <h1 className="workspace-title">Входящие</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Запишите сейчас — разберёте потом.
             {inboxTasks.length > 0 && ` Неразобранных: ${inboxTasks.length}.`}
@@ -135,7 +135,7 @@ export function InboxView({
 
       <form
         onSubmit={capture}
-        className="mt-5 flex items-center gap-2 rounded-xl border bg-card p-1.5 pl-4 shadow-sm transition-colors focus-within:border-ring"
+        className="mt-6 flex items-center gap-2 rounded-2xl border border-brand/25 bg-card p-2 pl-4 shadow-[var(--shadow-panel)] transition-colors focus-within:border-ring"
       >
         <label htmlFor="inbox-capture" className="sr-only">Новая задача во Входящие</label>
         <input
@@ -196,7 +196,7 @@ export function InboxView({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-9 text-muted-foreground hover:text-foreground"
+                        className="size-11 sm:size-9 text-muted-foreground hover:text-foreground"
                         title="На сегодня"
                         aria-label={`Запланировать «${task.title}» на сегодня`}
                         onClick={() => onAssignToToday(task.id)}
@@ -220,7 +220,7 @@ export function InboxView({
                 )
           }
           empty={
-            <div className="rounded-2xl border border-dashed px-5 py-12 text-center">
+            <div className="rounded-2xl border bg-card shadow-[var(--shadow-panel)] px-5 py-12 text-center">
               <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
                 <Inbox className="size-5" aria-hidden="true" />
               </span>
@@ -270,7 +270,7 @@ export function InboxView({
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-white dark:text-background hover:bg-destructive/90"
               onClick={() => void runBatch(onBatchDelete)}
             >
               Удалить

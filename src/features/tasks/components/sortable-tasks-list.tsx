@@ -60,7 +60,7 @@ export function DragHandle({ label, ...props }: { label: string } & React.Compon
     <button
       type="button"
       aria-label={label}
-      className="flex h-8 w-5 cursor-grab touch-none items-center justify-center rounded text-muted-foreground/70 transition-opacity hover:text-foreground active:cursor-grabbing [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100"
+      className="flex h-11 w-6 sm:h-8 sm:w-5 cursor-grab touch-none items-center justify-center rounded text-muted-foreground/70 transition-opacity hover:text-foreground active:cursor-grabbing [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100"
       {...props}
     >
       <GripVertical className="size-4" aria-hidden="true" />

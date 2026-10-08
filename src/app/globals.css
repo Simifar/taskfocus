@@ -68,7 +68,7 @@
 }
 
 :root {
-  /* Approved Brand Kit v1.0; interface surfaces keep their existing roles. */
+  /* TaskFocus Brand Kit v1.0: immutable identity, semantic interface tokens. */
   --tf-brand-navy: #172C62;
   --tf-brand-blue: #5278F6;
   --tf-brand-blue-text: #3156CA;
@@ -76,123 +76,105 @@
   --tf-brand-inverse: #F2F5FF;
   --tf-brand-inverse-blue: #85A4FF;
   --tf-surface: #F3F6FF;
-  --radius: 0.625rem;
-  --background: oklch(0.975 0.004 260);
-  --foreground: oklch(0.205 0.012 260);
-  --card: oklch(0.997 0.002 260);
-  --card-foreground: oklch(0.205 0.012 260);
-  --popover: oklch(0.997 0.002 260);
-  --popover-foreground: oklch(0.205 0.012 260);
-  --primary: oklch(0.245 0.018 260);
-  --primary-foreground: oklch(0.985 0.003 260);
-  --secondary: oklch(0.93 0.006 260);
-  --secondary-foreground: oklch(0.27 0.015 260);
-  --muted: oklch(0.94 0.006 260);
-  --muted-foreground: oklch(0.42 0.015 260);
-  --accent: oklch(0.92 0.018 255);
-  --accent-foreground: oklch(0.25 0.035 255);
-  --destructive: oklch(0.55 0.19 27);
-  --border: oklch(0.86 0.008 260);
-  --input: oklch(0.86 0.008 260);
-  --ring: oklch(0.52 0.14 255);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.955 0.005 260);
-  --sidebar-foreground: oklch(0.205 0.012 260);
-  --sidebar-primary: oklch(0.245 0.018 260);
-  --sidebar-primary-foreground: oklch(0.985 0.003 260);
-  --sidebar-accent: oklch(0.91 0.015 255);
-  --sidebar-accent-foreground: oklch(0.25 0.035 255);
-  --sidebar-border: oklch(0.86 0.008 260);
-  --sidebar-ring: oklch(0.52 0.14 255);
-  
-  /* Brand color — единый акцент приложения */
+  --radius: 0.875rem;
+  --background: var(--tf-surface);
+  --foreground: var(--tf-brand-navy);
+  --card: #FFFFFF;
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: var(--tf-brand-blue-text);
+  --primary-foreground: var(--tf-brand-inverse);
+  --secondary: #E9EEFC;
+  --secondary-foreground: var(--foreground);
+  --muted: #EDF1FB;
+  --muted-foreground: #536382;
+  --accent: #E6EDFF;
+  --accent-foreground: var(--tf-brand-blue-text);
+  --destructive: #B4233A;
+  --border: #DAE2F2;
+  --input: #C7D3E9;
+  --ring: var(--tf-brand-blue);
   --brand: var(--tf-brand-blue-text);
   --brand-foreground: var(--tf-brand-inverse);
+  --brand-soft: #E9EFFF;
+  --surface-raised: var(--card);
   --auth-panel: var(--tf-brand-navy);
   --auth-panel-foreground: var(--tf-brand-inverse);
-
-  --brand-soft: var(--tf-surface);
-  --surface-raised: oklch(1 0 0);
-
-  /* Semantic colors */
-  --success: oklch(0.52 0.13 155);
-  --success-soft: oklch(0.95 0.035 155);
-  --warning: oklch(0.6 0.13 65);
-  --warning-soft: oklch(0.96 0.04 80);
-  --error: oklch(0.577 0.245 27.325);
-  --info: oklch(0.538 0.2 258.4);
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: var(--brand-soft);
+  --sidebar-accent-foreground: var(--brand);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --success: #187047;
+  --success-soft: #E8F5EE;
+  --warning: #8A5713;
+  --warning-soft: #FFF3DA;
+  --error: var(--destructive);
+  --info: var(--brand);
+  --chart-1: var(--tf-brand-blue);
+  --chart-2: #187047;
+  --chart-3: var(--tf-brand-navy);
+  --chart-4: #85A4FF;
+  --chart-5: #8A5713;
+  --shadow-panel: 0 4px 24px -12px rgb(23 44 98 / 14%);
+  --shadow-dialog: 0 24px 80px -20px rgb(12 20 48 / 35%);
+  --motion-fast: 160ms;
+  --motion-enter: 220ms;
 }
 
 .dark {
-  --background: oklch(0.16 0.008 260);
-  --foreground: oklch(0.94 0.008 260);
-  --card: oklch(0.205 0.01 260);
-  --card-foreground: oklch(0.94 0.008 260);
-  --popover: oklch(0.22 0.012 260);
-  --popover-foreground: oklch(0.94 0.008 260);
-  --primary: oklch(0.78 0.12 255);
-  --primary-foreground: oklch(0.17 0.02 260);
-  --secondary: oklch(0.27 0.012 260);
-  --secondary-foreground: oklch(0.92 0.01 260);
-  --muted: oklch(0.26 0.01 260);
-  --muted-foreground: oklch(0.73 0.012 260);
-  --accent: oklch(0.29 0.025 255);
-  --accent-foreground: oklch(0.94 0.008 260);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0.008 260 / 15%);
-  --input: oklch(1 0.008 260 / 19%);
-  --ring: oklch(0.72 0.12 255);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.185 0.009 260);
-  --sidebar-foreground: oklch(0.94 0.008 260);
-  --sidebar-primary: oklch(0.78 0.12 255);
-  --sidebar-primary-foreground: oklch(0.17 0.02 260);
-  --sidebar-accent: oklch(0.29 0.025 255);
-  --sidebar-accent-foreground: oklch(0.94 0.008 260);
-  --sidebar-border: oklch(1 0.008 260 / 15%);
-  --sidebar-ring: oklch(0.72 0.12 255);
-
-  /* Brand color — чуть светлее для dark mode */
+  color-scheme: dark;
+  --background: #0C1430;
+  --foreground: var(--tf-brand-inverse);
+  --card: #121F40;
+  --popover: #18284F;
+  --primary: var(--tf-brand-inverse-blue);
+  --primary-foreground: var(--tf-brand-navy);
+  --secondary: #22345B;
+  --muted: #1A2A4C;
+  --muted-foreground: #ADBADA;
+  --accent: var(--tf-brand-tile);
+  --accent-foreground: var(--tf-brand-inverse);
+  --destructive: #FFA4B2;
+  --border: #2C3D63;
+  --input: #3B5078;
+  --ring: var(--tf-brand-inverse-blue);
   --brand: var(--tf-brand-inverse-blue);
   --brand-foreground: var(--tf-brand-navy);
-  --brand-soft: oklch(0.3 0.05 255);
-  --surface-raised: oklch(0.235 0.011 260);
-  --success: oklch(0.74 0.13 155);
-  --success-soft: oklch(0.3 0.05 155);
-  --warning: oklch(0.8 0.12 75);
-  --warning-soft: oklch(0.32 0.05 70);
-  --error: oklch(0.704 0.191 22.216);
-  --info: oklch(0.72 0.12 255);
+  --brand-soft: var(--tf-brand-tile);
+  --surface-raised: #18284F;
+  --sidebar: #101C39;
+  --success: #83DDB0;
+  --success-soft: #193D34;
+  --warning: #F4CB86;
+  --warning-soft: #3D3327;
   --auth-panel: var(--tf-brand-tile);
-  --auth-panel-foreground: var(--tf-brand-inverse);
+  --shadow-panel: 0 4px 24px -12px rgb(0 0 0 / 35%);
+  --shadow-dialog: 0 24px 80px -20px rgb(0 0 0 / 65%);
 }
 
 /* Typography utilities */
 .text-display {
   font-size: var(--font-size-display);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
   letter-spacing: -0.025em;
 }
 
 .text-headline {
   font-size: var(--font-size-headline);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .text-title {
   font-size: var(--font-size-title);
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .text-subtitle {
@@ -226,7 +208,7 @@
 .text-label {
   font-size: var(--font-size-label);
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .text-muted-foreground {
@@ -253,6 +235,7 @@
   color: var(--info);
 }
 
+@layer base {
 /* Base styles */
 * {
   border-color: var(--border);
@@ -264,41 +247,38 @@ body {
   color: var(--foreground);
 }
 
+}
+
 @layer base {
   /* Heading hierarchy — inside @layer base so Tailwind utilities can override */
   h1 {
     font-size: var(--font-size-title);
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.2;
     letter-spacing: -0.025em;
-    color: var(--foreground);
   }
 
   h2 {
     font-size: var(--font-size-subtitle);
     font-weight: 700;
-    line-height: 1;
-    color: var(--foreground);
+    line-height: 1.2;
   }
 
   h3 {
     font-size: var(--font-size-body-large);
     font-weight: 600;
-    line-height: 1;
-    color: var(--foreground);
+    line-height: 1.2;
   }
 
   h4 {
     font-size: var(--font-size-subtitle);
     font-weight: 500;
     line-height: 1.25;
-    color: var(--foreground);
   }
 
   h5, h6 {
     font-size: var(--font-size-body);
     font-weight: 600;
-    color: var(--foreground);
   }
 
   p {
@@ -330,7 +310,6 @@ body {
 html,
 body {
   min-width: 320px;
-  overflow-x: hidden;
 }
 
 button,
@@ -359,3 +338,15 @@ select {
     transition-duration: 0.01ms !important;
   }
 }
+
+@layer components {
+  .workspace-title { font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 650; line-height: 1.15; letter-spacing: -0.04em; }
+  .workspace-panel { border: 1px solid var(--border); border-radius: 1.25rem; background: var(--card); box-shadow: var(--shadow-panel); }
+  .workspace-enter { animation: workspace-enter var(--motion-enter) ease-out both; }
+  .focus-hero { --completion-border: var(--tf-brand-inverse-blue); --ring: var(--tf-brand-inverse-blue); color: var(--tf-brand-inverse); background: var(--tf-brand-navy); border-color: var(--tf-brand-tile); box-shadow: var(--shadow-panel); }
+  .dark .focus-hero { background: var(--tf-brand-tile); border-color: #3B5078; }
+  .focus-hero button[data-slot="button"] { --ring: var(--tf-brand-inverse-blue); }
+  .focus-hero [data-energy-bar="active"] { background: #85A4FF; }
+  .focus-hero [data-energy-bar="inactive"] { background: #3B5078; }
+}
+@keyframes workspace-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }

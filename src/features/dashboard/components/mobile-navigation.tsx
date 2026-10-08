@@ -16,6 +16,7 @@ import {
   Plus,
   Settings2,
   UserRound,
+  X,
 } from "lucide-react";
 
 import type { DashboardView } from "@/features/dashboard/store";
@@ -127,9 +128,9 @@ export function MobileNavigation({
     <Dialog.Root open={sectionsOpen} onOpenChange={setSectionsOpen}>
       <nav
         aria-label="Основная мобильная навигация"
-        className="z-30 shrink-0 border-t border-border/80 bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_28px_-20px_rgba(0,0,0,0.3)] backdrop-blur md:hidden"
+        className="z-30 shrink-0 border-t border-border/80 bg-card/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_28px_-20px_rgba(0,0,0,0.3)] backdrop-blur md:hidden"
       >
-        <div className="grid grid-cols-5 items-stretch">
+        <div className="grid grid-cols-5 items-stretch gap-1 py-1">
           {primaryItems.slice(0, 2).map(({ view, label, icon: Icon }) => (
             <button
               key={view}
@@ -138,7 +139,7 @@ export function MobileNavigation({
               aria-current={activeSection === view ? "page" : undefined}
               className={cn(
                 "flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand",
-                activeSection === view ? "text-brand" : "text-muted-foreground hover:text-foreground",
+                activeSection === view ? "bg-brand-soft text-brand" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="size-5" aria-hidden="true" />
@@ -165,7 +166,7 @@ export function MobileNavigation({
               aria-current={activeSection === view ? "page" : undefined}
               className={cn(
                 "flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand",
-                activeSection === view ? "text-brand" : "text-muted-foreground hover:text-foreground",
+                activeSection === view ? "bg-brand-soft text-brand" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="size-5" aria-hidden="true" />
@@ -179,7 +180,7 @@ export function MobileNavigation({
               aria-expanded={sectionsOpen}
               className={cn(
                 "flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand",
-                activeSection === "sections" ? "text-brand" : "text-muted-foreground hover:text-foreground",
+                activeSection === "sections" ? "bg-brand-soft text-brand" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <PanelsTopLeft className="size-5" aria-hidden="true" />
@@ -190,11 +191,11 @@ export function MobileNavigation({
       </nav>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-3xl border-t border-border bg-background px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom">
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-[#0C1430]/60 backdrop-blur-[3px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out" />
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-3xl border-t border-border bg-card px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom">
           <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
           <div className="mx-auto max-w-lg">
-            <Dialog.Title className="text-lg font-semibold">Все разделы</Dialog.Title>
+            <div className="flex items-center justify-between gap-3"><Dialog.Title className="text-xl font-semibold">Все разделы</Dialog.Title><Dialog.Close className="flex size-11 items-center justify-center rounded-xl hover:bg-muted" aria-label="Закрыть разделы"><X className="size-5" aria-hidden="true" /></Dialog.Close></div>
             <Dialog.Description className="mb-5 mt-1 text-sm text-muted-foreground">
               Задачи, планирование и настройки аккаунта — в одном месте.
             </Dialog.Description>

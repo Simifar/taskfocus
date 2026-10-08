@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, RefreshCw, ArrowLeft } from "lucide-react";
+import { StatusShell } from "@/shared/ui/status-shell";
 import { Button } from "@/shared/ui/button";
 
 export default function ProfileError({
@@ -27,10 +28,10 @@ export default function ProfileError({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <StatusShell>
       <div className="text-center max-w-md w-full">
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-          <AlertTriangle className="h-8 w-8 text-red-500 dark:text-red-400" />
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+          <AlertTriangle className="h-8 w-8 text-destructive" />
         </div>
 
         <h1 className="text-xl font-semibold mb-2">Ошибка загрузки профиля</h1>
@@ -62,6 +63,6 @@ export default function ProfileError({
           </Button>
         </div>
       </div>
-    </div>
+    </StatusShell>
   );
 }

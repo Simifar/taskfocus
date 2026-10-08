@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { AlertCircle, CornerDownLeft, Loader2, Search } from "lucide-react";
+import { AlertCircle, CornerDownLeft, Loader2, Search, X } from "lucide-react";
 
 import type { Task } from "@/shared/types";
 import { useTasks } from "@/features/tasks/hooks";
@@ -201,7 +201,7 @@ export function TaskSearchDialog({ open, onOpenChange, onEdit }: TaskSearchDialo
             className="min-h-14 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground focus-visible:outline-none"
           />
           {waiting && tasks.length > 0 && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden="true" />}
-          <kbd className="hidden rounded border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground sm:block">Esc</kbd>
+          <button type="button" aria-label="Закрыть поиск" className="flex size-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted" onClick={() => { setQuery(""); onOpenChange(false); }}><X className="size-4" aria-hidden="true" /></button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto" aria-live="polite">
           {body}

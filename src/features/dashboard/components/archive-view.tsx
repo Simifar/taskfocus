@@ -21,9 +21,9 @@ export function ArchiveView({ tasks, onRestore, onDelete, onEdit }: ArchiveViewP
   const archived = tasks.filter((task) => !task.parentTaskId && task.status === "archived");
 
   return (
-    <div className="mx-auto w-full max-w-3xl pb-6">
+    <div className="mx-auto w-full max-w-4xl pb-6">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Архив</h1>
+        <h1 className="workspace-title">Архив</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {archived.length > 0
             ? `Задач в архиве: ${archived.length}. Верните нужное или удалите лишнее.`
@@ -32,7 +32,7 @@ export function ArchiveView({ tasks, onRestore, onDelete, onEdit }: ArchiveViewP
       </header>
 
       {archived.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-dashed px-5 py-12 text-center">
+        <div className="mt-6 rounded-2xl border bg-card shadow-[var(--shadow-panel)] px-5 py-12 text-center">
           <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <Archive className="size-5" aria-hidden="true" />
           </span>
@@ -48,7 +48,7 @@ export function ArchiveView({ tasks, onRestore, onDelete, onEdit }: ArchiveViewP
                 onClick={() => onEdit?.(task)}
               >
                 <span className="block break-words text-[15px] text-muted-foreground">{task.title}</span>
-                <span className="block text-xs text-muted-foreground/80">
+                <span className="block text-xs text-muted-foreground">
                   Изменена {format(new Date(task.updatedAt), "d MMMM", { locale: ru })}
                 </span>
               </button>

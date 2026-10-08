@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { ArrowUpRight, Check, Loader2 } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import { BrandLogo } from "@/shared/ui/brand-logo";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
 
 export type AuthMode = "login" | "register";
 
@@ -46,14 +48,14 @@ export function AuthShell({
   const isLogin = mode === "login";
 
   return (
-    <main className="min-h-svh bg-background text-foreground">
-      <div className="mx-auto grid min-h-svh w-full max-w-7xl gap-5 px-4 py-4 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] lg:gap-8 lg:px-8">
-        <div className="flex min-w-0 flex-col">
+    <main id="main" tabIndex={-1} className="min-h-svh bg-background text-foreground">
+      <div className="mx-auto grid min-h-svh w-full max-w-7xl gap-5 px-4 py-4 sm:px-6 sm:py-6 lg:grid-cols-[minmax(360px,0.9fr)_minmax(0,1fr)] lg:gap-8 lg:px-8">
+        <div className="flex min-w-0 flex-col lg:order-2 lg:px-8">
           <header className="flex items-center justify-between">
             <Link href="/login" className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <BrandLogo priority />
             </Link>
-            <span className="hidden text-xs text-muted-foreground sm:block">Ваши задачи — в вашем ритме</span>
+            <ThemeToggle />
           </header>
 
           <div className="flex flex-1 items-start justify-center py-8 sm:items-center lg:py-12">
@@ -74,7 +76,7 @@ export function AuthShell({
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+              <div className="workspace-panel p-5 sm:p-7">
                 {googleEnabled && (
                   <>
                     <Button
@@ -115,9 +117,9 @@ export function AuthShell({
           </div>
         </div>
 
-        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-3xl bg-auth-panel p-9 text-auth-panel-foreground lg:flex xl:p-12">
+        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-[2rem] bg-auth-panel p-9 text-auth-panel-foreground lg:flex xl:p-12">
           <div className="relative z-10 max-w-lg">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-auth-panel-foreground/60">Спокойный рабочий ритм</p>
+            <div className="mb-10 flex size-24 items-center justify-center rounded-3xl border border-white/15 bg-white/5"><Image unoptimized src="/brand/symbol-inverse.svg" alt="" width={64} height={64} /></div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#CAD7FC]">Спокойный рабочий ритм</p>
             <h2 className="mt-6 max-w-md text-4xl font-medium leading-[1.08] tracking-[-0.04em] text-auth-panel-foreground xl:text-5xl">
               Меньше планировать. Больше делать.
             </h2>
@@ -126,19 +128,19 @@ export function AuthShell({
             </p>
           </div>
 
-          <ol className="relative z-10 mt-12 space-y-0">
+          <ol className="relative z-10 mt-12 list-none space-y-0 p-0">
             {steps.map((step) => (
-              <li key={step.number} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-3 border-t border-auth-panel-foreground/15 py-4">
-                <span className="pt-0.5 font-mono text-xs tabular-nums text-auth-panel-foreground/50">{step.number}</span>
+              <li key={step.number} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-4 border-t border-auth-panel-foreground/15 py-4">
+                <span className="pt-0.5 font-mono text-xs tabular-nums text-[#CAD7FC]">{step.number}</span>
                 <div>
                   <h3 className="text-sm font-semibold text-auth-panel-foreground">{step.title}</h3>
-                  <p className="mt-1 max-w-sm text-xs leading-5 text-auth-panel-foreground/65">{step.text}</p>
+                  <p className="mt-1 max-w-sm text-xs leading-5 text-[#CAD7FC]">{step.text}</p>
                 </div>
               </li>
             ))}
           </ol>
 
-          <p className="relative z-10 mt-8 text-xs text-auth-panel-foreground/55">Без бесконечного списка. Без необходимости всё успеть.</p>
+          <p className="relative z-10 mt-8 text-xs text-[#CAD7FC]">Без бесконечного списка. Без необходимости всё успеть.</p>
         </aside>
       </div>
     </main>

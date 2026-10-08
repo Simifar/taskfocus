@@ -89,17 +89,17 @@ export function WeekView({
       id,
       tasks: dayTasks,
       className: cn(
-        "group/day flex flex-col rounded-xl border bg-card/60",
-        isToday ? "border-brand/50 bg-card" : "border-border/70",
-        isDayPast && "opacity-70",
+        "group/day flex min-w-0 flex-col rounded-2xl border bg-card shadow-[var(--shadow-panel)]",
+        isToday ? "border-brand/50 bg-brand-soft/40" : "border-border/70",
+        isDayPast && "bg-muted/25",
       ),
-      contentClassName: "flex-1 space-y-1.5 px-1.5 pb-1.5",
+      contentClassName: "flex-1 space-y-2 px-2 pb-2",
       header: (
         <div className="flex items-center gap-1 py-1 pr-1 pl-1">
           <button
             type="button"
             onClick={() => onSelectDay?.(date)}
-            className="flex min-h-11 min-w-0 flex-1 items-baseline gap-2 rounded-lg px-2 text-left hover:bg-muted"
+            className="flex min-h-14 min-w-0 flex-1 flex-wrap content-center items-baseline gap-x-2 gap-y-0 rounded-xl px-2 text-left hover:bg-muted"
             aria-label={`Открыть ${format(date, "EEEE, d MMMM", { locale: ru })}`}
           >
             <span className={cn("text-sm font-semibold capitalize", isToday && "text-brand")}>
@@ -108,7 +108,7 @@ export function WeekView({
             <span className={cn("text-sm tabular-nums", isToday ? "font-semibold text-brand" : "text-muted-foreground")}>
               {format(date, "d MMM", { locale: ru })}
             </span>
-            {isToday && <span className="text-xs text-brand">· сегодня</span>}
+            {isToday && <span className="sr-only">сегодня</span>}
           </button>
           <span
             className={cn("px-1 text-xs tabular-nums", full ? "font-medium text-warning" : "text-muted-foreground")}
@@ -119,7 +119,7 @@ export function WeekView({
           {!isDayPast && (
             <button
               type="button"
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+              className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
               aria-label={`Добавить задачу на ${format(date, "d MMMM", { locale: ru })}`}
               title={full ? "День заполнен" : `Добавить задачу на ${format(date, "d MMMM", { locale: ru })}`}
               disabled={full}
@@ -131,7 +131,7 @@ export function WeekView({
         </div>
       ),
       empty: (
-        <p className="flex min-h-12 items-center justify-center rounded-lg border border-dashed border-border/70 px-2 text-xs text-muted-foreground">
+        <p className="flex min-h-20 items-center justify-center rounded-lg border border-dashed border-border/70 px-2 text-xs text-muted-foreground">
           {isDayPast ? "Не было задач" : "Свободно"}
         </p>
       ),
@@ -180,7 +180,7 @@ export function WeekView({
 
       <SortableTasksBoard
         groups={groups}
-        className="grid grid-cols-1 items-start gap-2 sm:grid-cols-2 xl:grid-cols-4 min-[1600px]:grid-cols-7"
+        className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-3 min-[1800px]:grid-cols-4"
         onChange={handleBoardChange}
         getDropBlocker={getDropBlocker}
         groupLabel={(id) => format(new Date(`${id}T12:00:00`), "EEEE, d MMMM", { locale: ru })}

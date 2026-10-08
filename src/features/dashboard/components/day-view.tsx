@@ -57,7 +57,7 @@ export function DayView({
   const full = activeTasks.length >= MAX_ACTIVE_TASKS_PER_DAY;
 
   return (
-    <div className="mx-auto w-full max-w-3xl pb-6">
+    <div className="mx-auto w-full max-w-4xl pb-6">
       <div className="flex items-center justify-between gap-2">
         <Button variant="ghost" className="-ml-3 min-h-11 gap-1.5 text-muted-foreground sm:min-h-9" onClick={onBack}>
           <ArrowLeft /> {backLabel}
@@ -74,13 +74,13 @@ export function DayView({
         )}
       </div>
 
-      <header className="mt-2 flex items-end justify-between gap-4">
+      <header className="mt-4 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
             {format(selectedDate, "d MMMM yyyy", { locale: ru })}
             {isToday && " · сегодня"}
           </p>
-          <h1 className="mt-1 text-3xl font-semibold capitalize tracking-tight">
+          <h1 className="mt-1 workspace-title capitalize">
             {format(selectedDate, "EEEE", { locale: ru })}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground tabular-nums">
@@ -109,7 +109,7 @@ export function DayView({
           onAddSubtask={onAddSubtask}
           onDeleteSubtask={onDeleteSubtask}
           empty={
-            <div className="rounded-2xl border border-dashed px-5 py-10 text-center">
+            <div className="rounded-2xl border bg-card shadow-[var(--shadow-panel)] px-5 py-10 text-center">
               <p className="font-semibold">
                 {completedTasks.length > 0 ? "На этот день всё готово" : isDayPast ? "В этот день задач не было" : "День свободен"}
               </p>
