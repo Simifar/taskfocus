@@ -1,0 +1,33 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "name": "TaskFocus Brand Tokens",
+  "version": "1.0.0",
+  "colors": {
+    "brand": {
+      "navy": "#172C62",
+      "blue": "#5278F6",
+      "blueReadable": "#3156CA",
+      "navyTile": "#1C326A",
+      "inverseInk": "#F2F5FF",
+      "inverseBlue": "#85A4FF"
+    },
+    "surfaces": {
+      "background": "#F3F6FF",
+      "backgroundDark": "#0C1430",
+      "white": "#FFFFFF"
+    },
+    "neutral": {
+      "black": "#111827"
+    }
+  },
+  "typography": {
+    "family": "Inter, system-ui, sans-serif",
+    "headingWeight": 700,
+    "bodyWeight": 400
+  },
+  "radius": {
+    "tilePreview": 26,
+    "button": 12
+  },
+  "source": "06-forward master"
+}

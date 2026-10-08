@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowUpRight, Check, Loader2 } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
+import { BrandLogo } from "@/shared/ui/brand-logo";
 
 export type AuthMode = "login" | "register";
 
@@ -51,10 +51,7 @@ export function AuthShell({
         <div className="flex min-w-0 flex-col">
           <header className="flex items-center justify-between">
             <Link href="/login" className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-brand p-1.5">
-                <Image src="/logo.svg" alt="" width={24} height={24} priority />
-              </span>
-              <span className="text-sm font-semibold tracking-tight">TaskFocus</span>
+              <BrandLogo priority />
             </Link>
             <span className="hidden text-xs text-muted-foreground sm:block">Ваши задачи — в вашем ритме</span>
           </header>
@@ -121,7 +118,7 @@ export function AuthShell({
         <aside className="relative hidden flex-col justify-between overflow-hidden rounded-3xl bg-auth-panel p-9 text-auth-panel-foreground lg:flex xl:p-12">
           <div className="relative z-10 max-w-lg">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-auth-panel-foreground/60">Спокойный рабочий ритм</p>
-            <h2 className="mt-6 max-w-md text-4xl font-medium leading-[1.08] tracking-[-0.04em] xl:text-5xl">
+            <h2 className="mt-6 max-w-md text-4xl font-medium leading-[1.08] tracking-[-0.04em] text-auth-panel-foreground xl:text-5xl">
               Меньше планировать. Больше делать.
             </h2>
             <p className="mt-5 max-w-md text-sm leading-6 text-auth-panel-foreground/70">

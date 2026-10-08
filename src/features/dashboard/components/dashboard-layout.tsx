@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
-import { AlertCircle, Loader2, Brain, Search } from "lucide-react";
+import { AlertCircle, Loader2, Search } from "lucide-react";
+import { BrandLogo } from "@/shared/ui/brand-logo";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { Task } from "@/shared/types";
@@ -220,10 +221,7 @@ export function DashboardLayout() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:hidden">
           <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-brand">
-              <Brain className="size-4 text-brand-foreground" aria-hidden="true" />
-            </span>
-            <span className="text-sm font-semibold">TaskFocus</span>
+            <BrandLogo className="w-[160px]" />
           </div>
           <button
             type="button"

@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Archive,
-  Brain,
   CalendarCheck,
   CalendarDays,
   CalendarRange,
@@ -18,6 +17,7 @@ import {
 
 import { useDashboardStore, type DashboardView } from "@/features/dashboard/store";
 import { Button } from "@/shared/ui/button";
+import { BrandLogo } from "@/shared/ui/brand-logo";
 import { cn } from "@/shared/lib/utils";
 import type { StatsResponse, User } from "@/shared/types";
 
@@ -91,9 +91,7 @@ export function DashboardSidebar({
     >
       <div className="px-5 pt-5 pb-1">
         <div className="flex items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-foreground">
-            <Brain className="size-5" aria-hidden="true" />
-          </span>
+          <BrandLogo variant="symbol" decorative />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold tracking-tight">TaskFocus</p>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">

@@ -68,6 +68,14 @@
 }
 
 :root {
+  /* Approved Brand Kit v1.0; interface surfaces keep their existing roles. */
+  --tf-brand-navy: #172C62;
+  --tf-brand-blue: #5278F6;
+  --tf-brand-blue-text: #3156CA;
+  --tf-brand-tile: #1C326A;
+  --tf-brand-inverse: #F2F5FF;
+  --tf-brand-inverse-blue: #85A4FF;
+  --tf-surface: #F3F6FF;
   --radius: 0.625rem;
   --background: oklch(0.975 0.004 260);
   --foreground: oklch(0.205 0.012 260);
@@ -102,12 +110,12 @@
   --sidebar-ring: oklch(0.52 0.14 255);
   
   /* Brand color — единый акцент приложения */
-  --brand: oklch(0.43 0.15 255);
-  --brand-foreground: oklch(0.985 0.003 260);
-  --auth-panel: oklch(0.235 0.025 260);
-  --auth-panel-foreground: oklch(0.97 0.004 260);
+  --brand: var(--tf-brand-blue-text);
+  --brand-foreground: var(--tf-brand-inverse);
+  --auth-panel: var(--tf-brand-navy);
+  --auth-panel-foreground: var(--tf-brand-inverse);
 
-  --brand-soft: oklch(0.94 0.03 255);
+  --brand-soft: var(--tf-surface);
   --surface-raised: oklch(1 0 0);
 
   /* Semantic colors */
@@ -153,8 +161,8 @@
   --sidebar-ring: oklch(0.72 0.12 255);
 
   /* Brand color — чуть светлее для dark mode */
-  --brand: oklch(0.72 0.12 255);
-  --brand-foreground: oklch(0.17 0.02 260);
+  --brand: var(--tf-brand-inverse-blue);
+  --brand-foreground: var(--tf-brand-navy);
   --brand-soft: oklch(0.3 0.05 255);
   --surface-raised: oklch(0.235 0.011 260);
   --success: oklch(0.74 0.13 155);
@@ -163,8 +171,8 @@
   --warning-soft: oklch(0.32 0.05 70);
   --error: oklch(0.704 0.191 22.216);
   --info: oklch(0.72 0.12 255);
-  --auth-panel: oklch(0.205 0.01 260);
-  --auth-panel-foreground: oklch(0.94 0.008 260);
+  --auth-panel: var(--tf-brand-tile);
+  --auth-panel-foreground: var(--tf-brand-inverse);
 }
 
 /* Typography utilities */

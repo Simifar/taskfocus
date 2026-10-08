@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, Settings2, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
+import { BrandLogo } from "@/shared/ui/brand-logo";
 
 type AccountSection = "profile" | "settings";
 
@@ -33,7 +34,7 @@ export function AccountShell({ section, title, description, children }: AccountS
             <ArrowLeft className="size-4" aria-hidden="true" />
             <span>К задачам</span>
           </Link>
-          <span className="text-xs font-medium text-muted-foreground">TaskFocus</span>
+          <BrandLogo className="w-[140px]" />
         </div>
       </header>
 

@@ -1,5 +1,9 @@
 <div align="center">
-  <img src="public/logo.svg" alt="TaskFocus logo" width="76" height="76" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/symbol-inverse.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="public/brand/symbol-primary.svg" />
+    <img src="public/brand/symbol-primary.svg" alt="TaskFocus logo" width="76" height="76" />
+  </picture>
   <h1>TaskFocus</h1>
   <p><strong>A calmer way to plan the work in front of you.</strong></p>
   <p>A personal task planner built around a small daily focus, flexible dates, and room to think.</p>

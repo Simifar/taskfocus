@@ -1,0 +1,13 @@
+:root {
+  --tf-brand-navy: #172C62;
+  --tf-brand-blue: #5278F6;
+  --tf-brand-blue-text: #3156CA;
+  --tf-brand-tile: #1C326A;
+  --tf-surface: #F3F6FF;
+  --tf-text-primary: #172C62;
+}
+[data-theme="dark"] {
+  --tf-text-primary: #F2F5FF;
+  --tf-brand-blue: #85A4FF;
+  --tf-surface: #0C1430;
+}

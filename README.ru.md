@@ -1,5 +1,9 @@
 <div align="center">
-  <img src="public/logo.svg" alt="Логотип TaskFocus" width="76" height="76" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/symbol-inverse.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="public/brand/symbol-primary.svg" />
+    <img src="public/brand/symbol-primary.svg" alt="Логотип TaskFocus" width="76" height="76" />
+  </picture>
   <h1>TaskFocus</h1>
   <p><strong>Спокойный способ спланировать то, что важно сейчас.</strong></p>
   <p>Персональный планировщик: небольшой фокус на день, гибкие даты и пространство для размышлений.</p>
